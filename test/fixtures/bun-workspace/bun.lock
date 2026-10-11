@@ -1,0 +1,36 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "fixture-bun-workspace",
+      "devDependencies": {
+        "typescript": "^5.9.0",
+      },
+    },
+    "apps/api": {
+      "name": "@fixture/api",
+      "dependencies": {
+        "hono": "^4.13.0",
+        "zod": "^4.0.0",
+      },
+    },
+    "apps/web": {
+      "name": "@fixture/web",
+      "dependencies": {
+        "@fixture/api": "workspace:*",
+        "zod": "^4.0.0",
+      },
+    },
+  },
+  "packages": {
+    "@fixture/api": ["@fixture/api@workspace:apps/api"],
+
+    "@fixture/web": ["@fixture/web@workspace:apps/web"],
+
+    "hono": ["hono@4.13.13", "", {}, "sha512-AAAA"],
+
+    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-BBBB"],
+
+    "zod": ["zod@4.6.5", "", {}, "sha512-CCCC"],
+  }
+}

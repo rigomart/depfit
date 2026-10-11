@@ -1,0 +1,6 @@
+{
+  "name": "@fixture/web",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@fixture/api": "workspace:*", "zod": "^4.0.0" }
+}

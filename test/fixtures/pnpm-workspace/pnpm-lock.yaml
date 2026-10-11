@@ -1,0 +1,53 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+
+  apps/api:
+    dependencies:
+      hono:
+        specifier: ^4.13.0
+        version: 4.13.13
+      zod:
+        specifier: ^4.0.0
+        version: 4.6.5
+
+  apps/web:
+    dependencies:
+      '@fixture/api':
+        specifier: workspace:*
+        version: link:../api
+      zod:
+        specifier: ^4.0.0
+        version: 4.6.5
+
+packages:
+
+  hono@4.13.13:
+    resolution: {integrity: sha512-AAAA}
+    engines: {node: '>=16.9.0'}
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-BBBB}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  zod@4.6.5:
+    resolution: {integrity: sha512-CCCC}
+
+snapshots:
+
+  hono@4.13.13: {}
+
+  typescript@5.9.3: {}
+
+  zod@4.6.5: {}

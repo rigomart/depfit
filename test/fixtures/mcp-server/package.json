@@ -1,0 +1,11 @@
+{
+  "name": "fixture-mcp-server",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1",
+    "express": "^5"
+  },
+  "devDependencies": { "typescript": "^5" }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "fixture-pnpm-workspace",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "devDependencies": { "typescript": "^5.9.0" }
+}

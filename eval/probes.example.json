@@ -1,0 +1,8 @@
+[
+  {
+    "project": "my-app",
+    "cwd": "~/code/my-app",
+    "packages": ["date-fns", "dayjs", "luxon"],
+    "question": "Should this project switch date libraries?"
+  }
+]

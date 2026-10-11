@@ -1,0 +1,6 @@
+{
+  "name": "fixture-bun-workspace",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "devDependencies": { "typescript": "^5.9.0" }
+}
