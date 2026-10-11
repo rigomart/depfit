@@ -47,9 +47,9 @@ export const nodeProject: ProjectInfo = {
 };
 
 /** Root of a bun monorepo with apps/desktop, apps/server, and apps/web; compared from the root. */
-export const t3codeProject: ProjectInfo = {
-  root: "/home/dev/t3code",
-  workspace: "/home/dev/t3code",
+export const pnpmMonorepoProject: ProjectInfo = {
+  root: "/home/dev/monorepo",
+  workspace: "/home/dev/monorepo",
   lockfile: "bun.lock",
   packages_in_lockfile: 1184,
   module_type: "module",

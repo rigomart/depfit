@@ -10,10 +10,10 @@ import {
   nodePty,
   nodeSqlite,
   noProjectReport,
+  pnpmMonorepoProject,
   report,
   sharp,
   sonner,
-  t3codeProject,
   valibot,
   workersProject,
   yup,
@@ -178,7 +178,7 @@ describe("renderTable", () => {
 
   it("renders a builtin next to npm packages in one table without errors", () => {
     const out = renderTable(
-      report([nodeSqlite, betterSqlite3, libsqlClient], t3codeProject),
+      report([nodeSqlite, betterSqlite3, libsqlClient], pnpmMonorepoProject),
       plain,
     );
     expect(

@@ -37,4 +37,6 @@ for (const probe of probes) {
   console.log(
     `${probe.project} #${n} ${probe.packages.join(" ")}: ${Math.round(performance.now() - started)}ms`,
   );
+  // npm's downloads API rate-limits bursts; one-off CLI runs never hit this.
+  await new Promise((resolve) => setTimeout(resolve, 3000));
 }
