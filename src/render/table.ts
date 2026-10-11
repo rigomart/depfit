@@ -13,14 +13,9 @@ import {
   formatAgo,
   formatBool,
   formatBytes,
-  formatChange,
   formatCompact,
   formatCount,
-  formatDays,
   formatDaysAgo,
-  formatPair,
-  formatRepository,
-  formatShare,
   headOfList,
   inlineList,
   NONE,
@@ -38,8 +33,16 @@ type Row = { label: string; value: (pkg: PackageReport) => Cell };
 /** A group without a title sits directly under the package names. */
 type Group = { title: string | null; rows: Row[] };
 
-/** `showLatest`: some package resolved to a version other than npm latest. */
-type Context = { project: ProjectInfo | null; now: string; showLatest: boolean };
+/**
+ * `showLatest`: some package resolved to a version other than npm latest.
+ * `workspaces`: see knownWorkspaces.
+ */
+type Context = {
+  project: ProjectInfo | null;
+  now: string;
+  showLatest: boolean;
+  workspaces: string[];
+};
 
 const GAP = "  ";
 const INDENT = "  ";
@@ -49,7 +52,8 @@ const MAX_COLUMN = 40;
 const WRAP_COLUMN = 24;
 const MIN_COLUMN = 8;
 const DESCRIPTION_LINES = 3;
-const KEYWORDS = 4;
+/** Directories that conventionally hold workspaces, e.g. "apps/web". */
+const WORKSPACE_PARENTS = new Set(["apps", "packages", "libs", "services", "examples", "tools"]);
 
 function section<T>(value: T | null, render: (value: T) => Cell): Cell {
   return value === null ? NONE : render(value);
@@ -59,67 +63,53 @@ function listOrNone(items: string[]): string[] | string {
   return items.length === 0 ? "none" : headOfList(items);
 }
 
-function aboutRows(): Row[] {
-  return [
-    {
-      label: "Description",
-      value: (p) =>
-        p.description === null ? NONE : { wrap: p.description, maxLines: DESCRIPTION_LINES },
-    },
-    {
-      label: "Keywords",
-      value: (p) =>
-        p.keywords.length === 0 ? "none" : { wrap: inlineList(p.keywords, KEYWORDS), maxLines: 2 },
-    },
-  ];
-}
-
-/** "4.1.0 → 4.4.0 (minor)", or "same". */
-function versionChange(r: InRepo, version: string | null): string {
-  const change = r.version_change_from_installed;
-  if (change === null || r.newest_installed === null) return NONE;
-  if (change === "same") return "same";
-  return `${r.newest_installed} → ${version ?? NONE} (${change})`;
-}
-
 /** Workspace dir of the current workspace relative to the root, or null at the root. */
 function currentWorkspace(project: ProjectInfo | null): string | null {
   if (project === null || project.workspace === project.root) return null;
   return relative(project.root, project.workspace).split(sep).join("/");
 }
 
-/**
- * Workspace of each file in files_using, most files first. A file belongs to the longest known
- * workspace (declaring ones plus the current one) it sits in. In a monorepo, other files three or
- * more levels deep count under their first two segments (e.g. "apps/admin"); the rest are ".".
- */
-function workspacesUsing(r: InRepo, project: ProjectInfo | null): string[] {
-  const current = currentWorkspace(project);
-  const known = [
-    ...new Set([
-      ...r.declared_in_workspaces.map((d) => d.workspace),
-      ...(current ? [current] : []),
-    ]),
-  ]
+/** Non-root workspaces declaring any package in the report, plus the current one, longest first. */
+function knownWorkspaces(report: Report): string[] {
+  const current = currentWorkspace(report.project);
+  const declared = report.packages.flatMap(
+    (p) => p.in_repo?.declared_in_workspaces.map((d) => d.workspace) ?? [],
+  );
+  return [...new Set([...declared, ...(current ? [current] : [])])]
     .filter((w) => w !== ".")
     .sort((a, b) => b.length - a.length);
-  const counts = new Map<string, number>();
-  for (const file of r.files_using) {
-    const segments = file.split("/");
-    const workspace =
-      known.find((w) => file.startsWith(`${w}/`)) ??
-      (known.length > 0 && segments.length >= 3 ? segments.slice(0, 2).join("/") : ".");
-    counts.set(workspace, (counts.get(workspace) ?? 0) + 1);
-  }
-  return [...counts].sort((a, b) => b[1] - a[1]).map(([workspace]) => workspace);
 }
 
-/** "4 (packages/ui, apps/web)"; just the count when every file is in the root workspace. */
-function filesUsing(r: InRepo, project: ProjectInfo | null): string {
+/**
+ * The workspace a file belongs to: the longest known workspace it sits in, else the first two
+ * segments when the first is a directory that holds workspaces (conventional, or the parent of a
+ * known one), e.g. "apps/server/src/db.ts" → "apps/server"; otherwise "." (the root).
+ */
+function workspaceOf(file: string, known: string[]): string {
+  const found = known.find((w) => file.startsWith(`${w}/`));
+  if (found) return found;
+  const segments = file.split("/");
+  const parent = segments[0] ?? "";
+  const isParent = WORKSPACE_PARENTS.has(parent) || known.some((w) => w.startsWith(`${parent}/`));
+  return segments.length >= 3 && isParent ? segments.slice(0, 2).join("/") : ".";
+}
+
+/** "10 (apps/server, apps/desktop)", workspaces with the most files first; just the count when all are in the root. */
+function filesUsing(r: InRepo, known: string[]): string {
   const count = String(r.files_using.length);
-  const workspaces = workspacesUsing(r, project);
+  const counts = new Map<string, number>();
+  for (const file of r.files_using) {
+    const workspace = workspaceOf(file, known);
+    counts.set(workspace, (counts.get(workspace) ?? 0) + 1);
+  }
+  const workspaces = [...counts].sort((a, b) => b[1] - a[1]).map(([workspace]) => workspace);
   if (workspaces.every((w) => w === ".")) return count;
   return `${count} (${inlineList(workspaces)})`;
+}
+
+function installed(r: InRepo, pkg: PackageReport): string {
+  if (pkg.kind === "builtin") return "builtin";
+  return r.installed_versions.length === 0 ? "no" : inlineList(r.installed_versions);
 }
 
 function inRepoRows(ctx: Context): Row[] {
@@ -128,16 +118,12 @@ function inRepoRows(ctx: Context): Row[] {
     value: (p) => section(p.in_repo, (r) => render(r, p)),
   });
   return [
-    row("Installed", (r) =>
-      r.installed_versions.length === 0 ? "no" : inlineList(r.installed_versions),
-    ),
-    row("Newest installed vs version", (r, p) => versionChange(r, p.version)),
+    row("Installed", installed),
     row("Pulled in by", (r) => listOrNone(r.pulled_in_by)),
-    row("In package.json", (r) => r.in_package_json ?? "no"),
     row("Declared in", (r) =>
       listOrNone(r.declared_in_workspaces.map((d) => `${d.workspace} ${d.range}`)),
     ),
-    row("Files using", (r) => filesUsing(r, ctx.project)),
+    row("Files using", (r) => filesUsing(r, ctx.workspaces)),
   ];
 }
 
@@ -160,6 +146,12 @@ function latest(p: PackageReport): string {
   return p.latest_version === p.version ? "same" : p.latest_version;
 }
 
+/** "0.17.3: +0 packages". */
+function atNewestInstalled(c: Cost): string {
+  const at = c.at_newest_installed;
+  return at === null ? NONE : `${at.version}: +${plural(at.new_packages.length, "package")}`;
+}
+
 function costRows(ctx: Context): Row[] {
   const row = (label: string, render: (c: Cost) => Cell): Row => ({
     label,
@@ -171,19 +163,10 @@ function costRows(ctx: Context): Row[] {
     row("New packages", (c) => String(c.new_packages.length)),
     row("Reused packages", (c) => String(c.reused_packages.length)),
     row("New install size", (c) => formatBytes(c.new_install_bytes)),
-    row("Other-platform packages", (c) => String(c.other_platform_packages)),
+    row("Using installed version", atNewestInstalled),
     row("Install scripts", (c) => listOrNone(c.install_scripts)),
     row("Native binaries", (c) => listOrNone(c.native_binaries)),
-    row("Browser gzip (full import)", (c) => formatBytes(c.bundle.gzip_bytes_browser_full_import)),
-    row("Node gzip (full import)", (c) => formatBytes(c.bundle.gzip_bytes_node_full_import)),
-    row("Browser compatible", (c) => formatBool(c.bundle.browser_compatible)),
-    row("Browser named exports", (c) => formatCount(c.bundle.browser_named_exports)),
-    row("Subpath exports", (c) => {
-      const count = c.bundle.subpath_exports.length;
-      return count === 0 ? "none" : plural(count, "subpath");
-    }),
-    row("Unresolved imports", (c) => listOrNone(c.bundle.unresolved_imports)),
-    row("Bundle errors", (c) => listOrNone(c.bundle.errors)),
+    row("Other-platform packages", (c) => String(c.other_platform_packages)),
   ];
 }
 
@@ -202,26 +185,39 @@ function typesSource(c: Compatibility): Cell {
   return c.types_package === null ? c.types_source : [c.types_source, c.types_package];
 }
 
-function engines(c: Compatibility): string {
+/**
+ * "node >=18 (ok), bun >=1.1": engine_satisfied is shown on the project runtime's entry.
+ * Wrapped, not truncated, so long ranges keep their status.
+ */
+function engines(c: Compatibility, project: ProjectInfo | null): Cell {
   const entries = Object.entries(c.engines);
   if (entries.length === 0) return "none";
-  return entries.map(([runtime, range]) => `${runtime} ${range}`).join(", ");
+  const status =
+    c.engine_satisfied === null ? "" : c.engine_satisfied ? " (ok)" : " (not satisfied)";
+  const text = entries
+    .map(([runtime, range]) => `${runtime} ${range}${runtime === project?.runtime ? status : ""}`)
+    .join(", ");
+  return { wrap: text };
 }
 
-function compatibilityRows(): Row[] {
+function compatibilityRows(ctx: Context): Row[] {
   const row = (label: string, render: (c: Compatibility) => Cell): Row => ({
     label,
     value: (p) => section(p.compatibility, render),
   });
   return [
     row("Module format", (c) => c.module_format),
-    row("Side-effects free", (c) => formatBool(c.side_effects_free)),
     row("Types", typesSource),
-    row("Engines", engines),
-    row("Engine satisfied", (c) => formatBool(c.engine_satisfied)),
+    row("Engines", (c) => engines(c, ctx.project)),
     row("Peer deps", (c) => listOrNone(c.peer_dependencies.map(peerDependency))),
     row("License", (c) => c.license ?? NONE),
   ];
+}
+
+/** "no / no", or the deprecation message verbatim, then whether the repository is archived. */
+function deprecatedArchived(m: Maintenance): Cell {
+  const archived = formatBool(m.archived);
+  return m.deprecated === null ? `no / ${archived}` : { wrap: `"${m.deprecated}" / ${archived}` };
 }
 
 function maintenanceRows(ctx: Context): Row[] {
@@ -230,48 +226,30 @@ function maintenanceRows(ctx: Context): Row[] {
     value: (p) => section(p.maintenance, render),
   });
   return [
-    row("Deprecated", (m) => (m.deprecated === null ? "no" : { wrap: m.deprecated })),
     row("Last release", (m) => formatDaysAgo(m.days_since_release)),
-    row("Stable releases last year", (m) => String(m.stable_releases_last_year)),
+    row("Releases last year", (m) => String(m.stable_releases_last_year)),
     row("Last commit", (m) => formatAgo(m.last_commit_at, ctx.now)),
-    row("Commits 90d / year", (m) => formatPair(m.commits_last_90d, m.commits_last_year)),
-    row("Sampled commits by bots", (m) =>
-      m.sampled_commits_by_bots === null || m.sampled_commits === null
-        ? NONE
-        : `${m.sampled_commits_by_bots} of ${m.sampled_commits}`,
-    ),
-    row("Human committers", (m) => formatCount(m.human_committers)),
-    row("Top human committer", (m) => {
-      if (m.top_human_committer === null) return NONE;
-      if (m.top_human_committer_share === null) return m.top_human_committer;
-      return `${m.top_human_committer} ${formatShare(m.top_human_committer_share)}`;
-    }),
-    row("Merged PRs by others", (m) => formatShare(m.merged_prs_by_others_share)),
-    row("Open issues / PRs", (m) => formatPair(m.open_issues, m.open_prs)),
-    row("Issue close median", (m) => formatDays(m.issues_median_days_to_close)),
+    row("Commits last year", (m) => formatCount(m.commits_last_year)),
     row("Weekly downloads", (m) => formatCompact(m.weekly_downloads)),
-    row("Downloads 90d change", (m) => formatChange(m.downloads_change_ratio_90d)),
-    row("Archived", (m) => formatBool(m.archived)),
+    row("Deprecated / archived", deprecatedArchived),
     row("Provenance", (m) => formatBool(m.provenance)),
-    row("Repository", (m) => formatRepository(m.repository)),
   ];
 }
 
-function affect(count: number, version: string): string {
-  return `${count} ${count === 1 ? "affects" : "affect"} ${version}`;
-}
-
-/** "13 (0 affect 17.0.1)", plus a line for the newest installed version when it differs. */
+/**
+ * "13 (0 affect 17.0.1)", plus which installed versions any advisory affects when a version
+ * other than `version` is installed.
+ */
 function advisories(s: Security, pkg: PackageReport): Cell {
   const total = String(s.advisories.length);
   if (s.advisories.length === 0 || pkg.version === null) return total;
-  const lines = [
-    `${total} (${affect(s.advisories.filter((a) => a.affects_version).length, pkg.version)})`,
-  ];
-  const installed = pkg.in_repo?.newest_installed ?? null;
-  if (installed !== null && installed !== pkg.version) {
-    const count = s.advisories.filter((a) => a.affects_newest_installed === true).length;
-    lines.push(`(${affect(count, installed)})`);
+  const count = s.advisories.filter((a) => a.affects_version).length;
+  const lines = [`${total} (${count} ${count === 1 ? "affects" : "affect"} ${pkg.version})`];
+  const installedVersions = pkg.in_repo?.installed_versions ?? [];
+  if (installedVersions.some((v) => v !== pkg.version)) {
+    const affected = new Set(s.advisories.flatMap((a) => a.affects_installed_versions));
+    const list = installedVersions.filter((v) => affected.has(v));
+    lines.push(`(installed affected: ${list.length === 0 ? "none" : inlineList(list)})`);
   }
   return lines;
 }
@@ -288,11 +266,16 @@ function securityRows(): Row[] {
 }
 
 function groups(ctx: Context): Group[] {
+  const description: Row = {
+    label: "Description",
+    value: (p) =>
+      p.description === null ? NONE : { wrap: p.description, maxLines: DESCRIPTION_LINES },
+  };
   return [
-    { title: null, rows: aboutRows() },
+    { title: null, rows: [description] },
     ...(ctx.project === null ? [] : [{ title: "In this repo", rows: inRepoRows(ctx) }]),
     { title: "Cost", rows: costRows(ctx) },
-    { title: "Compatibility", rows: compatibilityRows() },
+    { title: "Compatibility", rows: compatibilityRows(ctx) },
     { title: "Maintenance", rows: maintenanceRows(ctx) },
     { title: "Security", rows: securityRows() },
   ];
@@ -481,6 +464,7 @@ export function renderTable(report: Report, options: TableOptions): string {
     showLatest: report.packages.some(
       (p) => p.error === null && p.latest_version !== null && p.latest_version !== p.version,
     ),
+    workspaces: knownWorkspaces(report),
   };
   const table = groups(ctx);
   const labelWidth = Math.max(

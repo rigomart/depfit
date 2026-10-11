@@ -4,6 +4,7 @@ import type { PackageReport } from "../src/report.ts";
 import {
   betterSqlite3,
   bunProject,
+  libsqlClient,
   missing,
   nodeProject,
   nodePty,
@@ -12,6 +13,7 @@ import {
   report,
   sharp,
   sonner,
+  t3codeProject,
   valibot,
   workersProject,
   yup,
@@ -93,24 +95,19 @@ describe("renderTable", () => {
     expect(block.join(" ")).toMatch(/^High performance Node\.js image processing/);
   });
 
-  it("lists the first keywords", () => {
-    expect(lastCells(sharpOutput, "Keywords").join(" ")).toBe("jpeg, png, webp, avif, +6 more");
-  });
-
   it("formats repo facts", () => {
     expect(row(output, "Installed")).toEqual(["4.6.5", "no", "no"]);
-    expect(row(output, "Newest installed vs version")).toEqual(["same", "-", "-"]);
-    expect(row(output, "In package.json")).toEqual(["no", "no", "no"]);
     expect(row(output, "Declared in")).toEqual(["none", "none", "none"]);
     expect(row(output, "Files using")).toEqual(["1", "0", "0"]);
     expect(row(output, "Pulled in by")).toEqual(["@modelcontextprotocol/sdk", "none", "none"]);
     expect(rowBlock(output, "Pulled in by")[1]?.trim()).toBe("zod-to-json-schema");
   });
 
-  it("shows how the latest version relates to the installed one", () => {
+  it("shows what using the installed version instead would add", () => {
     expect(row(sharpOutput, "Installed")).toEqual(["0.34.5"]);
-    expect(row(sharpOutput, "Newest installed vs version")).toEqual(["0.34.5 → 0.35.5 (minor)"]);
     expect(row(sharpOutput, "Pulled in by")).toEqual(["next"]);
+    expect(row(sharpOutput, "Using installed version")).toEqual(["0.34.5: +0 packages"]);
+    expect(row(output, "Using installed version")).toEqual(["-", "-", "-"]);
   });
 
   it("formats cost facts for the resolved version", () => {
@@ -118,16 +115,10 @@ describe("renderTable", () => {
     expect(row(output, "New packages")).toEqual(["0", "1", "5"]);
     expect(row(output, "Reused packages")).toEqual(["1", "0", "0"]);
     expect(row(output, "New install size")).toEqual(["0 B", "1.9 MB", "504.7 KB"]);
-    expect(row(output, "Browser gzip (full import)")).toEqual(["92.6 KB", "15.4 KB", "14.1 KB"]);
-    expect(row(output, "Node gzip (full import)")).toEqual(["92.6 KB", "15.4 KB", "14.2 KB"]);
-    expect(row(output, "Browser compatible")).toEqual(["yes", "yes", "yes"]);
-    expect(row(output, "Browser named exports")).toEqual(["168", "712", "31"]);
-    expect(row(output, "Subpath exports")).toEqual(["10 subpaths", "none", "none"]);
-    expect(row(output, "Unresolved imports")).toEqual(["none", "none", "none"]);
-    expect(row(output, "Bundle errors")).toEqual(["none", "none", "none"]);
+    expect(row(output, "Install scripts")).toEqual(["none", "none", "none"]);
   });
 
-  it("shows native, platform, and bundle failure facts", () => {
+  it("shows native and platform facts", () => {
     expect(row(sharpOutput, "Cost for")).toEqual(["0.35.5 (latest)"]);
     expect(row(sharpOutput, "New packages")).toEqual(["3"]);
     expect(row(sharpOutput, "Reused packages")).toEqual(["3"]);
@@ -138,11 +129,6 @@ describe("renderTable", () => {
       "@img/sharp-darwin-arm64",
       "@img/sharp-libvips-darwin-arm64",
     ]);
-    expect(row(sharpOutput, "Browser gzip (full import)")).toEqual(["-"]);
-    expect(row(sharpOutput, "Node gzip (full import)")).toEqual(["39.3 KB"]);
-    expect(row(sharpOutput, "Browser compatible")).toEqual(["no"]);
-    expect(row(sharpOutput, "Browser named exports")).toEqual(["-"]);
-    expect(row(sharpOutput, "Bundle errors")[0]).toMatch(/^browser: Could not resolve .*…$/);
   });
 
   it("names where the version comes from and shows latest only when it differs", () => {
@@ -165,10 +151,8 @@ describe("renderTable", () => {
 
   it("shows every declaring workspace and the workspaces of the files using it", () => {
     const out = renderTable(report([sonner, sharp], bunProject), plain);
-    expect(row(out, "In package.json")).toEqual(["no", "no"]);
     expect(row(out, "Declared in")).toEqual(["packages/ui ^2.0.7", "none"]);
     expect(row(out, "Files using")).toEqual(["4 (packages/ui, apps/web)", "0"]);
-    expect(row(out, "Subpath exports")).toEqual(["1 subpath", "none"]);
     expect(row(renderTable(report([nodePty], nodeProject), plain), "Declared in")).toEqual([
       ". ^1.2.0-beta.15",
     ]);
@@ -192,42 +176,34 @@ describe("renderTable", () => {
     ]);
   });
 
-  it("renders a builtin next to npm packages without errors", () => {
-    const out = renderTable(report([nodeSqlite, betterSqlite3], nodeProject), plain);
-    expect(out.split("\n")[4]?.trim().split(/\s+/)).toEqual(["node:sqlite", "better-sqlite3"]);
+  it("renders a builtin next to npm packages in one table without errors", () => {
+    const out = renderTable(
+      report([nodeSqlite, betterSqlite3, libsqlClient], t3codeProject),
+      plain,
+    );
+    expect(
+      out
+        .split("\n")[4]
+        ?.trim()
+        .split(/\s{2,}/),
+    ).toEqual(["node:sqlite", "better-sqlite3", "@libsql/client"]);
+    expect(out.match(/^Cost$/gm)).toHaveLength(1);
+    for (const l of out.split("\n")) expect(l.length).toBeLessThanOrEqual(120);
     expect(row(out, "Description")[0]).toBe("-");
-    expect(row(out, "Installed")).toEqual(["no", "no"]);
-    expect(row(out, "Newest installed vs version")).toEqual(["-", "-"]);
-    expect(row(out, "Declared in")).toEqual(["none", "none"]);
-    expect(row(out, "Files using")).toEqual(["2", "0"]);
-    expect(row(out, "Cost for")).toEqual(["builtin", "12.4.1 (latest)"]);
-    expect(row(out, "New packages")).toEqual(["0", "32"]);
-    expect(row(out, "Node gzip (full import)")).toEqual(["-", "9.9 KB"]);
+    expect(row(out, "Installed")).toEqual(["builtin", "no", "0.17.3"]);
+    expect(lastCells(out, "Pulled in by")).toEqual(["alchemy", "drizzle-orm"]);
+    expect(row(out, "Files using")).toEqual(["10 (apps/server, apps/desktop)", "0", "0"]);
+    expect(row(out, "Cost for")).toEqual(["builtin", "12.4.1 (latest)", "0.18.0 (latest)"]);
+    expect(out).not.toMatch(/^ {2}Latest /m);
+    expect(row(out, "New packages")).toEqual(["0", "2", "5"]);
+    expect(row(out, "New install size")).toEqual(["0 B", "27.7 MB", "10.2 MB"]);
+    expect(row(out, "Using installed version")).toEqual(["-", "-", "0.17.3: +0 packages"]);
+    expect(row(out, "Native binaries")).toEqual(["none", "better-sqlite3", "@libsql/darwin-arm64"]);
+    expect(row(out, "Other-platform packages")).toEqual(["0", "0", "8"]);
     for (const label of ["Module format", "Types", "License", "Last release", "Advisories"]) {
       expect(row(out, label)[0], label).toBe("-");
     }
     expect(out).not.toContain("error:");
-  });
-
-  it("lists native and generated paths that could not be bundled", () => {
-    const out = renderTable(report([nodePty], nodeProject), plain);
-    expect(lastCells(out, "Unresolved imports")).toEqual([
-      "../build/Release/pty.node",
-      "../build/Debug/pty.node",
-    ]);
-  });
-
-  it("prints collapsed unresolved imports as-is", () => {
-    const pkg: PackageReport = {
-      ...nodePty,
-      cost: nodePty.cost && {
-        ...nodePty.cost,
-        bundle: { ...nodePty.cost.bundle, unresolved_imports: ["keyring.*.node (26 variants)"] },
-      },
-    };
-    expect(row(renderTable(report([pkg], nodeProject), plain), "Unresolved imports")).toEqual([
-      "keyring.*.node (26 variants)",
-    ]);
   });
 
   it("prints the cloudflare-workers runtime as-is", () => {
@@ -239,10 +215,8 @@ describe("renderTable", () => {
 
   it("formats compatibility facts", () => {
     expect(row(output, "Module format")).toEqual(["dual", "dual", "dual"]);
-    expect(row(output, "Side-effects free")).toEqual(["no", "yes", "no"]);
     expect(row(output, "Types")).toEqual(["bundled", "bundled", "bundled"]);
     expect(row(output, "Engines")).toEqual(["none", "none", "none"]);
-    expect(row(output, "Engine satisfied")).toEqual(["-", "-", "-"]);
     expect(row(output, "Peer deps")).toEqual([
       "none",
       "typescript >=5 optional (have 5.9.3)",
@@ -251,7 +225,7 @@ describe("renderTable", () => {
     expect(row(output, "License")).toEqual(["MIT", "MIT", "MIT"]);
   });
 
-  it("lists every engine and whether the project runtime satisfies it", () => {
+  it("lists every engine and marks whether the project runtime satisfies its entry", () => {
     const pkg = (satisfied: boolean | null): PackageReport => ({
       ...sharp,
       compatibility: sharp.compatibility && {
@@ -260,12 +234,25 @@ describe("renderTable", () => {
         engine_satisfied: satisfied,
       },
     });
-    const out = renderTable(report([pkg(true), pkg(null)], bunProject), plain);
-    expect(row(out, "Engines")).toEqual(["node >=18, bun >=1.1", "node >=18, bun >=1.1"]);
-    expect(row(out, "Engine satisfied")).toEqual(["yes", "-"]);
-    expect(row(renderTable(report([pkg(false)], bunProject), plain), "Engine satisfied")).toEqual([
-      "no",
-    ]);
+    const engines = (satisfied: boolean | null) =>
+      lastCells(renderTable(report([pkg(satisfied)], bunProject), plain), "Engines").join(" ");
+    expect(engines(true)).toBe("node >=18, bun >=1.1 (ok)");
+    expect(engines(false)).toBe("node >=18, bun >=1.1 (not satisfied)");
+    expect(engines(null)).toBe("node >=18, bun >=1.1");
+  });
+
+  it("wraps long engine ranges instead of cutting off the status", () => {
+    const pkg: PackageReport = {
+      ...betterSqlite3,
+      compatibility: betterSqlite3.compatibility && {
+        ...betterSqlite3.compatibility,
+        engine_satisfied: false,
+      },
+    };
+    const out = renderTable(report([pkg], nodeProject), plain);
+    expect(lastCells(out, "Engines").join(" ")).toBe(
+      "node 20.x || 22.x || 23.x || 24.x (not satisfied)",
+    );
   });
 
   it("shows the types package and unsatisfied or missing peers", () => {
@@ -303,43 +290,51 @@ describe("renderTable", () => {
 
   it("formats maintenance facts", () => {
     expect(row(output, "Last release")).toEqual(["27 days ago", "31 days ago", "384 days ago"]);
-    expect(row(output, "Commits 90d / year")).toEqual(["323 / 598", "61 / 458", "0 / 0"]);
-    expect(row(output, "Sampled commits by bots")).toEqual(["3 of 100", "14 of 100", "0 of 0"]);
-    expect(row(output, "Human committers")).toEqual(["4", "23", "0"]);
-    expect(row(output, "Top human committer")).toEqual([
-      "colinhacks 97%",
-      "fabian-hiller 43%",
-      "-",
-    ]);
-    expect(row(output, "Merged PRs by others")).toEqual(["20%", "60%", "-"]);
-    expect(row(output, "Issue close median")).toEqual(["1.9 days", "26 days", "5.9 days"]);
+    expect(row(output, "Releases last year")).toEqual(["25", "7", "0"]);
+    expect(row(output, "Last commit")).toEqual(["today", "1 day ago", "383 days ago"]);
+    expect(row(output, "Commits last year")).toEqual(["598", "458", "0"]);
     expect(row(output, "Weekly downloads")).toEqual(["334M", "22.2M", "12.5M"]);
-    expect(row(output, "Downloads 90d change")).toEqual(["+46%", "+60%", "+7%"]);
-    expect(row(output, "Repository")).toEqual([
-      "github.com/colinhacks/zod",
-      "github.com/open-circle/valibot",
-      "github.com/jquense/yup",
-    ]);
+    expect(row(output, "Deprecated / archived")).toEqual(["no / no", "no / no", "no / no"]);
+    expect(row(output, "Provenance")).toEqual(["yes", "yes", "no"]);
+    expect(output).not.toContain("github.com");
   });
 
-  it("counts advisories affecting the resolved and the installed version", () => {
+  it("counts advisories affecting the resolved and the installed versions", () => {
     expect(row(output, "Advisories")).toEqual(["1 (0 affect 4.6.5)", "1 (0 affect 1.5.0)", "0"]);
     expect(row(output, "Dependency vulnerabilities")).toEqual(["0", "0", "0"]);
+    expect(lastCells(sharpOutput, "Advisories")).toEqual([
+      "1 (0 affect 0.35.5)",
+      "(installed affected: none)",
+    ]);
     const advisory = sharp.security?.advisories[0];
     if (!advisory) throw new Error("fixture has no advisory");
     const affected: PackageReport = {
       ...sharp,
+      in_repo: sharp.in_repo && { ...sharp.in_repo, installed_versions: ["0.33.1", "0.34.5"] },
       security: {
         advisories: [
           advisory,
-          { ...advisory, id: "GHSA-a", affects_version: false, affects_newest_installed: true },
-          { ...advisory, id: "GHSA-b", affects_version: true, affects_newest_installed: true },
+          {
+            ...advisory,
+            id: "GHSA-a",
+            affects_version: false,
+            affects_installed_versions: ["0.34.5"],
+          },
+          {
+            ...advisory,
+            id: "GHSA-b",
+            affects_version: true,
+            affects_installed_versions: ["0.34.5", "0.33.1"],
+          },
         ],
         dependency_vulnerabilities: ["semver@7.7.3:GHSA-c"],
       },
     };
     const out = renderTable(report([affected], bunProject), plain);
-    expect(lastCells(out, "Advisories")).toEqual(["3 (1 affects 0.35.5)", "(2 affect 0.34.5)"]);
+    expect(lastCells(out, "Advisories")).toEqual([
+      "3 (1 affects 0.35.5)",
+      "(installed affected: 0.33.1, 0.34.5)",
+    ]);
     expect(row(out, "Dependency vulnerabilities")).toEqual(["1"]);
   });
 
@@ -377,43 +372,30 @@ describe("renderTable", () => {
 
   it("renders null values as - and lists unavailable sources", () => {
     const out = renderTable(report([zod, yupWithoutGithub]), plain);
-    for (const label of [
-      "Last commit",
-      "Commits 90d / year",
-      "Sampled commits by bots",
-      "Human committers",
-      "Top human committer",
-      "Merged PRs by others",
-      "Open issues / PRs",
-      "Issue close median",
-      "Archived",
-      "Repository",
-    ]) {
-      expect(row(out, label)[1], label).toBe("-");
-    }
+    expect(row(out, "Last commit")[1]).toBe("-");
+    expect(row(out, "Commits last year")[1]).toBe("-");
+    expect(row(out, "Deprecated / archived")[1]).toBe("no / -");
     expect(out.trimEnd().split("\n").slice(-2)).toEqual([
       "Unavailable data",
       "  yup: github: no token",
     ]);
   });
 
-  it("renders a null description and empty keywords", () => {
+  it("renders a null description", () => {
     const bare: PackageReport = { ...yup, description: null, keywords: [] };
-    const out = renderTable(report([bare]), plain);
-    expect(row(out, "Description")).toEqual(["-"]);
-    expect(row(out, "Keywords")).toEqual(["none"]);
+    expect(row(renderTable(report([bare]), plain), "Description")).toEqual(["-"]);
   });
 
-  it("wraps free text such as deprecation messages", () => {
+  it("wraps deprecation messages verbatim next to the archived flag", () => {
     const message =
       "Use valibot instead. This package is no longer maintained and will not be updated.";
     const deprecated: PackageReport = {
       ...yup,
-      maintenance: yup.maintenance && { ...yup.maintenance, deprecated: message },
+      maintenance: yup.maintenance && { ...yup.maintenance, deprecated: message, archived: true },
     };
-    const block = lastCells(renderTable(report([deprecated]), plain), "Deprecated");
+    const block = lastCells(renderTable(report([deprecated]), plain), "Deprecated / archived");
     expect(block.length).toBeGreaterThan(1);
-    expect(block.join(" ")).toBe(message);
+    expect(block.join(" ")).toBe(`"${message}" / yes`);
   });
 
   it("fits the width by stacking tables that repeat the labels", () => {
@@ -435,7 +417,10 @@ describe("renderTable", () => {
   it("truncates cells that do not fit a narrow terminal", () => {
     const out = renderTable(report([sharp], bunProject), { width: 50, color: false });
     for (const l of out.split("\n").slice(4)) expect(l.length).toBeLessThanOrEqual(50);
-    expect(row(out, "Repository")).toEqual(["github.com/lovell/…"]);
+    expect(lastCells(out, "Native binaries")).toEqual([
+      "@img/sharp-darwin-a…",
+      "@img/sharp-libvips-…",
+    ]);
     expect(lastCells(out, "Description")).toHaveLength(3);
   });
 

@@ -6,10 +6,10 @@
  * - Facts only. No scores, verdicts, warnings, or prose notes.
  * - Every package has every field. Missing data is `null`, never an absent key, so no field
  *   appears only when something looks bad.
- * - Units and caveats live in field names (`_bytes`, `_full_import`), not in commentary.
+ * - Units and caveats live in field names (`_bytes`, `_last_year`), not in commentary.
  */
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export type Lockfile = "package-lock.json" | "pnpm-lock.yaml" | "yarn.lock" | "bun.lock";
 
@@ -45,7 +45,7 @@ export type ProjectInfo = {
  * A "builtin" is a runtime module given as a candidate, e.g. "node:sqlite" or "bun:sqlite".
  * For builtins only `in_repo` is filled (files_using lists importing files; installed_versions,
  * pulled_in_by and declared_in_workspaces stay empty), `cost`
- * has zero packages and null bundle sizes, and version/compatibility/maintenance/security are null.
+ * has zero packages, and version/compatibility/maintenance/security are null.
  */
 export type PackageReport = {
   /** The spec as typed, e.g. "zod", "zod@^3", or "node:sqlite". */
@@ -121,37 +121,20 @@ export type Cost = {
   native_binaries: string[];
   /** Optional per-OS/CPU packages that would not install on this platform; excluded from all counts above. */
   other_platform_packages: number;
-  bundle: Bundle;
-};
-
-/** esbuild, minified, of `import * as m from "<name>"`: an upper bound for libraries that tree-shake. */
-export type Bundle = {
-  /** Browser build. null when the browser build failed. */
-  gzip_bytes_browser_full_import: number | null;
-  min_bytes_browser_full_import: number | null;
-  /** Node build ("node" export conditions; Node built-ins external). */
-  gzip_bytes_node_full_import: number | null;
-  /** false when the browser build needs Node built-ins or native .node files. null when it failed for another reason. */
-  browser_compatible: boolean | null;
-  /** Named exports of the browser entry (excluding default). 0 = the browser entry exports nothing. null when not browser-compatible or not statically known (CommonJS). */
-  browser_named_exports: number | null;
-  /** Bare imports, native .node files, or generated paths that could not be bundled and were marked external to finish the build. */
-  unresolved_imports: string[];
   /**
-   * Importable subpaths other than the root, e.g. "./element/adapter": keys of the `exports` map
-   * (excluding "." and "./package.json"), or, when there is no `exports` map, folders that carry
-   * their own package.json with an entry point. Code that lives only in subpaths is not in the
-   * full-import sizes.
+   * What depending on newest_installed instead of `version` would add: always zero packages, since
+   * that version and its dependencies are already resolved. null when not installed or when
+   * newest_installed equals `version`.
    */
-  subpath_exports: string[];
-  /** Build failures, each prefixed with the build: "browser: ...", "node: ...". */
-  errors: string[];
+  at_newest_installed: {
+    version: string;
+    new_packages: string[];
+    new_install_bytes: number;
+  } | null;
 };
 
 export type Compatibility = {
   module_format: "esm" | "cjs" | "dual";
-  /** package.json declares `"sideEffects": false`. */
-  side_effects_free: boolean;
   types_source: "bundled" | "definitely_typed" | "none";
   /** The @types package spec when types_source is "definitely_typed", else null. Not included in `cost`. */
   types_package: string | null;
@@ -177,43 +160,19 @@ export type Maintenance = {
   deprecated: string | null;
   published_at: string;
   days_since_release: number;
-  first_published_at: string;
   stable_releases_last_year: number;
   /** A newer version is published under a non-latest dist-tag, e.g. "next=5.0.0-beta.1". */
   prerelease_tags_ahead: string[];
-  npm_maintainers: number;
-  /** npm users who published the last 10 stable releases. */
-  publishers_recent: string[];
   provenance: boolean;
   /** Includes installs as a transitive dependency. */
   weekly_downloads: number | null;
-  /** Downloads in the last 90 days divided by the 90 before, minus 1: 0.12 = 12% more. */
-  downloads_change_ratio_90d: number | null;
 
-  // GitHub; all null when the repo is unknown or GitHub is unavailable
+  // GitHub; null when the repo is unknown or GitHub is unavailable
   repository: string | null;
   archived: boolean | null;
-  stars: number | null;
   last_commit_at: string | null;
-  /** All commits on the default branch, bots included. */
-  commits_last_90d: number | null;
+  /** All commits on the default branch in the last 365 days, bots included. */
   commits_last_year: number | null;
-  /** The most recent ≤100 commits of the past year, which the fields below are computed from. */
-  sampled_commits: number | null;
-  /** Commits in the sample by bots (dependabot, renovate, *-bot, GitHub Bot accounts). */
-  sampled_commits_by_bots: number | null;
-  /** Distinct human authors in the sample. */
-  human_committers: number | null;
-  /** Human author with the most commits in the sample. */
-  top_human_committer: string | null;
-  /** That author's share of the sample's human commits, 0–1. */
-  top_human_committer_share: number | null;
-  /** Share of the last ≤50 merged human PRs authored by someone other than top_human_committer, 0–1. */
-  merged_prs_by_others_share: number | null;
-  open_issues: number | null;
-  open_prs: number | null;
-  /** Median days from open to close over the last 100 issues that were closed. */
-  issues_median_days_to_close: number | null;
 };
 
 export type Advisory = {
@@ -226,8 +185,8 @@ export type Advisory = {
   affected_ranges: string[];
   fixed_in: string[];
   affects_version: boolean;
-  /** null when not installed. */
-  affects_newest_installed: boolean | null;
+  /** Which of in_repo.installed_versions it affects; empty when none or not installed. */
+  affects_installed_versions: string[];
 };
 
 export type Security = {

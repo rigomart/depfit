@@ -9,8 +9,7 @@ function trimZero(text: string): string {
 }
 
 /** SI units: 92557 → "92.6 KB", 29435001 → "29.4 MB". */
-export function formatBytes(bytes: number | null): string {
-  if (bytes === null) return NONE;
+export function formatBytes(bytes: number): string {
   const units = ["B", "KB", "MB", "GB"];
   let value = bytes;
   let unit = 0;
@@ -39,27 +38,8 @@ export function formatCompact(n: number | null): string {
   return String(n);
 }
 
-/** 0.97 → "97%". */
-export function formatShare(share: number | null): string {
-  return share === null ? NONE : `${Math.round(share * 100)}%`;
-}
-
-/** 0.46 → "+46%", -0.011 → "-1%". */
-export function formatChange(change: number | null): string {
-  if (change === null) return NONE;
-  const pct = Math.round(change * 100);
-  return `${pct > 0 ? "+" : ""}${pct === 0 ? 0 : pct}%`;
-}
-
 export function plural(n: number, unit: string): string {
   return `${n} ${unit}${n === 1 ? "" : "s"}`;
-}
-
-/** 1.9 → "1.9 days", 25.6 → "26 days". */
-export function formatDays(days: number | null): string {
-  if (days === null) return NONE;
-  const text = days < 10 ? trimZero(days.toFixed(1)) : String(Math.round(days));
-  return `${text} ${text === "1" ? "day" : "days"}`;
 }
 
 /** Time from `iso` to `now`: "today", "27 days ago", "384 days ago", "6 years ago". */
@@ -90,12 +70,6 @@ export function formatCount(n: number | null): string {
   return n === null ? NONE : String(n);
 }
 
-/** "a / b", "-" for each unknown side. */
-export function formatPair(a: number | null, b: number | null): string {
-  if (a === null && b === null) return NONE;
-  return `${formatCount(a)} / ${formatCount(b)}`;
-}
-
 /** First `max` items, then "+N more". Returns one entry per output line. */
 export function headOfList(items: string[], max = 2): string[] {
   if (items.length <= max) return items;
@@ -105,10 +79,4 @@ export function headOfList(items: string[], max = 2): string[] {
 /** Same as headOfList, joined on one line: "3.23.8, 4.6.5, +1 more". */
 export function inlineList(items: string[], max = 2): string {
   return headOfList(items, max).join(", ");
-}
-
-/** Drops the URL scheme so repository URLs fit a column. */
-export function formatRepository(url: string | null): string {
-  if (url === null) return NONE;
-  return url.replace(/^git\+/, "").replace(/^[a-z]+:\/\//, "");
 }

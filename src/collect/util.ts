@@ -45,14 +45,6 @@ export function errorMessage(error: unknown): string {
   return message.split("\n")[0]?.trim() ?? message;
 }
 
-export function round(value: number, digits: number): number {
-  return Number(value.toFixed(digits));
-}
-
-export function unique<T>(values: Iterable<T>): T[] {
-  return [...new Set(values)];
-}
-
 const RETRY_STATUS = (status: number) => status === 429 || status >= 500;
 const MAX_RETRY_WAIT_MS = 30_000;
 

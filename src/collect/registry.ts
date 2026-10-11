@@ -11,8 +11,6 @@ import {
   asStringRecord,
   DAY_MS,
   fetchJson,
-  round,
-  unique,
 } from "./util.ts";
 
 const REGISTRY = "https://registry.npmjs.org";
@@ -38,11 +36,8 @@ export type NpmMaintenance = Pick<
   | "deprecated"
   | "published_at"
   | "days_since_release"
-  | "first_published_at"
   | "stable_releases_last_year"
   | "prerelease_tags_ahead"
-  | "npm_maintainers"
-  | "publishers_recent"
   | "provenance"
 >;
 
@@ -184,11 +179,6 @@ export function npmMaintenance(
     .map(([v, at]) => ({ version: v, at: Date.parse(at) }))
     .sort((a, b) => a.at - b.at);
 
-  const publishers = releases
-    .slice(-10)
-    .map((r) => asString(asRecord(asRecord(versions[r.version])._npmUser).name))
-    .filter((name) => name !== null);
-
   const latest = tags.latest;
   const ahead = Object.entries(tags)
     .filter(
@@ -206,30 +196,18 @@ export function npmMaintenance(
     deprecated: asString(manifest.deprecated),
     published_at: publishedAt,
     days_since_release: publishedAt ? Math.floor((now - Date.parse(publishedAt)) / DAY_MS) : 0,
-    first_published_at: time.created ?? "",
     stable_releases_last_year: releases.filter((r) => now - r.at < 365 * DAY_MS).length,
     prerelease_tags_ahead: ahead,
-    npm_maintainers: asArray(packument.maintainers).length,
-    publishers_recent: unique(publishers),
     provenance: Boolean(asRecord(asRecord(manifest.dist).attestations).provenance),
   };
 }
 
-export async function downloads(
-  name: string,
-): Promise<Pick<Maintenance, "weekly_downloads" | "downloads_change_ratio_90d">> {
+/** Downloads in the last 7 days, from npm's point endpoint. */
+export async function weeklyDownloads(name: string): Promise<number> {
   const data = asRecord(
-    await fetchJson(`https://api.npmjs.org/downloads/range/last-year/${encodeName(name)}`),
+    await fetchJson(`https://api.npmjs.org/downloads/point/last-week/${encodeName(name)}`),
   );
-  const days = asArray(data.downloads).map((d) => asNumber(asRecord(d).downloads) ?? 0);
-  if (!days.length) throw new Error("no download data");
-  const sum = (from: number, to: number) =>
-    days.slice(Math.max(0, from), Math.max(0, to)).reduce((acc, n) => acc + n, 0);
-  const n = days.length;
-  const last90 = sum(n - 90, n);
-  const prior90 = sum(n - 180, n - 90);
-  return {
-    weekly_downloads: sum(n - 7, n),
-    downloads_change_ratio_90d: prior90 ? round(last90 / prior90 - 1, 3) : null,
-  };
+  const count = asNumber(data.downloads);
+  if (count === null) throw new Error("no download data");
+  return count;
 }

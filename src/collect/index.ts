@@ -9,8 +9,8 @@ import {
   SCHEMA_VERSION,
   type Security,
 } from "../report.ts";
-import { bundleFacts } from "./bundle.ts";
 import {
+  atNewestInstalled,
   builtinReport,
   declaredRange,
   dependenciesOf,
@@ -26,7 +26,6 @@ import { withIsolatedInstall } from "./install.ts";
 import { advisories, dependencyVulnerabilities } from "./osv.ts";
 import { loadProject, type Project } from "./project.ts";
 import {
-  downloads,
   githubRepo,
   keywordsOf,
   licenseOf,
@@ -36,6 +35,7 @@ import {
   type Resolved,
   resolvePackage,
   typesPackage,
+  weeklyDownloads,
 } from "./registry.ts";
 import { manifestDeclaresTypes, shipsTypes } from "./types.ts";
 import { asRecord, asString, asStringRecord, errorMessage } from "./util.ts";
@@ -90,14 +90,13 @@ async function githubSection(
 }
 
 /** Everything that needs the isolated install of the candidate itself. */
-async function treeFacts(resolved: Resolved, peers: string[]) {
+async function treeFacts(resolved: Resolved) {
   return withIsolatedInstall(resolved.name, resolved.version, async ({ dir, tree }) => {
-    const [bundle, vulnerabilities, bundledTypes] = await Promise.all([
-      bundleFacts(dir, resolved.name, peers, resolved.manifest),
+    const [vulnerabilities, bundledTypes] = await Promise.all([
       settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree))),
       shipsTypes(join(dir, "node_modules", resolved.name), resolved.manifest),
     ]);
-    return { tree, bundle, vulnerabilities, bundledTypes };
+    return { tree, vulnerabilities, bundledTypes };
   });
 }
 
@@ -135,10 +134,10 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
   // DefinitelyTyped is looked up alongside the install, and ignored if the install ships types.
   const declaresTypes = manifestDeclaresTypes(manifest);
   const [install, ownAdvisories, github, downloadStats, typesLookup] = await Promise.all([
-    settle(treeFacts(resolved, Object.keys(peers))),
-    settle(advisories(name, version, inRepo?.newest_installed ?? null)),
+    settle(treeFacts(resolved)),
+    settle(advisories(name, version, inRepo?.installed_versions ?? [])),
     githubSection(manifest, context.token),
-    settle(downloads(name)),
+    settle(weeklyDownloads(name)),
     declaresTypes ? null : settle(typesPackage(name)),
   ]);
   const types = declaresTypes || (install.ok && install.value.bundledTypes) ? null : typesLookup;
@@ -158,7 +157,6 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
 
   const compatibility: Compatibility = {
     module_format: moduleFormat(manifest),
-    side_effects_free: manifest.sideEffects === false,
     ...typesFacts(types),
     engines,
     engine_satisfied: runtime
@@ -171,10 +169,7 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
 
   const maintenance: Maintenance = {
     ...npmMaintenance(resolved),
-    weekly_downloads: downloadStats.ok ? downloadStats.value.weekly_downloads : null,
-    downloads_change_ratio_90d: downloadStats.ok
-      ? downloadStats.value.downloads_change_ratio_90d
-      : null,
+    weekly_downloads: downloadStats.ok ? downloadStats.value : null,
     repository: github.repository,
     ...(github.ok ? github.value : NO_GITHUB),
   };
@@ -190,7 +185,7 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
   const cost: Cost | null = install.ok
     ? {
         ...treeCost(project?.lock ?? null, resolved, install.value.tree),
-        bundle: install.value.bundle,
+        at_newest_installed: atNewestInstalled(version, inRepo?.newest_installed ?? null),
       }
     : null;
 

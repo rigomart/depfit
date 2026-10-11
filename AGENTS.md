@@ -19,7 +19,7 @@ bun run test:once
 - Facts only: no scores, verdicts, warning symbols, or prose notes. Choosing what to highlight
   biases agents, especially small models. The reader interprets.
 - Every package has every field. Unknown is `null`, never a missing key.
-- Units and caveats go in field names (`gzip_bytes_full_import`), not commentary.
+- Units and caveats go in field names (`new_install_bytes`), not commentary.
 - Failed data sources are listed in `unavailable`, never silently dropped.
 
 ## Code

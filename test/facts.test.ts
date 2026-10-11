@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  atNewestInstalled,
   builtinFilesUsing,
   builtinReport,
   declaredRange,
@@ -295,16 +296,7 @@ describe("builtins", () => {
         install_scripts: [],
         native_binaries: [],
         other_platform_packages: 0,
-        bundle: {
-          gzip_bytes_browser_full_import: null,
-          min_bytes_browser_full_import: null,
-          gzip_bytes_node_full_import: null,
-          browser_compatible: null,
-          browser_named_exports: null,
-          unresolved_imports: [],
-          subpath_exports: [],
-          errors: [],
-        },
+        at_newest_installed: null,
       },
       compatibility: null,
       maintenance: null,
@@ -347,6 +339,22 @@ describe("versionChange", () => {
       newest_installed: "0.34.5",
       version_change_from_installed: "minor",
     });
+  });
+});
+
+describe("atNewestInstalled", () => {
+  it("costs nothing extra when a different version is already installed", () => {
+    expect(atNewestInstalled("0.15.15", "0.17.3")).toEqual({
+      version: "0.17.3",
+      new_packages: [],
+      new_install_bytes: 0,
+    });
+    expect(atNewestInstalled("2.0.0", "1.4.0")?.version).toBe("1.4.0");
+  });
+
+  it("is null when not installed or already the chosen version", () => {
+    expect(atNewestInstalled("1.0.0", null)).toBeNull();
+    expect(atNewestInstalled("1.0.0", "1.0.0")).toBeNull();
   });
 });
 

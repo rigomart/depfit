@@ -7,16 +7,14 @@ import { SCHEMA_VERSION } from "./report.ts";
  * Keep in sync with src/report.ts; test/schema-docs.test.ts checks the paths.
  */
 
-const NO_GITHUB = "the repository is unknown or GitHub data is unavailable";
-const GITHUB_NULL = `null when ${NO_GITHUB}`;
-const SAMPLE = "the sample (see sampled_commits)";
+const GITHUB_NULL = "null when the repository is unknown or GitHub data is unavailable";
 const NULL_SECTION = 'null when error is set or kind is "builtin"';
 
 export const FIELD_DESCRIPTIONS: Record<string, string> = {
   schema_version:
     "Version of this report format; it changes when a field is renamed, removed, or changes meaning.",
   generated_at:
-    "ISO 8601 UTC time the report was collected; every relative value (days, last 90 days, last year) is measured back from it.",
+    "ISO 8601 UTC time the report was collected; every relative value (days, last week, last year) is measured back from it.",
   measured_on_platform:
     'OS and CPU (e.g. "darwin-arm64") where install sizes, native binaries, and other-platform packages were measured; other platforms install different optional packages.',
   project:
@@ -37,7 +35,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   packages: "One entry per requested spec, in the order given on the command line.",
   "packages[].requested": 'The spec exactly as typed, e.g. "zod", "zod@^3", or "node:sqlite".',
   "packages[].kind":
-    '"npm" for a registry package, or "builtin" for a runtime module such as "node:sqlite" or "bun:sqlite", for which only in_repo (files_using) is filled, cost has zero packages and null bundle sizes, version, version_source, and latest_version are null, and compatibility, maintenance, and security are null.',
+    '"npm" for a registry package, or "builtin" for a runtime module such as "node:sqlite" or "bun:sqlite", for which only in_repo (files_using) is filled, cost has zero packages, version, version_source, and latest_version are null, and compatibility, maintenance, and security are null.',
   "packages[].name": 'npm package name, or the builtin module name as typed (e.g. "node:sqlite").',
   "packages[].version":
     'The version every cost field is for, chosen as described by version_source; it can differ from latest_version and from in_repo.newest_installed; null when error is set or kind is "builtin".',
@@ -74,7 +72,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     'Repo-relative paths of source files anywhere in the repo, not only the current workspace, that import or require this package, so the path prefix shows the workspace (e.g. "packages/ui/src/toast.tsx"); empty when none do.',
 
   "packages[].cost":
-    'What depending on `version` would add to this project, estimated from the lockfile with semver ranges: a dependency counts as reused when the lockfile has a version satisfying the range its parent requests, and a reused package\'s own dependencies are not counted; for kind "builtin" every count is zero and every bundle size null; null when error is set.',
+    'What depending on `version` would add to this project, estimated from the lockfile with semver ranges: a dependency counts as reused when the lockfile has a version satisfying the range its parent requests, and a reused package\'s own dependencies are not counted; for kind "builtin" every count is zero; null when error is set.',
   "packages[].cost.total_packages":
     "Packages in `version`'s dependency tree on measured_on_platform, itself included, counted without deduplicating against the lockfile; compare new_packages for what would actually be added.",
   "packages[].cost.new_packages":
@@ -89,30 +87,18 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     "Names of packages that installed a native binary (.node, .dylib, .so, .dll, or binding.gyp) on measured_on_platform; empty when none.",
   "packages[].cost.other_platform_packages":
     "Number of optional OS/CPU-specific packages that would not install on measured_on_platform; they are excluded from every other cost field.",
-  "packages[].cost.bundle":
-    'esbuild minified bundle of `import * as m from "<name>"` at `version`: an upper bound, since code that imports only some exports from a tree-shakeable library ships less.',
-  "packages[].cost.bundle.gzip_bytes_browser_full_import":
-    "Gzipped bytes of the browser build of the full import; null when the browser build failed (see browser_compatible and errors).",
-  "packages[].cost.bundle.min_bytes_browser_full_import":
-    "Minified, uncompressed bytes of the same browser build; null when it failed.",
-  "packages[].cost.bundle.gzip_bytes_node_full_import":
-    'Gzipped bytes of the Node build ("node" export conditions, Node built-ins external) of the full import; null when it failed, and often set while the browser size is null for Node-only packages.',
-  "packages[].cost.bundle.browser_compatible":
-    "false when the browser build needs Node built-ins or native .node files, true when it built without them, null when it failed for another reason.",
-  "packages[].cost.bundle.browser_named_exports":
-    "Count of named exports (not default) of the browser entry; 0 means the entry exports nothing, null means not browser-compatible or not statically known (CommonJS).",
-  "packages[].cost.bundle.unresolved_imports":
-    'Bare imports (e.g. optional dependencies), native .node files, or generated paths that could not be bundled and were left external to finish the build, so their size is not in the bundle numbers; many variants of one path may be collapsed into one entry such as "keyring.*.node (26 variants)"; empty when none.',
-  "packages[].cost.bundle.subpath_exports":
-    'Importable subpaths other than the root (e.g. "./element/adapter"): keys of the package.json exports map other than "." and "./package.json", or, when there is no exports map, folders that carry their own package.json with an entry point; code reachable only through a subpath is not in the full-import sizes; empty when there are none.',
-  "packages[].cost.bundle.errors":
-    'Build failure messages, each prefixed with its build ("browser: ..." or "node: ..."); empty when both builds succeeded.',
+  "packages[].cost.at_newest_installed":
+    "What depending on in_repo.newest_installed instead of `version` would add, which is always zero packages because that version and its dependencies are already resolved; null when there is no project, the package is not installed, or newest_installed equals `version`.",
+  "packages[].cost.at_newest_installed.version":
+    "The installed version this is for, equal to in_repo.newest_installed.",
+  "packages[].cost.at_newest_installed.new_packages":
+    "name@version entries the lockfile cannot satisfy for that version; always empty.",
+  "packages[].cost.at_newest_installed.new_install_bytes":
+    "On-disk size in bytes of those new_packages; always 0.",
 
   "packages[].compatibility": `Facts from \`version\`'s package.json, compared with the project where noted; ${NULL_SECTION}.`,
   "packages[].compatibility.module_format":
     'Module system `version` ships: "esm", "cjs", or "dual" (both).',
-  "packages[].compatibility.side_effects_free":
-    'true only when package.json declares "sideEffects": false, which lets bundlers drop unused modules; false means not declared, not that side effects were found.',
   "packages[].compatibility.types_source":
     'Where TypeScript types come from: "bundled" in the package, "definitely_typed" (a separate @types package, see types_package), or "none".',
   "packages[].compatibility.types_package":
@@ -142,40 +128,22 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     "npm deprecation message for `version`, verbatim; null when not deprecated.",
   "packages[].maintenance.published_at": "ISO 8601 time `version` was published to npm.",
   "packages[].maintenance.days_since_release": "Whole days from published_at to generated_at.",
-  "packages[].maintenance.first_published_at":
-    "ISO 8601 time the package's first version was published to npm.",
   "packages[].maintenance.stable_releases_last_year":
     "Number of non-prerelease versions published in the year before generated_at.",
   "packages[].maintenance.prerelease_tags_ahead":
     'Non-latest dist-tags pointing to a version newer than `version`, as "tag=version" (e.g. "next=5.0.0-beta.1"); empty when none.',
-  "packages[].maintenance.npm_maintainers": "Number of npm accounts listed as maintainers.",
-  "packages[].maintenance.publishers_recent":
-    "Distinct npm users who published the last 10 stable releases.",
   "packages[].maintenance.provenance":
     "Whether `version` was published with npm provenance (a signed link to its source commit and build).",
   "packages[].maintenance.weekly_downloads":
     "npm downloads in the last 7 days, including installs as a transitive dependency; null when the downloads API failed.",
-  "packages[].maintenance.downloads_change_ratio_90d":
-    "Downloads in the last 90 days divided by the 90 days before, minus 1, as a ratio (0.12 means 12% more, -0.3 means 30% fewer); null when unknown.",
   "packages[].maintenance.repository": `Source repository URL; ${GITHUB_NULL}.`,
   "packages[].maintenance.archived": `Whether the GitHub repository is archived (read-only); ${GITHUB_NULL}.`,
-  "packages[].maintenance.stars": `GitHub stars; ${GITHUB_NULL}.`,
   "packages[].maintenance.last_commit_at": `ISO 8601 time of the latest commit on the default branch; ${GITHUB_NULL}.`,
-  "packages[].maintenance.commits_last_90d": `Commits on the default branch in the 90 days before generated_at, bots included; ${GITHUB_NULL}.`,
-  "packages[].maintenance.commits_last_year": `Commits on the default branch in the year before generated_at, bots included; ${GITHUB_NULL}.`,
-  "packages[].maintenance.sampled_commits": `Size of the commit sample the committer fields are computed from: the most recent 100 or fewer commits of the past year, bots included; ${GITHUB_NULL}.`,
-  "packages[].maintenance.sampled_commits_by_bots": `Commits in ${SAMPLE} by bots (dependabot, renovate, *-bot names, GitHub Bot accounts); ${GITHUB_NULL}.`,
-  "packages[].maintenance.human_committers": `Distinct human (non-bot) authors in ${SAMPLE}; ${GITHUB_NULL}.`,
-  "packages[].maintenance.top_human_committer": `Login of the human author with the most commits in ${SAMPLE}; null when the sample has no human commits, or ${NO_GITHUB}.`,
-  "packages[].maintenance.top_human_committer_share": `top_human_committer's share of the human commits in ${SAMPLE}, from 0 to 1; null when top_human_committer is null.`,
-  "packages[].maintenance.merged_prs_by_others_share": `Share, from 0 to 1, of the last 50 or fewer merged PRs by humans that were authored by someone other than top_human_committer; null when there are none, or ${NO_GITHUB}.`,
-  "packages[].maintenance.open_issues": `Open GitHub issues; ${GITHUB_NULL}.`,
-  "packages[].maintenance.open_prs": `Open GitHub pull requests; ${GITHUB_NULL}.`,
-  "packages[].maintenance.issues_median_days_to_close": `Median days from open to close over the last 100 issues that were closed; null when there are none, or ${NO_GITHUB}.`,
+  "packages[].maintenance.commits_last_year": `Commits on the default branch in the 365 days before generated_at, bots included; ${GITHUB_NULL}.`,
 
   "packages[].security": `Vulnerability advisories from OSV; ${NULL_SECTION}.`,
   "packages[].security.advisories":
-    "Every published advisory for this package, affecting any version; use affects_version and affects_newest_installed to see which apply here; empty when none.",
+    "Every published advisory for this package, affecting any version; use affects_version and affects_installed_versions to see which apply here; empty when none.",
   "packages[].security.advisories[].id": 'OSV id, e.g. "GHSA-xxxx-xxxx-xxxx".',
   "packages[].security.advisories[].summary": "One-line summary as published; null when none.",
   "packages[].security.advisories[].severity":
@@ -185,8 +153,8 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].security.advisories[].fixed_in":
     "Versions that fix the advisory, as published; empty when no fix is published.",
   "packages[].security.advisories[].affects_version": "Whether `version` is in affected_ranges.",
-  "packages[].security.advisories[].affects_newest_installed":
-    "Whether in_repo.newest_installed is in affected_ranges; null when the package is not installed or there is no project.",
+  "packages[].security.advisories[].affects_installed_versions":
+    "Which of in_repo.installed_versions are in affected_ranges; empty when none are, the package is not installed, or there is no project.",
   "packages[].security.dependency_vulnerabilities":
     'Advisories affecting other packages in `version`\'s dependency tree, as "name@version:ID"; the package itself is covered by advisories; empty when none.',
 };

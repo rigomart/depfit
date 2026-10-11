@@ -164,16 +164,7 @@ export function builtinReport(
       install_scripts: [],
       native_binaries: [],
       other_platform_packages: 0,
-      bundle: {
-        gzip_bytes_browser_full_import: null,
-        min_bytes_browser_full_import: null,
-        gzip_bytes_node_full_import: null,
-        browser_compatible: null,
-        browser_named_exports: null,
-        unresolved_imports: [],
-        subpath_exports: [],
-        errors: [],
-      },
+      at_newest_installed: null,
     },
     compatibility: null,
     maintenance: null,
@@ -224,7 +215,7 @@ export function treeCost(
   lock: LockIndex | null,
   root: { name: string; version: string },
   tree: TreePackage[],
-): Omit<Cost, "bundle"> {
+): Omit<Cost, "at_newest_installed"> {
   const installed = tree.filter((pkg) => pkg.installed);
   const byPath = new Map(installed.map((pkg) => [pkg.path, pkg]));
   const fresh = new Map<string, TreePackage>();
@@ -258,6 +249,18 @@ export function treeCost(
     native_binaries: namesWhere(installed, (pkg) => pkg.nativeBinary),
     other_platform_packages: tree.length - installed.length,
   };
+}
+
+/**
+ * Depending on the newest installed version instead of `version`: already resolved, so it adds
+ * nothing. null when not installed or when it is `version` itself.
+ */
+export function atNewestInstalled(
+  version: string,
+  newestInstalled: string | null,
+): Cost["at_newest_installed"] {
+  if (newestInstalled === null || newestInstalled === version) return null;
+  return { version: newestInstalled, new_packages: [], new_install_bytes: 0 };
 }
 
 export function licensesInTree(tree: TreePackage[]): string[] {

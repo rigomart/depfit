@@ -17,14 +17,14 @@ const npmRange = (name: string, events: unknown[], versions?: string[]) => ({
 });
 
 describe("toAdvisory", () => {
-  it("maps an introduced/fixed pair and evaluates both versions", () => {
+  it("maps an introduced/fixed pair and evaluates every installed version", () => {
     const advisory = toAdvisory(
       record("GHSA-5v2h-r2cx-5xgj", [
         npmRange("marked", [{ introduced: "0" }, { fixed: "4.0.10" }]),
       ]),
       "marked",
       "18.1.0",
-      "4.0.9",
+      ["4.0.9", "4.0.10", "12.0.0"],
     );
     expect(advisory).toEqual({
       id: "GHSA-5v2h-r2cx-5xgj",
@@ -33,7 +33,7 @@ describe("toAdvisory", () => {
       affected_ranges: [">=0 <4.0.10"],
       fixed_in: ["4.0.10"],
       affects_version: false,
-      affects_newest_installed: true,
+      affects_installed_versions: ["4.0.9"],
     });
   });
 
@@ -54,7 +54,7 @@ describe("toAdvisory", () => {
       ),
       "pkg",
       "2.3.0",
-      null,
+      [],
     );
     expect(advisory.severity).toBeNull();
     expect(advisory.affected_ranges).toEqual([
@@ -64,7 +64,7 @@ describe("toAdvisory", () => {
     ]);
     expect(advisory.fixed_in).toEqual(["1.4.2"]);
     expect(advisory.affects_version).toBe(true);
-    expect(advisory.affects_newest_installed).toBeNull();
+    expect(advisory.affects_installed_versions).toEqual([]);
 
     const prerelease = toAdvisory(
       record("GHSA-open", [
@@ -76,10 +76,10 @@ describe("toAdvisory", () => {
       ]),
       "pkg",
       "3.1.0-rc.0",
-      "1.4.2",
+      ["1.4.2", "3.0.0"],
     );
     expect(prerelease.affects_version).toBe(true);
-    expect(prerelease.affects_newest_installed).toBe(false);
+    expect(prerelease.affects_installed_versions).toEqual(["3.0.0"]);
   });
 
   it("only reads ranges for this package and falls back to explicit versions", () => {
@@ -90,10 +90,10 @@ describe("toAdvisory", () => {
       ]),
       "pkg",
       "1.0.2",
-      "1.0.0",
+      ["1.0.0", "1.0.1"],
     );
     expect(advisory.affected_ranges).toEqual(["=1.0.1", "=1.0.2"]);
     expect(advisory.affects_version).toBe(true);
-    expect(advisory.affects_newest_installed).toBe(false);
+    expect(advisory.affects_installed_versions).toEqual(["1.0.1"]);
   });
 });

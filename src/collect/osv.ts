@@ -48,12 +48,12 @@ function affects(version: string, ranges: string[], versions: string[]): boolean
   return ranges.some((range) => semver.satisfies(version, range, { includePrerelease: true }));
 }
 
-/** Maps one OSV record to an Advisory for `name`, evaluated against two versions. */
+/** Maps one OSV record to an Advisory for `name`, evaluated against `version` and every installed one. */
 export function toAdvisory(
   record: Record<string, unknown>,
   name: string,
   version: string,
-  newestInstalled: string | null,
+  installed: string[],
 ): Advisory {
   const affected = asArray(record.affected)
     .map(asRecord)
@@ -79,8 +79,7 @@ export function toAdvisory(
     affected_ranges: affectedRanges,
     fixed_in: [...new Set(spans.flatMap((span) => (span.fixed ? [span.fixed] : [])))],
     affects_version: affects(version, ranges, versions),
-    affects_newest_installed:
-      newestInstalled === null ? null : affects(newestInstalled, ranges, versions),
+    affects_installed_versions: installed.filter((v) => affects(v, ranges, versions)),
   };
 }
 
@@ -88,7 +87,7 @@ export function toAdvisory(
 export async function advisories(
   name: string,
   version: string,
-  newestInstalled: string | null,
+  installed: string[],
 ): Promise<Advisory[]> {
   const records: Array<Record<string, unknown>> = [];
   let pageToken: string | null = null;
@@ -107,7 +106,7 @@ export async function advisories(
         (asString(b.published) ?? "").localeCompare(asString(a.published) ?? "") ||
         (asString(a.id) ?? "").localeCompare(asString(b.id) ?? ""),
     )
-    .map((record) => toAdvisory(record, name, version, newestInstalled));
+    .map((record) => toAdvisory(record, name, version, installed));
 }
 
 /** "name@version:ID" for every OSV hit among `packages`. */
