@@ -6,11 +6,11 @@ import {
   bunProject,
   libsqlClient,
   missing,
+  monorepoProject,
   nodeProject,
   nodePty,
   nodeSqlite,
   noProjectReport,
-  pnpmMonorepoProject,
   report,
   sharp,
   sonner,
@@ -178,7 +178,7 @@ describe("renderTable", () => {
 
   it("renders a builtin next to npm packages in one table without errors", () => {
     const out = renderTable(
-      report([nodeSqlite, betterSqlite3, libsqlClient], pnpmMonorepoProject),
+      report([nodeSqlite, betterSqlite3, libsqlClient], monorepoProject),
       plain,
     );
     expect(

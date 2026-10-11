@@ -17,6 +17,7 @@ const REGISTRY = "https://registry.npmjs.org";
 
 export type Manifest = Record<string, unknown>;
 
+/** The chosen version with its manifest, plus the full packument it came from. */
 export type Resolved = {
   name: string;
   version: string;
@@ -116,6 +117,11 @@ export async function resolvePackage(
   return { name, ...choice, manifest, packument };
 }
 
+/**
+ * Heuristic over `exports` conditions, `type`, `module`, and `main`: import signals mean esm;
+ * a "require" condition, or `main` (or no `exports`) without `type: "module"`, means cjs; both
+ * mean dual.
+ */
 export function moduleFormat(manifest: Manifest): Compatibility["module_format"] {
   const exportsJson = JSON.stringify(manifest.exports ?? {});
   const isModule = manifest.type === "module";
@@ -144,6 +150,7 @@ export function keywordsOf(manifest: Manifest): string[] {
   return asStringArray(keywords);
 }
 
+/** SPDX string, `{ type }` object, or the legacy `licenses` array joined with " OR ". */
 export function licenseOf(manifest: Manifest): string | null {
   const license = manifest.license;
   if (typeof license === "string") return license;
@@ -155,6 +162,7 @@ export function licenseOf(manifest: Manifest): string | null {
   return legacy.length ? legacy.join(" OR ") : null;
 }
 
+/** owner/repo from package.json `repository` (URL, git URL, or shorthand); null when not GitHub. */
 export function githubRepo(manifest: Manifest): { owner: string; repo: string } | null {
   const repository = manifest.repository;
   const raw = typeof repository === "string" ? repository : asString(asRecord(repository).url);

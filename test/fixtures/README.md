@@ -1,3 +1,15 @@
 # Test fixtures
 
-The `lockfile-*` fixtures are one tiny project in four lockfile formats (`lockfile-npm`: package-lock.json, `lockfile-pnpm`: pnpm-lock.yaml, `lockfile-yarn`: yarn.lock v1, `lockfile-bun`: bun.lock): it depends on the MCP SDK, which pulls in zod transitively, and `src/server.ts` imports zod without declaring it. The tests check that every format parses to the same package set and dependency edges, and that the repo facts (installed versions, dependents, files using zod) come out the same. `bun-workspace` and `pnpm-workspace` are the same small monorepo with fake integrity hashes: `apps/api` (Hono and zod, a wrangler config so it targets Cloudflare Workers, and a SQLite built-in import), `apps/web` (zod), `packages/ui` (sonner and a `catalog:` react, used to check that sibling-workspace usage and catalogs are reported from any workspace), and `examples/demo`, which has a package.json but is not a workspace, so its imports count in `files_using` but it is not listed in `declared_in_workspaces`.
+The four `lockfile-*` fixtures are one Node project (MCP SDK and express) whose `src/server.ts`
+imports zod, which arrives only transitively. Every format must parse to the same packages,
+dependents, and repo facts.
+
+- `lockfile-npm`: that project with package-lock.json.
+- `lockfile-pnpm`: that project with pnpm-lock.yaml.
+- `lockfile-yarn`: that project with a yarn v1 yarn.lock, which records no peer dependencies.
+- `lockfile-bun`: that project with bun.lock.
+- `bun-workspace`: a Bun monorepo with fake integrity hashes: `apps/api` (Hono, zod,
+  wrangler.toml, `bun:sqlite`), `apps/web` (zod), `packages/ui` (sonner, `catalog:` react), and
+  `examples/demo`, which has a package.json but is not a workspace.
+- `pnpm-workspace`: the same monorepo for pnpm, with default and named catalogs, a `!`
+  workspace exclusion, wrangler.jsonc, and `node:sqlite`.

@@ -43,6 +43,7 @@ query($owner: String!, $repo: String!, $since: GitTimestamp!) {
   }
 }`;
 
+/** One GraphQL request; throws on HTTP errors or when the repository is not found. */
 export async function githubFacts(
   owner: string,
   repo: string,

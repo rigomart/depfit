@@ -46,7 +46,7 @@ type Context = {
 
 const GAP = "  ";
 const INDENT = "  ";
-/** Columns wider than this are truncated (lists, URLs). */
+/** Columns are at most this wide; longer lines are truncated unless the cell wraps. */
 const MAX_COLUMN = 40;
 /** Free text asks for at most this width; it wraps to whatever the other cells need. */
 const WRAP_COLUMN = 24;

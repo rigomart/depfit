@@ -50,6 +50,7 @@ export function dependentsOf(index: LockIndex, name: string): string[] {
   return [...all].sort();
 }
 
+/** Valid semver ascending, then anything else (tags, URLs) lexically. */
 export function sortVersions(versions: string[]): string[] {
   const valid = versions.filter((v) => semver.valid(v)).sort(semver.compare);
   const other = versions.filter((v) => !semver.valid(v)).sort();

@@ -1,4 +1,4 @@
-/** Small helpers for reading untyped JSON without type assertions. */
+/** Helpers for reading untyped JSON without type assertions, and fetch with retries. */
 
 export const DAY_MS = 86_400_000;
 
@@ -40,6 +40,7 @@ export function asStringArray(value: unknown): string[] {
   return asArray(value).filter((entry): entry is string => typeof entry === "string");
 }
 
+/** First line of the message, for one-line `unavailable` and `error` entries. */
 export function errorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message.split("\n")[0]?.trim() ?? message;

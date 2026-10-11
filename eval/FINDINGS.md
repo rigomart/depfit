@@ -288,3 +288,22 @@ the built-in.
 4. **Meaningless full-import sizes** for re-exports of generated code (@prisma/client 523 B) and empty
    roots. Facts are correct; the size needs a caveat field or should be null when `unresolved_imports`
    covers the root's re-exports.
+
+---
+
+# Schema v4: scope cut
+
+Across three rounds, most bugs came from two areas that rarely drove decisions:
+
+- **Bundling:** about 9 bugs. Sizes depend on import style, browser compatibility was heuristic, and native, generated, and subpath-only packages kept breaking.
+- **Detailed GitHub stats:** about 3 bugs. Bot accounting and committer/PR shares were ignored more often than used.
+
+Lockfile and repo facts, which drove most decisions, stayed.
+
+- **Removed:** the esbuild bundle section, `side_effects_free`, commits in 90 days, bot/committer/PR stats, issue stats, stars, download trend, maintainer and publisher lists.
+- **Added:** `cost.at_newest_installed` (asked for in all three rounds) and `advisories[].affects_installed_versions` (every installed copy, not just the newest).
+- **Result:** about 1,000 fewer lines and the table cut from 48 to 27 rows. A run on the large pnpm monorepo dropped from about 3.8 s to 1.9 s.
+
+Bundle size may return as an opt-in that measures a real usage snippet.
+
+Known limit: `eval/run.ts` paces probes because npm's downloads API rate-limits bursts. One-off runs aren't affected. Caching is the planned fix.

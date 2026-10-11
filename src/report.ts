@@ -18,7 +18,7 @@ export type Report = {
   generated_at: string;
   /** Where install sizes and native binaries were measured, e.g. "darwin-arm64". */
   measured_on_platform: string;
-  /** null when no package.json/lockfile was found from --cwd upwards. */
+  /** null when no package.json/lockfile was found from --cwd upwards, or reading it failed. */
   project: ProjectInfo | null;
   packages: PackageReport[];
 };
@@ -33,11 +33,15 @@ export type ProjectInfo = {
   module_type: "module" | "commonjs";
   /**
    * Runtime the workspace targets: "cloudflare-workers" when it has a wrangler config
-   * (wrangler.toml/.json/.jsonc) or depends on wrangler; else "bun" when bun.lock / @types/bun /
-   * engines.bun indicate it; otherwise "node". null when there is no project signal at all.
+   * (wrangler.toml/.json/.jsonc) or depends on wrangler; else "bun" when a bun lockfile, Bun types,
+   * engines.bun, or a bun packageManager indicate it; otherwise "node". null when there is no
+   * project signal at all.
    */
   runtime: "node" | "bun" | "cloudflare-workers" | null;
-  /** Version range for `runtime` from .nvmrc, .node-version, .bun-version, or package.json engines. */
+  /**
+   * Version range for `runtime` from .nvmrc, .node-version, .bun-version, or package.json engines.
+   * Always null for cloudflare-workers.
+   */
   runtime_range: string | null;
 };
 
@@ -59,7 +63,7 @@ export type PackageReport = {
    */
   version: string | null;
   version_source: "requested" | "declared_range" | "latest" | null;
-  /** npm `latest` dist-tag, for comparison with `version`. null for builtins or on error. */
+  /** npm `latest` dist-tag, for comparison with `version`. null for builtins, on error, or untagged. */
   latest_version: string | null;
   /** npm `description`, verbatim. */
   description: string | null;
@@ -107,7 +111,7 @@ export type InRepo = {
  * its parent requests, and then its own dependencies are not counted at all.
  */
 export type Cost = {
-  /** Packages installed for `version` on this platform, itself included, with no dedupe. */
+  /** Packages installed for `version` on this platform, itself included, ignoring the lockfile. */
   total_packages: number;
   /** name@version not satisfied by the lockfile. Empty when version_change_from_installed is "same". */
   new_packages: string[];
@@ -140,7 +144,10 @@ export type Compatibility = {
   types_package: string | null;
   /** package.json `engines`, verbatim (e.g. { node: ">=18", bun: ">=1.1" }). */
   engines: Record<string, string>;
-  /** engines[project.runtime] vs project.runtime_range. null when either side is unknown. */
+  /**
+   * Whether the lowest version project.runtime_range allows satisfies engines[project.runtime].
+   * null when either side is unknown.
+   */
   engine_satisfied: boolean | null;
   peer_dependencies: Array<{
     name: string;
@@ -161,17 +168,18 @@ export type Maintenance = {
   published_at: string;
   days_since_release: number;
   stable_releases_last_year: number;
-  /** A newer version is published under a non-latest dist-tag, e.g. "next=5.0.0-beta.1". */
+  /** Non-latest dist-tags pointing to a version newer than latest_version, e.g. "next=5.0.0-beta.1". */
   prerelease_tags_ahead: string[];
   provenance: boolean;
   /** Includes installs as a transitive dependency. */
   weekly_downloads: number | null;
 
-  // GitHub; null when the repo is unknown or GitHub is unavailable
+  /** "owner/repo" parsed from package.json `repository`; null when it names no GitHub repository. */
   repository: string | null;
+  // GitHub API; null when `repository` is null or GitHub is unavailable
   archived: boolean | null;
   last_commit_at: string | null;
-  /** All commits on the default branch in the last 365 days, bots included. */
+  /** All commits on the default branch in the last 365 days. */
   commits_last_year: number | null;
 };
 
@@ -181,7 +189,7 @@ export type Advisory = {
   summary: string | null;
   /** As published (e.g. "HIGH", "MODERATE"), or null. */
   severity: string | null;
-  /** Affected ranges as published, e.g. ">=0 <4.0.10". */
+  /** Affected ranges built from OSV events, e.g. ">=0 <4.0.10"; "=x.y.z" when OSV lists only versions. */
   affected_ranges: string[];
   fixed_in: string[];
   affects_version: boolean;
@@ -190,9 +198,12 @@ export type Advisory = {
 };
 
 export type Security = {
-  /** Every published advisory for this package, any version. */
+  /** Every non-withdrawn advisory for this package, any version, newest first. */
   advisories: Advisory[];
-  /** Advisories affecting other packages in `version`'s tree, as "name@version:ID". */
+  /**
+   * Advisories affecting other packages in `version`'s tree, as "name@version:ID". Empty, not null,
+   * when the install or this lookup failed (listed in `unavailable`).
+   */
   dependency_vulnerabilities: string[];
 };
 

@@ -61,6 +61,7 @@ function newest(versions: string[]): string | null {
   return versions.filter((v) => semver.valid(v)).at(-1) ?? versions.at(-1) ?? null;
 }
 
+/** How `version` relates to `installed`; a prerelease bump counts as its base level. */
 export function versionChange(
   version: string,
   installed: string | null,
@@ -263,6 +264,7 @@ export function atNewestInstalled(
   return { version: newestInstalled, new_packages: [], new_install_bytes: 0 };
 }
 
+/** Distinct licenses of installed packages, "UNKNOWN" for those that declare none. */
 export function licensesInTree(tree: TreePackage[]): string[] {
   return [
     ...new Set(tree.filter((pkg) => pkg.installed).map((pkg) => pkg.license ?? "UNKNOWN")),
@@ -274,6 +276,7 @@ export function dependenciesOf(root: string, tree: TreePackage[]): TreePackage[]
   return tree.filter((pkg) => pkg.installed && pkg.path !== `node_modules/${root}`);
 }
 
+/** Each declared peer against its newest locked version; `lock` is null without a project. */
 export function peerDependencyFacts(
   peers: Record<string, string>,
   optional: Set<string>,

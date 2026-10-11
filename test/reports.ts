@@ -47,7 +47,7 @@ export const nodeProject: ProjectInfo = {
 };
 
 /** Root of a bun monorepo with apps/desktop, apps/server, and apps/web; compared from the root. */
-export const pnpmMonorepoProject: ProjectInfo = {
+export const monorepoProject: ProjectInfo = {
   root: "/home/dev/monorepo",
   workspace: "/home/dev/monorepo",
   lockfile: "bun.lock",
@@ -286,8 +286,8 @@ export const yup: PackageReport = {
 };
 
 /**
- * Bun workspace with sharp@0.34.5 already installed via next; latest is 0.35.5. The browser
- * build needs Node built-ins, so only the Node size is known.
+ * Bun workspace with sharp@0.34.5 already installed via next; latest is 0.35.5. The native build
+ * ships one package per platform.
  */
 export const sharp: PackageReport = {
   requested: "sharp",
