@@ -3,9 +3,9 @@ import { existsSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
 import type { Lockfile, ProjectInfo } from "../report.ts";
-import type { ProjectFacts } from "./facts.ts";
+import type { ProjectFacts, Workspace } from "./facts.ts";
 import { type LockIndex, parseLockfile } from "./lockfile.ts";
-import { asRecord, asString, asStringRecord } from "./util.ts";
+import { asRecord, asString, asStringArray, asStringRecord, unquote } from "./util.ts";
 
 export type Project = ProjectFacts & { info: ProjectInfo };
 
@@ -17,6 +17,7 @@ const DECLARED_FIELDS = [
   "devDependencies",
   "dependencies",
 ] as const;
+const WRANGLER_CONFIGS = ["wrangler.toml", "wrangler.json", "wrangler.jsonc"];
 const SOURCE_EXT = /\.(?:[mc]?[tj]sx?|vue|svelte|astro)$/;
 const SKIP_DIRS = new Set(["node_modules", "dist", "build", "out", "coverage"]);
 const MAX_SOURCE_FILES = 10_000;
@@ -58,29 +59,133 @@ async function readManifest(dir: string): Promise<Record<string, unknown>> {
   return text ? asRecord(JSON.parse(text)) : {};
 }
 
-async function sourceFiles(dir: string, acc: string[] = []): Promise<string[]> {
+type RepoFiles = { sources: string[]; manifestDirs: string[] };
+
+/** Source files and directories holding a package.json under `dir`, skipping SKIP_DIRS and dot-dirs. */
+async function walkRepo(dir: string, acc: RepoFiles = { sources: [], manifestDirs: [] }) {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
   for (const entry of entries) {
-    if (acc.length >= MAX_SOURCE_FILES) break;
+    if (acc.sources.length >= MAX_SOURCE_FILES) break;
     if (entry.name.startsWith(".")) continue;
     const full = join(dir, entry.name);
-    if (entry.isDirectory() && !SKIP_DIRS.has(entry.name)) await sourceFiles(full, acc);
-    else if (entry.isFile() && SOURCE_EXT.test(entry.name)) acc.push(full);
+    if (entry.isDirectory() && !SKIP_DIRS.has(entry.name)) await walkRepo(full, acc);
+    else if (entry.isFile() && SOURCE_EXT.test(entry.name)) acc.sources.push(full);
+    else if (entry.isFile() && entry.name === "package.json") acc.manifestDirs.push(dir);
   }
   return acc;
 }
 
-/** Source files under `dir`, keyed by path relative to `root`. */
-async function readSources(root: string, dir: string): Promise<Map<string, string>> {
-  const files = await sourceFiles(dir);
+/** Repo-relative path with "/" separators; "." for the root itself. */
+function repoPath(root: string, path: string): string {
+  return relative(root, path).split(sep).join("/") || ".";
+}
+
+/** Contents of `files`, keyed by path relative to `root`. */
+async function readSources(root: string, files: string[]): Promise<Map<string, string>> {
   const entries = await Promise.all(
     files.map(async (file) => {
       const size = (await stat(file)).size;
       if (size > MAX_SOURCE_BYTES) return null;
-      return [relative(root, file).split(sep).join("/"), await readFile(file, "utf8")] as const;
+      return [repoPath(root, file), await readFile(file, "utf8")] as const;
     }),
   );
   return new Map(entries.filter((entry) => entry !== null));
+}
+
+/**
+ * Lines of a top-level YAML block (`key:` at column 0) until the next top-level key, without
+ * comments and blank lines. Enough for pnpm-workspace.yaml `packages`, `catalog`, `catalogs`.
+ */
+function yamlBlock(text: string, key: string): string[] {
+  const lines = text.split(/\r?\n/).map((line) => line.replace(/(^|\s)#.*$/, "").trimEnd());
+  const start = lines.indexOf(`${key}:`);
+  if (start < 0) return [];
+  const block: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^\S/.test(line)) break;
+    if (line) block.push(line);
+  }
+  return block;
+}
+
+/** `  key: value` entries of a YAML block with their indentation. */
+function yamlEntries(lines: string[]) {
+  return lines.flatMap((line) => {
+    const match = line.match(/^(\s+)("[^"]+"|'[^']+'|[^\s'"-][^:]*?):\s*(.*)$/);
+    if (!match?.[1] || !match[2]) return [];
+    return [{ indent: match[1].length, key: unquote(match[2]), value: unquote(match[3] ?? "") }];
+  });
+}
+
+/** Workspace globs from package.json `workspaces` (array or { packages }) and pnpm-workspace.yaml. */
+function workspacePatterns(rootManifest: Record<string, unknown>, pnpmYaml: string | null) {
+  const { workspaces } = rootManifest;
+  const fromManifest = Array.isArray(workspaces)
+    ? asStringArray(workspaces)
+    : asStringArray(asRecord(workspaces).packages);
+  const fromPnpm = pnpmYaml
+    ? yamlBlock(pnpmYaml, "packages").flatMap((line) => {
+        const item = line.match(/^\s+-\s+(.+)$/)?.[1];
+        return item ? [unquote(item)] : [];
+      })
+    : [];
+  return [...fromManifest, ...fromPnpm];
+}
+
+/** "apps/*" -> /^apps\/[^/]*$/; "**" spans directories. */
+export function globRegExp(pattern: string): RegExp {
+  const clean = pattern.replace(/^\.\//, "").replace(/\/+$/, "");
+  const source = clean
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*\*\/|\*\*|\*|\?/g, (token) => {
+      if (token === "**/") return "(?:.*/)?";
+      if (token === "**") return ".*";
+      return token === "*" ? "[^/]*" : "[^/]";
+    });
+  return new RegExp(`^${source}$`);
+}
+
+/** Repo-relative dirs of workspace package.jsons: the root, matches of `patterns`, and `current`. */
+function workspaceDirs(manifestDirs: string[], patterns: string[], current: string): string[] {
+  const include = patterns.filter((p) => !p.startsWith("!")).map(globRegExp);
+  const exclude = patterns.filter((p) => p.startsWith("!")).map((p) => globRegExp(p.slice(1)));
+  const matches = manifestDirs.filter(
+    (dir) => include.some((re) => re.test(dir)) && !exclude.some((re) => re.test(dir)),
+  );
+  const rest = [...new Set([current, ...matches])].filter((dir) => dir !== ".").sort();
+  return [".", ...rest];
+}
+
+/** pnpm (pnpm-workspace.yaml) and bun (root package.json or its `workspaces`) catalogs. */
+function readCatalogs(rootManifest: Record<string, unknown>, pnpmYaml: string | null) {
+  const catalogs = new Map<string, Map<string, string>>();
+  const add = (catalog: string, name: string, range: string) => {
+    const entries = catalogs.get(catalog) ?? new Map<string, string>();
+    entries.set(name, range);
+    catalogs.set(catalog, entries);
+  };
+  for (const source of [rootManifest, asRecord(rootManifest.workspaces)]) {
+    for (const [name, range] of Object.entries(asStringRecord(source.catalog))) {
+      add("default", name, range);
+    }
+    for (const [catalog, entries] of Object.entries(asRecord(source.catalogs))) {
+      for (const [name, range] of Object.entries(asStringRecord(entries)))
+        add(catalog, name, range);
+    }
+  }
+  if (pnpmYaml) {
+    for (const { key, value } of yamlEntries(yamlBlock(pnpmYaml, "catalog"))) {
+      if (value) add("default", key, value);
+    }
+    const named = yamlEntries(yamlBlock(pnpmYaml, "catalogs"));
+    const base = Math.min(...named.map((entry) => entry.indent));
+    let current: string | null = null;
+    for (const { indent, key, value } of named) {
+      if (indent === base) current = key;
+      else if (current && value) add(current, key, value);
+    }
+  }
+  return catalogs;
 }
 
 const declaredIn = (manifest: Record<string, unknown>, name: string) =>
@@ -102,6 +207,11 @@ async function runtimeFacts(
   manifests: Array<Record<string, unknown>>,
   lockfile: Lockfile | null,
 ): Promise<Pick<ProjectInfo, "runtime" | "runtime_range">> {
+  // dirs and manifests start with the workspace.
+  const isWorkers =
+    WRANGLER_CONFIGS.some((file) => existsSync(join(dirs[0] ?? "", file))) ||
+    declaredIn(manifests[0] ?? {}, "wrangler");
+  if (isWorkers) return { runtime: "cloudflare-workers", runtime_range: null };
   const engine = (key: string) =>
     manifests.map((m) => asString(asRecord(m.engines)[key])).find((v) => v) ?? null;
   const isBun =
@@ -127,6 +237,16 @@ async function runtimeFacts(
   };
 }
 
+function declaredDependencies(manifest: Record<string, unknown>): Map<string, string> {
+  const declared = new Map<string, string>();
+  for (const field of DECLARED_FIELDS) {
+    for (const [name, range] of Object.entries(asStringRecord(manifest[field]))) {
+      declared.set(name, range);
+    }
+  }
+  return declared;
+}
+
 /** null when no lockfile or package.json is found from cwd upwards. */
 export async function loadProject(cwd: string): Promise<Project | null> {
   const found = findProjectDirs(cwd);
@@ -136,17 +256,27 @@ export async function loadProject(cwd: string): Promise<Project | null> {
 
   const manifests = await Promise.all(dirs.map(readManifest));
   const manifest = manifests[0] ?? {};
+  const rootManifest = manifests.at(-1) ?? {};
   const lockfile = LOCKFILES.find((file) => existsSync(join(root, file))) ?? null;
   const lock: LockIndex = lockfile
     ? parseLockfile(lockfile, await readFile(join(root, lockfile), "utf8"))
     : new Map();
 
-  const declared = new Map<string, string>();
-  for (const field of DECLARED_FIELDS) {
-    for (const [name, range] of Object.entries(asStringRecord(manifest[field]))) {
-      declared.set(name, range);
-    }
-  }
+  const pnpmYaml = await readOptional(join(root, "pnpm-workspace.yaml"));
+  const files = await walkRepo(root);
+  const current = repoPath(root, workspace);
+  const workspaces: Workspace[] = await Promise.all(
+    workspaceDirs(
+      files.manifestDirs.map((dir) => repoPath(root, dir)),
+      workspacePatterns(rootManifest, pnpmYaml),
+      current,
+    ).map(async (dir) => {
+      // A broken package.json elsewhere in the repo should not hide the current workspace's facts.
+      const own =
+        dir === current ? manifest : await readManifest(join(root, dir)).catch(() => ({}));
+      return { dir, declared: declaredDependencies(own) };
+    }),
+  );
 
   return {
     info: {
@@ -158,7 +288,9 @@ export async function loadProject(cwd: string): Promise<Project | null> {
       ...(await runtimeFacts(dirs, manifests, lockfile)),
     },
     lock,
-    declared,
-    sources: await readSources(root, workspace),
+    workspace: current,
+    workspaces,
+    catalogs: readCatalogs(rootManifest, pnpmYaml),
+    sources: await readSources(root, files.sources),
   };
 }

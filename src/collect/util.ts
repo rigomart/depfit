@@ -31,6 +31,11 @@ export function asStringRecord(value: unknown): Record<string, string> {
   return out;
 }
 
+/** Strips one pair of matching single or double quotes, and surrounding whitespace. */
+export function unquote(value: string): string {
+  return value.trim().replace(/^(['"])(.*)\1$/, "$2");
+}
+
 export function asStringArray(value: unknown): string[] {
   return asArray(value).filter((entry): entry is string => typeof entry === "string");
 }

@@ -1,3 +1,4 @@
+import { relative, sep } from "node:path";
 import type {
   Compatibility,
   Cost,
@@ -37,7 +38,8 @@ type Row = { label: string; value: (pkg: PackageReport) => Cell };
 /** A group without a title sits directly under the package names. */
 type Group = { title: string | null; rows: Row[] };
 
-type Context = { project: ProjectInfo | null; now: string };
+/** `showLatest`: some package resolved to a version other than npm latest. */
+type Context = { project: ProjectInfo | null; now: string; showLatest: boolean };
 
 const GAP = "  ";
 const INDENT = "  ";
@@ -80,7 +82,47 @@ function versionChange(r: InRepo, version: string | null): string {
   return `${r.newest_installed} → ${version ?? NONE} (${change})`;
 }
 
-function inRepoRows(): Row[] {
+/** Workspace dir of the current workspace relative to the root, or null at the root. */
+function currentWorkspace(project: ProjectInfo | null): string | null {
+  if (project === null || project.workspace === project.root) return null;
+  return relative(project.root, project.workspace).split(sep).join("/");
+}
+
+/**
+ * Workspace of each file in files_using, most files first. A file belongs to the longest known
+ * workspace (declaring ones plus the current one) it sits in. In a monorepo, other files three or
+ * more levels deep count under their first two segments (e.g. "apps/admin"); the rest are ".".
+ */
+function workspacesUsing(r: InRepo, project: ProjectInfo | null): string[] {
+  const current = currentWorkspace(project);
+  const known = [
+    ...new Set([
+      ...r.declared_in_workspaces.map((d) => d.workspace),
+      ...(current ? [current] : []),
+    ]),
+  ]
+    .filter((w) => w !== ".")
+    .sort((a, b) => b.length - a.length);
+  const counts = new Map<string, number>();
+  for (const file of r.files_using) {
+    const segments = file.split("/");
+    const workspace =
+      known.find((w) => file.startsWith(`${w}/`)) ??
+      (known.length > 0 && segments.length >= 3 ? segments.slice(0, 2).join("/") : ".");
+    counts.set(workspace, (counts.get(workspace) ?? 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1]).map(([workspace]) => workspace);
+}
+
+/** "4 (packages/ui, apps/web)"; just the count when every file is in the root workspace. */
+function filesUsing(r: InRepo, project: ProjectInfo | null): string {
+  const count = String(r.files_using.length);
+  const workspaces = workspacesUsing(r, project);
+  if (workspaces.every((w) => w === ".")) return count;
+  return `${count} (${inlineList(workspaces)})`;
+}
+
+function inRepoRows(ctx: Context): Row[] {
   const row = (label: string, render: (r: InRepo, pkg: PackageReport) => Cell): Row => ({
     label,
     value: (p) => section(p.in_repo, (r) => render(r, p)),
@@ -92,17 +134,40 @@ function inRepoRows(): Row[] {
     row("Newest installed vs version", (r, p) => versionChange(r, p.version)),
     row("Pulled in by", (r) => listOrNone(r.pulled_in_by)),
     row("In package.json", (r) => r.in_package_json ?? "no"),
-    row("Files using", (r) => String(r.files_using.length)),
+    row("Declared in", (r) =>
+      listOrNone(r.declared_in_workspaces.map((d) => `${d.workspace} ${d.range}`)),
+    ),
+    row("Files using", (r) => filesUsing(r, ctx.project)),
   ];
 }
 
-function costRows(): Row[] {
+const VERSION_SOURCES: Record<NonNullable<PackageReport["version_source"]>, string> = {
+  requested: "requested",
+  declared_range: "declared range",
+  latest: "latest",
+};
+
+/** "1.2.0-beta.15 (declared range)", or "builtin" for runtime modules. */
+function costFor(p: PackageReport): string {
+  if (p.kind === "builtin") return "builtin";
+  if (p.cost === null || p.version === null) return NONE;
+  if (p.version_source === null) return p.version;
+  return `${p.version} (${VERSION_SOURCES[p.version_source]})`;
+}
+
+function latest(p: PackageReport): string {
+  if (p.latest_version === null) return NONE;
+  return p.latest_version === p.version ? "same" : p.latest_version;
+}
+
+function costRows(ctx: Context): Row[] {
   const row = (label: string, render: (c: Cost) => Cell): Row => ({
     label,
     value: (p) => section(p.cost, render),
   });
   return [
-    { label: "Cost for", value: (p) => (p.cost === null ? NONE : (p.version ?? NONE)) },
+    { label: "Cost for", value: costFor },
+    ...(ctx.showLatest ? [{ label: "Latest", value: latest }] : []),
     row("New packages", (c) => String(c.new_packages.length)),
     row("Reused packages", (c) => String(c.reused_packages.length)),
     row("New install size", (c) => formatBytes(c.new_install_bytes)),
@@ -113,6 +178,10 @@ function costRows(): Row[] {
     row("Node gzip (full import)", (c) => formatBytes(c.bundle.gzip_bytes_node_full_import)),
     row("Browser compatible", (c) => formatBool(c.bundle.browser_compatible)),
     row("Browser named exports", (c) => formatCount(c.bundle.browser_named_exports)),
+    row("Subpath exports", (c) => {
+      const count = c.bundle.subpath_exports.length;
+      return count === 0 ? "none" : plural(count, "subpath");
+    }),
     row("Unresolved imports", (c) => listOrNone(c.bundle.unresolved_imports)),
     row("Bundle errors", (c) => listOrNone(c.bundle.errors)),
   ];
@@ -221,8 +290,8 @@ function securityRows(): Row[] {
 function groups(ctx: Context): Group[] {
   return [
     { title: null, rows: aboutRows() },
-    ...(ctx.project === null ? [] : [{ title: "In this repo", rows: inRepoRows() }]),
-    { title: "Cost", rows: costRows() },
+    ...(ctx.project === null ? [] : [{ title: "In this repo", rows: inRepoRows(ctx) }]),
+    { title: "Cost", rows: costRows(ctx) },
     { title: "Compatibility", rows: compatibilityRows() },
     { title: "Maintenance", rows: maintenanceRows(ctx) },
     { title: "Security", rows: securityRows() },
@@ -406,7 +475,13 @@ function unavailableLines(packages: PackageReport[], color: boolean): string[] {
 
 /** Renders the report as one or more stacked tables: rows are facts, columns are packages. */
 export function renderTable(report: Report, options: TableOptions): string {
-  const ctx: Context = { project: report.project, now: report.generated_at };
+  const ctx: Context = {
+    project: report.project,
+    now: report.generated_at,
+    showLatest: report.packages.some(
+      (p) => p.error === null && p.latest_version !== null && p.latest_version !== p.version,
+    ),
+  };
   const table = groups(ctx);
   const labelWidth = Math.max(
     ...table.flatMap((group) => group.rows.map((row) => INDENT.length + row.label.length)),

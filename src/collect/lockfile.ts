@@ -7,7 +7,7 @@
  */
 import semver from "semver";
 import type { Lockfile } from "../report.ts";
-import { asArray, asRecord, asString, asStringRecord, isRecord } from "./util.ts";
+import { asArray, asRecord, asString, asStringRecord, isRecord, unquote } from "./util.ts";
 
 /** name -> version -> names of lockfile packages that depend on that version. */
 export type LockIndex = Map<string, Map<string, Set<string>>>;
@@ -166,10 +166,6 @@ function parseBun(text: string): LockIndex {
   }
   linkEdges(index, edges);
   return index;
-}
-
-function unquote(value: string) {
-  return value.trim().replace(/^(['"])(.*)\1$/, "$2");
 }
 
 /** pnpm keys: "zod@4.6.5", "/zod@4.6.5", "@a/b@1.0.0(peer@2.0.0)", or v5 "/zod/4.6.5". */

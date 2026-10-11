@@ -1,2 +1,11 @@
 packages:
   - apps/*
+  - "packages/*"
+  - "!**/fixtures/**"
+
+catalog:
+  react: ^19.0.0 # shared by every workspace
+
+catalogs:
+  legacy:
+    react: ^18.0.0

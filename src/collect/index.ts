@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import {
   type Collect,
   type Compatibility,
@@ -11,6 +11,8 @@ import {
 } from "../report.ts";
 import { bundleFacts } from "./bundle.ts";
 import {
+  builtinReport,
+  declaredRange,
   dependenciesOf,
   engineSatisfied,
   inRepoFacts,
@@ -26,7 +28,6 @@ import { loadProject, type Project } from "./project.ts";
 import {
   downloads,
   githubRepo,
-  hasBundledTypes,
   keywordsOf,
   licenseOf,
   moduleFormat,
@@ -36,6 +37,7 @@ import {
   resolvePackage,
   typesPackage,
 } from "./registry.ts";
+import { manifestDeclaresTypes, shipsTypes } from "./types.ts";
 import { asRecord, asString, asStringRecord, errorMessage } from "./util.ts";
 
 type Settled<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -58,8 +60,11 @@ type Context = {
 function failedReport(spec: string, name: string, error: string, unavailable: string[]) {
   return {
     requested: spec,
+    kind: parseSpec(spec).kind,
     name,
     version: null,
+    version_source: null,
+    latest_version: null,
     description: null,
     keywords: [],
     error,
@@ -87,11 +92,12 @@ async function githubSection(
 /** Everything that needs the isolated install of the candidate itself. */
 async function treeFacts(resolved: Resolved, peers: string[]) {
   return withIsolatedInstall(resolved.name, resolved.version, async ({ dir, tree }) => {
-    const [bundle, vulnerabilities] = await Promise.all([
-      bundleFacts(dir, resolved.name, peers),
+    const [bundle, vulnerabilities, bundledTypes] = await Promise.all([
+      bundleFacts(dir, resolved.name, peers, resolved.manifest),
       settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree))),
+      shipsTypes(join(dir, "node_modules", resolved.name), resolved.manifest),
     ]);
-    return { tree, bundle, vulnerabilities };
+    return { tree, bundle, vulnerabilities, bundledTypes };
   });
 }
 
@@ -106,11 +112,14 @@ function typesFacts(
 
 async function collectPackage(spec: string, context: Context): Promise<PackageReport> {
   const { project } = context;
-  const { name, range } = parseSpec(spec);
+  const candidate = parseSpec(spec);
   const unavailable: string[] = [];
   if (context.projectError) unavailable.push(`project: ${context.projectError}`);
+  if (candidate.kind === "builtin") return builtinReport(spec, project, unavailable);
 
-  const resolution = await settle(resolvePackage(name, range));
+  const { name, range } = candidate;
+  const declared = project ? declaredRange(project, name) : null;
+  const resolution = await settle(resolvePackage(name, range, declared));
   if (!resolution.ok) return failedReport(spec, name, resolution.error, unavailable);
   const resolved = resolution.value;
   const { version, manifest } = resolved;
@@ -123,13 +132,16 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
   );
   const inRepo: InRepo | null = project ? inRepoFacts(project, name, version) : null;
 
-  const [install, ownAdvisories, github, downloadStats, types] = await Promise.all([
+  // DefinitelyTyped is looked up alongside the install, and ignored if the install ships types.
+  const declaresTypes = manifestDeclaresTypes(manifest);
+  const [install, ownAdvisories, github, downloadStats, typesLookup] = await Promise.all([
     settle(treeFacts(resolved, Object.keys(peers))),
     settle(advisories(name, version, inRepo?.newest_installed ?? null)),
     githubSection(manifest, context.token),
     settle(downloads(name)),
-    hasBundledTypes(manifest) ? null : settle(typesPackage(name)),
+    declaresTypes ? null : settle(typesPackage(name)),
   ]);
+  const types = declaresTypes || (install.ok && install.value.bundledTypes) ? null : typesLookup;
 
   if (!install.ok) unavailable.push(`install: ${install.error}`);
   if (!ownAdvisories.ok) unavailable.push(`osv: ${ownAdvisories.error}`);
@@ -184,8 +196,11 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
 
   return {
     requested: spec,
+    kind: "npm",
     name,
     version,
+    version_source: resolved.version_source,
+    latest_version: resolved.latest_version,
     description: asString(manifest.description),
     keywords: keywordsOf(manifest),
     error: null,

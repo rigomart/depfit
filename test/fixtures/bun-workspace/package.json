@@ -1,6 +1,7 @@
 {
   "name": "fixture-bun-workspace",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": ["apps/*", "packages/*"],
+  "catalog": { "react": "^19.0.0" },
   "devDependencies": { "typescript": "^5.9.0" }
 }

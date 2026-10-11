@@ -9,7 +9,7 @@
  * - Units and caveats live in field names (`_bytes`, `_full_import`), not in commentary.
  */
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export type Lockfile = "package-lock.json" | "pnpm-lock.yaml" | "yarn.lock" | "bun.lock";
 
@@ -32,20 +32,35 @@ export type ProjectInfo = {
   packages_in_lockfile: number;
   module_type: "module" | "commonjs";
   /**
-   * Runtime the project targets: "bun" when bun.lock / @types/bun / engines.bun indicate it,
-   * otherwise "node". null when there is no project signal at all.
+   * Runtime the workspace targets: "cloudflare-workers" when it has a wrangler config
+   * (wrangler.toml/.json/.jsonc) or depends on wrangler; else "bun" when bun.lock / @types/bun /
+   * engines.bun indicate it; otherwise "node". null when there is no project signal at all.
    */
-  runtime: "node" | "bun" | null;
+  runtime: "node" | "bun" | "cloudflare-workers" | null;
   /** Version range for `runtime` from .nvmrc, .node-version, .bun-version, or package.json engines. */
   runtime_range: string | null;
 };
 
+/**
+ * A "builtin" is a runtime module given as a candidate, e.g. "node:sqlite" or "bun:sqlite".
+ * For builtins only `in_repo` is filled (files_using lists importing files; installed_versions,
+ * pulled_in_by and declared_in_workspaces stay empty), `cost`
+ * has zero packages and null bundle sizes, and version/compatibility/maintenance/security are null.
+ */
 export type PackageReport = {
-  /** The spec as typed, e.g. "zod" or "zod@^3". */
+  /** The spec as typed, e.g. "zod", "zod@^3", or "node:sqlite". */
   requested: string;
+  kind: "npm" | "builtin";
   name: string;
-  /** Version the spec resolved to on npm (latest for a bare name). Every `cost` field is for this version. null only when `error` is set. */
+  /**
+   * The version every `cost` field is for. Chosen by `version_source`: an explicit range in the
+   * spec wins; else the highest version satisfying the workspace package.json range if declared
+   * there; else npm latest. null when `error` is set or for builtins.
+   */
   version: string | null;
+  version_source: "requested" | "declared_range" | "latest" | null;
+  /** npm `latest` dist-tag, for comparison with `version`. null for builtins or on error. */
+  latest_version: string | null;
   /** npm `description`, verbatim. */
   description: string | null;
   /** npm `keywords`, verbatim. */
@@ -76,11 +91,13 @@ export type InRepo = {
    * or "older". null when not installed.
    */
   version_change_from_installed: "same" | "patch" | "minor" | "major" | "older" | null;
-  /** Lockfile packages that depend on this one (dependencies, optional, peer). */
+  /** Registry packages in the lockfile that depend on this one (dependencies, optional, peer). */
   pulled_in_by: string[];
-  /** Range in the workspace package.json (any dependency field), or null if not declared. */
+  /** Range in the current workspace's package.json (any dependency field), or null if not declared. */
   in_package_json: string | null;
-  /** Source files in the workspace that import or require this package, repo-relative. */
+  /** Every workspace package.json that declares it, root included: repo-relative dir ("." for root) and range. */
+  declared_in_workspaces: Array<{ workspace: string; range: string }>;
+  /** Source files anywhere in the repo that import or require it, repo-relative (prefix shows the workspace). */
   files_using: string[];
 };
 
@@ -114,12 +131,19 @@ export type Bundle = {
   min_bytes_browser_full_import: number | null;
   /** Node build ("node" export conditions; Node built-ins external). */
   gzip_bytes_node_full_import: number | null;
-  /** false when the browser build needs Node built-ins. null when it failed for another reason. */
+  /** false when the browser build needs Node built-ins or native .node files. null when it failed for another reason. */
   browser_compatible: boolean | null;
   /** Named exports of the browser entry (excluding default). 0 = the browser entry exports nothing. null when not browser-compatible or not statically known (CommonJS). */
   browser_named_exports: number | null;
-  /** Bare imports that could not be resolved and were marked external to finish the build, e.g. optional deps. */
+  /** Bare imports, native .node files, or generated paths that could not be bundled and were marked external to finish the build. */
   unresolved_imports: string[];
+  /**
+   * Importable subpaths other than the root, e.g. "./element/adapter": keys of the `exports` map
+   * (excluding "." and "./package.json"), or, when there is no `exports` map, folders that carry
+   * their own package.json with an entry point. Code that lives only in subpaths is not in the
+   * full-import sizes.
+   */
+  subpath_exports: string[];
   /** Build failures, each prefixed with the build: "browser: ...", "node: ...". */
   errors: string[];
 };

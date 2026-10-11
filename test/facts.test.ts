@@ -1,18 +1,24 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  builtinFilesUsing,
+  builtinReport,
+  declaredRange,
   dependenciesOf,
   engineSatisfied,
   filesUsing,
   inRepoFacts,
   licensesInTree,
+  type ProjectFacts,
   peerDependencyFacts,
   type TreePackage,
   treeCost,
   versionChange,
 } from "../src/collect/facts.ts";
 import type { LockIndex } from "../src/collect/lockfile.ts";
-import { loadProject } from "../src/collect/project.ts";
+import { loadProject, type Project } from "../src/collect/project.ts";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
 
@@ -37,6 +43,24 @@ function pkg(name: string, version: string, options: PkgOptions = {}): TreePacka
   };
 }
 
+async function load(...path: string[]): Promise<Project> {
+  const project = await loadProject(join(FIXTURES, ...path));
+  if (!project) throw new Error("fixture project not found");
+  return project;
+}
+
+/** Project facts with nothing but `overrides`; the root is the current workspace. */
+function facts(overrides: Partial<ProjectFacts> = {}): ProjectFacts {
+  return {
+    lock: new Map(),
+    workspace: ".",
+    workspaces: [{ dir: ".", declared: new Map() }],
+    catalogs: new Map(),
+    sources: new Map(),
+    ...overrides,
+  };
+}
+
 function lock(entries: Record<string, string[]>): LockIndex {
   return new Map(
     Object.entries(entries).map(([name, versions]) => [
@@ -46,8 +70,8 @@ function lock(entries: Record<string, string[]>): LockIndex {
   );
 }
 
-describe("project facts on the MCP fixtures", () => {
-  it.each(["mcp-server", "mcp-server-pnpm", "mcp-server-yarn", "mcp-server-bun"])(
+describe("project facts on the lockfile-* fixtures", () => {
+  it.each(["lockfile-npm", "lockfile-pnpm", "lockfile-yarn", "lockfile-bun"])(
     "%s: zod is installed transitively and imported without being declared",
     async (dir) => {
       const project = await loadProject(join(FIXTURES, dir, "src"));
@@ -63,18 +87,21 @@ describe("project facts on the MCP fixtures", () => {
       expect(facts.newest_installed).toBe("4.6.5");
       expect(facts.version_change_from_installed).toBe("same");
       expect(facts.in_package_json).toBeNull();
+      expect(facts.declared_in_workspaces).toEqual([]);
       expect(facts.files_using).toEqual(["src/server.ts"]);
       expect(facts.pulled_in_by).toContain("@modelcontextprotocol/sdk");
 
-      expect(inRepoFacts(project, "express", "5.0.0").in_package_json).toBe("^5");
+      const express = inRepoFacts(project, "express", "5.0.0");
+      expect(express.in_package_json).toBe("^5");
+      expect(express.declared_in_workspaces).toEqual([{ workspace: ".", range: "^5" }]);
       expect(inRepoFacts(project, "typescript", "5.0.0").in_package_json).toBe("^5");
     },
   );
 
   it("reads the runtime from the lockfile and the range from engines", async () => {
-    const npm = await loadProject(join(FIXTURES, "mcp-server"));
+    const npm = await loadProject(join(FIXTURES, "lockfile-npm"));
     expect(npm?.info).toMatchObject({ runtime: "node", runtime_range: ">=20" });
-    const bun = await loadProject(join(FIXTURES, "mcp-server-bun"));
+    const bun = await loadProject(join(FIXTURES, "lockfile-bun"));
     // bun.lock makes it a Bun project; engines only declares node.
     expect(bun?.info).toMatchObject({ runtime: "bun", runtime_range: null });
   });
@@ -86,43 +113,204 @@ describe("workspaces", () => {
     ["pnpm-workspace", "pnpm-lock.yaml", { runtime: "node", runtime_range: ">=22" }],
   ] as const)("%s: facts are for the workspace containing cwd", async (dir, lockfile, runtime) => {
     const root = join(FIXTURES, dir);
-    const project = await loadProject(join(root, "apps", "web", "src"));
-    if (!project) throw new Error("fixture project not found");
+    const project = await load(dir, "apps", "web", "src");
 
     expect(project.info).toEqual({
       root,
       workspace: join(root, "apps", "web"),
       lockfile,
-      packages_in_lockfile: 3,
+      packages_in_lockfile: 5,
       module_type: "module",
       ...runtime,
     });
 
     const zod = inRepoFacts(project, "zod", "4.6.5");
     expect(zod.in_package_json).toBe("^4.0.0");
-    // apps/api imports zod too, but only the web workspace is scanned; paths stay repo-relative.
-    expect(zod.files_using).toEqual(["apps/web/src/index.ts"]);
     expect(zod.installed_versions).toEqual(["4.6.5"]);
+    // examples/demo has a package.json but is not a workspace, so only its file counts.
+    expect(zod.declared_in_workspaces).toEqual([
+      { workspace: "apps/api", range: "^4.0.0" },
+      { workspace: "apps/web", range: "^4.0.0" },
+    ]);
+    expect(zod.files_using).toEqual([
+      "apps/api/src/server.ts",
+      "apps/web/src/index.ts",
+      "examples/demo/index.js",
+    ]);
 
     const hono = inRepoFacts(project, "hono", "4.13.13");
-    expect(hono.installed_versions).toEqual(["4.13.13"]);
-    expect(hono.in_package_json).toBeNull();
-    expect(hono.files_using).toEqual([]);
-    // Declared only in the root package.json.
-    expect(inRepoFacts(project, "typescript", "5.9.3").in_package_json).toBeNull();
+    expect(hono).toMatchObject({
+      installed_versions: ["4.13.13"],
+      in_package_json: null,
+      declared_in_workspaces: [{ workspace: "apps/api", range: "^4.13.0" }],
+      files_using: ["apps/api/src/server.ts"],
+    });
+
+    const typescript = inRepoFacts(project, "typescript", "5.9.3");
+    expect(typescript.in_package_json).toBeNull();
+    expect(typescript.declared_in_workspaces).toEqual([{ workspace: ".", range: "^5.9.0" }]);
+  });
+
+  it.each(["bun-workspace", "pnpm-workspace"])(
+    "%s: a package used only by a sibling workspace shows that workspace",
+    async (dir) => {
+      const project = await load(dir, "apps", "web");
+      expect(inRepoFacts(project, "sonner", "2.0.7")).toEqual({
+        installed_versions: ["2.0.7"],
+        newest_installed: "2.0.7",
+        version_change_from_installed: "same",
+        // Only registry packages count as dependents, not the workspace package.
+        pulled_in_by: [],
+        in_package_json: null,
+        declared_in_workspaces: [{ workspace: "packages/ui", range: "^2.0.7" }],
+        files_using: ["packages/ui/src/toast.tsx"],
+      });
+      expect(inRepoFacts(project, "react", "19.2.0").pulled_in_by).toEqual(["sonner"]);
+    },
+  );
+
+  it.each(["bun-workspace", "pnpm-workspace"])(
+    "%s: catalog: references resolve to the catalog range",
+    async (dir) => {
+      const project = await load(dir, "packages", "ui", "src");
+      expect(project.info.workspace).toBe(join(FIXTURES, dir, "packages", "ui"));
+      const react = inRepoFacts(project, "react", "19.2.0");
+      expect(react.in_package_json).toBe("catalog:");
+      expect(react.declared_in_workspaces).toEqual([
+        { workspace: "packages/ui", range: "catalog:" },
+      ]);
+      expect(declaredRange(project, "react")).toBe("^19.0.0");
+      expect(declaredRange(project, "sonner")).toBe("^2.0.7");
+      expect(declaredRange(project, "zod")).toBeNull();
+    },
+  );
+
+  it("reads named pnpm catalogs", async () => {
+    const project = await load("pnpm-workspace");
+    expect(project.catalogs.get("legacy")?.get("react")).toBe("^18.0.0");
+    const declared = new Map([["react", "catalog:legacy"]]);
+    const legacy = { ...project, workspaces: [{ dir: ".", declared }] };
+    expect(declaredRange(legacy, "react")).toBe("^18.0.0");
+    const missing = {
+      ...legacy,
+      workspaces: [{ dir: ".", declared: new Map([["react", "catalog:nope"]]) }],
+    };
+    expect(declaredRange(missing, "react")).toBeNull();
   });
 
   it("uses the root as the workspace when run from the root", async () => {
     const root = join(FIXTURES, "bun-workspace");
-    const project = await loadProject(root);
-    if (!project) throw new Error("fixture project not found");
+    const project = await load("bun-workspace");
     expect(project.info.workspace).toBe(root);
     expect(project.info.module_type).toBe("commonjs");
     expect(inRepoFacts(project, "typescript", "5.9.3").in_package_json).toBe("^5.9.0");
     expect(inRepoFacts(project, "zod", "4.6.5").files_using).toEqual([
       "apps/api/src/server.ts",
       "apps/web/src/index.ts",
+      "examples/demo/index.js",
     ]);
+  });
+});
+
+describe("Cloudflare Workers runtime", () => {
+  it.each([
+    ["bun-workspace", "wrangler.toml"],
+    ["pnpm-workspace", "wrangler.jsonc"],
+  ])("%s: apps/api has a %s", async (dir) => {
+    const api = await load(dir, "apps", "api", "src");
+    expect(api.info).toMatchObject({ runtime: "cloudflare-workers", runtime_range: null });
+    // Sibling workspaces keep their own runtime.
+    const web = await load(dir, "apps", "web");
+    expect(web.info.runtime).not.toBe("cloudflare-workers");
+  });
+
+  it("detects a wrangler dependency without a config file", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "depfit-workers-"));
+    try {
+      const manifest = { engines: { node: ">=22" }, devDependencies: { wrangler: "^4" } };
+      await writeFile(join(dir, "package.json"), JSON.stringify(manifest));
+      expect((await loadProject(dir))?.info).toMatchObject({
+        runtime: "cloudflare-workers",
+        runtime_range: null,
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("builtins", () => {
+  const sources = new Map([
+    ["a.ts", 'import { readFile } from "node:fs/promises";'],
+    ["b.js", "const fs = require('fs');"],
+    ["c.ts", 'import { DatabaseSync } from "node:sqlite";'],
+    ["d.ts", 'import sqlite from "sqlite";'],
+    ["e.ts", 'import { Database } from "bun:sqlite";'],
+    ["f.ts", 'import { glob } from "fs-extra";'],
+  ]);
+
+  it("matches the exact specifier, plus the bare form when Node has one", () => {
+    expect(builtinFilesUsing(sources, "node:fs")).toEqual(["a.ts", "b.js"]);
+    // "sqlite" is an npm package, not node:sqlite.
+    expect(builtinFilesUsing(sources, "node:sqlite")).toEqual(["c.ts"]);
+    expect(builtinFilesUsing(sources, "bun:sqlite")).toEqual(["e.ts"]);
+  });
+
+  it.each([
+    ["bun-workspace", "bun:sqlite", ["apps/api/src/db.ts"]],
+    ["pnpm-workspace", "node:sqlite", ["apps/api/src/db.ts"]],
+    ["pnpm-workspace", "node:fs", ["apps/api/src/db.ts"]],
+  ])("%s: %s lists files across the repo", async (dir, spec, files) => {
+    const report = builtinReport(spec, await load(dir, "apps", "web"), []);
+    expect(report.in_repo?.files_using).toEqual(files);
+  });
+
+  it("fills only in_repo files, a zero cost and null versions", () => {
+    const report = builtinReport("node:sqlite", facts({ sources }), ["project: x"]);
+    expect(report).toEqual({
+      requested: "node:sqlite",
+      kind: "builtin",
+      name: "node:sqlite",
+      version: null,
+      version_source: null,
+      latest_version: null,
+      description: null,
+      keywords: [],
+      error: null,
+      unavailable: ["project: x"],
+      in_repo: {
+        installed_versions: [],
+        newest_installed: null,
+        version_change_from_installed: null,
+        pulled_in_by: [],
+        in_package_json: null,
+        declared_in_workspaces: [],
+        files_using: ["c.ts"],
+      },
+      cost: {
+        total_packages: 0,
+        new_packages: [],
+        reused_packages: [],
+        new_install_bytes: 0,
+        install_scripts: [],
+        native_binaries: [],
+        other_platform_packages: 0,
+        bundle: {
+          gzip_bytes_browser_full_import: null,
+          min_bytes_browser_full_import: null,
+          gzip_bytes_node_full_import: null,
+          browser_compatible: null,
+          browser_named_exports: null,
+          unresolved_imports: [],
+          subpath_exports: [],
+          errors: [],
+        },
+      },
+      compatibility: null,
+      maintenance: null,
+      security: null,
+    });
+    expect(builtinReport("node:sqlite", null, []).in_repo).toBeNull();
   });
 });
 
@@ -153,11 +341,7 @@ describe("versionChange", () => {
   });
 
   it("uses the highest installed version", async () => {
-    const project = {
-      lock: lock({ sharp: ["0.33.1", "0.34.5"] }),
-      declared: new Map(),
-      sources: new Map(),
-    };
+    const project = facts({ lock: lock({ sharp: ["0.33.1", "0.34.5"] }) });
     expect(inRepoFacts(project, "sharp", "0.35.5")).toMatchObject({
       installed_versions: ["0.33.1", "0.34.5"],
       newest_installed: "0.34.5",

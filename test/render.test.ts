@@ -2,12 +2,18 @@ import { describe, expect, it } from "vitest";
 import { renderTable } from "../src/render/table.ts";
 import type { PackageReport } from "../src/report.ts";
 import {
+  betterSqlite3,
   bunProject,
   missing,
+  nodeProject,
+  nodePty,
+  nodeSqlite,
   noProjectReport,
   report,
   sharp,
+  sonner,
   valibot,
+  workersProject,
   yup,
   yupWithoutGithub,
   zod,
@@ -95,6 +101,7 @@ describe("renderTable", () => {
     expect(row(output, "Installed")).toEqual(["4.6.5", "no", "no"]);
     expect(row(output, "Newest installed vs version")).toEqual(["same", "-", "-"]);
     expect(row(output, "In package.json")).toEqual(["no", "no", "no"]);
+    expect(row(output, "Declared in")).toEqual(["none", "none", "none"]);
     expect(row(output, "Files using")).toEqual(["1", "0", "0"]);
     expect(row(output, "Pulled in by")).toEqual(["@modelcontextprotocol/sdk", "none", "none"]);
     expect(rowBlock(output, "Pulled in by")[1]?.trim()).toBe("zod-to-json-schema");
@@ -107,7 +114,7 @@ describe("renderTable", () => {
   });
 
   it("formats cost facts for the resolved version", () => {
-    expect(row(output, "Cost for")).toEqual(["4.6.5", "1.5.0", "1.7.1"]);
+    expect(row(output, "Cost for")).toEqual(["4.6.5 (latest)", "1.5.0 (latest)", "1.7.1 (latest)"]);
     expect(row(output, "New packages")).toEqual(["0", "1", "5"]);
     expect(row(output, "Reused packages")).toEqual(["1", "0", "0"]);
     expect(row(output, "New install size")).toEqual(["0 B", "1.9 MB", "504.7 KB"]);
@@ -115,12 +122,13 @@ describe("renderTable", () => {
     expect(row(output, "Node gzip (full import)")).toEqual(["92.6 KB", "15.4 KB", "14.2 KB"]);
     expect(row(output, "Browser compatible")).toEqual(["yes", "yes", "yes"]);
     expect(row(output, "Browser named exports")).toEqual(["168", "712", "31"]);
+    expect(row(output, "Subpath exports")).toEqual(["10 subpaths", "none", "none"]);
     expect(row(output, "Unresolved imports")).toEqual(["none", "none", "none"]);
     expect(row(output, "Bundle errors")).toEqual(["none", "none", "none"]);
   });
 
   it("shows native, platform, and bundle failure facts", () => {
-    expect(row(sharpOutput, "Cost for")).toEqual(["0.35.5"]);
+    expect(row(sharpOutput, "Cost for")).toEqual(["0.35.5 (latest)"]);
     expect(row(sharpOutput, "New packages")).toEqual(["3"]);
     expect(row(sharpOutput, "Reused packages")).toEqual(["3"]);
     expect(row(sharpOutput, "New install size")).toEqual(["16.9 MB"]);
@@ -135,6 +143,98 @@ describe("renderTable", () => {
     expect(row(sharpOutput, "Browser compatible")).toEqual(["no"]);
     expect(row(sharpOutput, "Browser named exports")).toEqual(["-"]);
     expect(row(sharpOutput, "Bundle errors")[0]).toMatch(/^browser: Could not resolve .*…$/);
+  });
+
+  it("names where the version comes from and shows latest only when it differs", () => {
+    expect(output).not.toMatch(/^ {2}Latest /m);
+    const requested: PackageReport = {
+      ...zod,
+      requested: "zod@^3",
+      version: "3.25.76",
+      version_source: "requested",
+    };
+    const out = renderTable(report([nodePty, requested, zod]), { width: 160, color: false });
+    expect(row(out, "Cost for")).toEqual([
+      "1.2.0-beta.15 (declared range)",
+      "3.25.76 (requested)",
+      "4.6.5 (latest)",
+    ]);
+    expect(row(out, "Latest")).toEqual(["1.1.0", "4.6.5", "same"]);
+    expect(out.indexOf("  Latest ")).toBeGreaterThan(out.indexOf("  Cost for "));
+  });
+
+  it("shows every declaring workspace and the workspaces of the files using it", () => {
+    const out = renderTable(report([sonner, sharp], bunProject), plain);
+    expect(row(out, "In package.json")).toEqual(["no", "no"]);
+    expect(row(out, "Declared in")).toEqual(["packages/ui ^2.0.7", "none"]);
+    expect(row(out, "Files using")).toEqual(["4 (packages/ui, apps/web)", "0"]);
+    expect(row(out, "Subpath exports")).toEqual(["1 subpath", "none"]);
+    expect(row(renderTable(report([nodePty], nodeProject), plain), "Declared in")).toEqual([
+      ". ^1.2.0-beta.15",
+    ]);
+  });
+
+  it("groups files outside known workspaces by their first two directories in a monorepo", () => {
+    const pkg: PackageReport = {
+      ...sonner,
+      in_repo: sonner.in_repo && {
+        ...sonner.in_repo,
+        files_using: [
+          ...sonner.in_repo.files_using,
+          "apps/admin/src/main.tsx",
+          "apps/admin/src/toasts.tsx",
+          "scripts/seed.ts",
+        ],
+      },
+    };
+    expect(row(renderTable(report([pkg], bunProject), plain), "Files using")).toEqual([
+      "7 (packages/ui, apps/admin, +2 more)",
+    ]);
+  });
+
+  it("renders a builtin next to npm packages without errors", () => {
+    const out = renderTable(report([nodeSqlite, betterSqlite3], nodeProject), plain);
+    expect(out.split("\n")[4]?.trim().split(/\s+/)).toEqual(["node:sqlite", "better-sqlite3"]);
+    expect(row(out, "Description")[0]).toBe("-");
+    expect(row(out, "Installed")).toEqual(["no", "no"]);
+    expect(row(out, "Newest installed vs version")).toEqual(["-", "-"]);
+    expect(row(out, "Declared in")).toEqual(["none", "none"]);
+    expect(row(out, "Files using")).toEqual(["2", "0"]);
+    expect(row(out, "Cost for")).toEqual(["builtin", "12.4.1 (latest)"]);
+    expect(row(out, "New packages")).toEqual(["0", "32"]);
+    expect(row(out, "Node gzip (full import)")).toEqual(["-", "9.9 KB"]);
+    for (const label of ["Module format", "Types", "License", "Last release", "Advisories"]) {
+      expect(row(out, label)[0], label).toBe("-");
+    }
+    expect(out).not.toContain("error:");
+  });
+
+  it("lists native and generated paths that could not be bundled", () => {
+    const out = renderTable(report([nodePty], nodeProject), plain);
+    expect(lastCells(out, "Unresolved imports")).toEqual([
+      "../build/Release/pty.node",
+      "../build/Debug/pty.node",
+    ]);
+  });
+
+  it("prints collapsed unresolved imports as-is", () => {
+    const pkg: PackageReport = {
+      ...nodePty,
+      cost: nodePty.cost && {
+        ...nodePty.cost,
+        bundle: { ...nodePty.cost.bundle, unresolved_imports: ["keyring.*.node (26 variants)"] },
+      },
+    };
+    expect(row(renderTable(report([pkg], nodeProject), plain), "Unresolved imports")).toEqual([
+      "keyring.*.node (26 variants)",
+    ]);
+  });
+
+  it("prints the cloudflare-workers runtime as-is", () => {
+    const out = renderTable(report([zod], workersProject), plain);
+    expect(out.split("\n")[2]).toBe(
+      "bun.lock (412 packages), type module, cloudflare-workers (no version range)",
+    );
   });
 
   it("formats compatibility facts", () => {
@@ -271,7 +371,7 @@ describe("renderTable", () => {
     const description = rowBlock(out, "Description").map((l) => l.slice(l.lastIndexOf("  ") + 2));
     expect(description.join(" ")).toContain("error: npm: package not found (404)");
     expect(row(out, "Installed")).toEqual(["4.6.5"]);
-    expect(row(out, "Cost for")).toEqual(["4.6.5"]);
+    expect(row(out, "Cost for")).toEqual(["4.6.5 (latest)"]);
     expect(row(out, "Weekly downloads")).toEqual(["334M"]);
   });
 

@@ -2,12 +2,18 @@ import { describe, expect, it } from "vitest";
 import { SCHEMA_VERSION } from "../src/report.ts";
 import { FIELD_DESCRIPTIONS, schemaDocument } from "../src/schema-docs.ts";
 import {
+  betterSqlite3,
   bunProject,
   missing,
+  nodeProject,
+  nodePty,
+  nodeSqlite,
   noProjectReport,
   report,
   sharp,
+  sonner,
   valibot,
+  workersProject,
   yup,
   yupWithoutGithub,
   zod,
@@ -40,7 +46,9 @@ function walk(value: unknown, path: string, paths: Paths): void {
 
 const fixtures = [
   report([zod, valibot, yup, missing]),
-  report([sharp, yupWithoutGithub], bunProject),
+  report([sharp, sonner, yupWithoutGithub], bunProject),
+  report([nodeSqlite, betterSqlite3, nodePty], nodeProject),
+  report([zod], workersProject),
   noProjectReport,
 ];
 

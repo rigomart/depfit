@@ -13,10 +13,10 @@ import type { Lockfile } from "../src/report.ts";
 const FIXTURES = join(import.meta.dirname, "fixtures");
 
 const cases: Array<[string, Lockfile]> = [
-  ["mcp-server", "package-lock.json"],
-  ["mcp-server-pnpm", "pnpm-lock.yaml"],
-  ["mcp-server-yarn", "yarn.lock"],
-  ["mcp-server-bun", "bun.lock"],
+  ["lockfile-npm", "package-lock.json"],
+  ["lockfile-pnpm", "pnpm-lock.yaml"],
+  ["lockfile-yarn", "yarn.lock"],
+  ["lockfile-bun", "bun.lock"],
 ];
 
 function parseFixture(dir: string, lockfile: Lockfile): LockIndex {
@@ -34,7 +34,7 @@ function dependentsMap(index: LockIndex): Record<string, string[]> {
 }
 
 describe("parseLockfile", () => {
-  const npm = parseFixture("mcp-server", "package-lock.json");
+  const npm = parseFixture("lockfile-npm", "package-lock.json");
 
   it.each(cases)("%s (%s) has the same package set as package-lock.json", (dir, lockfile) => {
     const index = parseFixture(dir, lockfile);
@@ -63,7 +63,7 @@ describe("parseLockfile", () => {
   );
 
   it("yarn v1 records no peers, so only peer edges are missing", () => {
-    const yarn = dependentsMap(parseFixture("mcp-server-yarn", "yarn.lock"));
+    const yarn = dependentsMap(parseFixture("lockfile-yarn", "yarn.lock"));
     for (const [name, dependents] of Object.entries(yarn)) {
       expect(dependentsMap(npm)[name]).toEqual(expect.arrayContaining(dependents));
     }
@@ -95,7 +95,17 @@ describe("parseLockfile", () => {
     ["pnpm-workspace", "pnpm-lock.yaml"],
   ] as const)("%s (%s) skips workspace packages and importers", (dir, lockfile) => {
     const index = parseFixture(dir, lockfile);
-    expect(packageSet(index)).toEqual(["hono@4.13.13", "typescript@5.9.3", "zod@4.6.5"]);
+    expect(packageSet(index)).toEqual([
+      "hono@4.13.13",
+      "react@19.2.0",
+      "sonner@2.0.7",
+      "typescript@5.9.3",
+      "zod@4.6.5",
+    ]);
+    // Workspace packages declaring zod or sonner are not lockfile dependents.
     expect(dependentsOf(index, "zod")).toEqual([]);
+    expect(dependentsOf(index, "sonner")).toEqual([]);
+    // sonner's peer dependency on react is an edge between registry packages.
+    expect(dependentsOf(index, "react")).toEqual(["sonner"]);
   });
 });

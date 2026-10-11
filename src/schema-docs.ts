@@ -10,6 +10,7 @@ import { SCHEMA_VERSION } from "./report.ts";
 const NO_GITHUB = "the repository is unknown or GitHub data is unavailable";
 const GITHUB_NULL = `null when ${NO_GITHUB}`;
 const SAMPLE = "the sample (see sampled_commits)";
+const NULL_SECTION = 'null when error is set or kind is "builtin"';
 
 export const FIELD_DESCRIPTIONS: Record<string, string> = {
   schema_version:
@@ -29,15 +30,21 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "project.module_type":
     'Module system of the workspace package.json: "module" or "commonjs" (its default when `type` is absent).',
   "project.runtime":
-    'Runtime the project targets: "bun" when bun.lock, @types/bun, or engines.bun indicate it, otherwise "node"; null when there is no project signal at all.',
+    'Runtime the workspace targets: "cloudflare-workers" when it has a wrangler config (wrangler.toml, wrangler.json, or wrangler.jsonc) or depends on wrangler, else "bun" when bun.lock, @types/bun, or engines.bun indicate it, otherwise "node"; null when there is no project signal at all.',
   "project.runtime_range":
     "Version range for project.runtime from .nvmrc, .node-version, .bun-version, or package.json engines; null when none of them sets one.",
 
   packages: "One entry per requested spec, in the order given on the command line.",
-  "packages[].requested": 'The spec exactly as typed, e.g. "zod" or "zod@^3".',
-  "packages[].name": "npm package name.",
+  "packages[].requested": 'The spec exactly as typed, e.g. "zod", "zod@^3", or "node:sqlite".',
+  "packages[].kind":
+    '"npm" for a registry package, or "builtin" for a runtime module such as "node:sqlite" or "bun:sqlite", for which only in_repo (files_using) is filled, cost has zero packages and null bundle sizes, version, version_source, and latest_version are null, and compatibility, maintenance, and security are null.',
+  "packages[].name": 'npm package name, or the builtin module name as typed (e.g. "node:sqlite").',
   "packages[].version":
-    "Version the spec resolved to on npm (the latest dist-tag for a bare name); every cost field is for this version, which can differ from in_repo.newest_installed; null only when error is set.",
+    'The version every cost field is for, chosen as described by version_source; it can differ from latest_version and from in_repo.newest_installed; null when error is set or kind is "builtin".',
+  "packages[].version_source":
+    'How `version` was chosen: "requested" when the spec has an explicit range, else "declared_range" for the highest version satisfying the current workspace package.json range (which may be a prerelease), else "latest" for the npm latest dist-tag; null when version is null.',
+  "packages[].latest_version":
+    'The npm latest dist-tag, for comparison with `version`, which may be higher (a declared prerelease) or lower (an older requested range); null when error is set or kind is "builtin".',
   "packages[].description": "The package's npm description, verbatim; null when it has none.",
   "packages[].keywords": "The package's npm keywords, verbatim; empty when it has none.",
   "packages[].error":
@@ -46,7 +53,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     'Data sources that failed or were skipped, e.g. "github: no token"; fields fed by a listed source are null, not zero; empty when every source answered.',
 
   "packages[].in_repo":
-    "How this package already appears in the project; null when there is no project or error is set.",
+    'How this package already appears in the project; null when there is no project or error is set; for kind "builtin" only files_using can be non-empty.',
   "packages[].in_repo.installed_versions":
     "Every version of this package already resolved in the lockfile, at any depth; empty when not installed.",
   "packages[].in_repo.newest_installed":
@@ -54,14 +61,20 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].in_repo.version_change_from_installed":
     'How `version` relates to newest_installed: "same", an upgrade ("patch", "minor", "major"), or "older" when `version` is lower; null when not installed.',
   "packages[].in_repo.pulled_in_by":
-    "Names of lockfile packages that depend on this one (dependencies, optional, or peer); empty when none do.",
+    "Names of registry packages in the lockfile that depend on this one (dependencies, optional, or peer), not workspace packages; empty when none do.",
   "packages[].in_repo.in_package_json":
-    "The dependency spec exactly as written in the workspace package.json (any dependency field), which may be an exact pin or a range; null when not declared there.",
+    "The dependency spec exactly as written in the current workspace's package.json (any dependency field), which may be an exact pin or a range; null when not declared there, even if another workspace declares it (see declared_in_workspaces).",
+  "packages[].in_repo.declared_in_workspaces":
+    "Every workspace package.json in the repo that declares this package, the root included; empty when none does.",
+  "packages[].in_repo.declared_in_workspaces[].workspace":
+    'Repo-relative directory of the declaring workspace, "." for the root.',
+  "packages[].in_repo.declared_in_workspaces[].range":
+    "The dependency spec exactly as written in that workspace's package.json.",
   "packages[].in_repo.files_using":
-    "Repo-relative paths of source files in the workspace that import or require this package; empty when none do.",
+    'Repo-relative paths of source files anywhere in the repo, not only the current workspace, that import or require this package, so the path prefix shows the workspace (e.g. "packages/ui/src/toast.tsx"); empty when none do.',
 
   "packages[].cost":
-    "What depending on `version` would add to this project, estimated from the lockfile with semver ranges: a dependency counts as reused when the lockfile has a version satisfying the range its parent requests, and a reused package's own dependencies are not counted; null when error is set.",
+    'What depending on `version` would add to this project, estimated from the lockfile with semver ranges: a dependency counts as reused when the lockfile has a version satisfying the range its parent requests, and a reused package\'s own dependencies are not counted; for kind "builtin" every count is zero and every bundle size null; null when error is set.',
   "packages[].cost.total_packages":
     "Packages in `version`'s dependency tree on measured_on_platform, itself included, counted without deduplicating against the lockfile; compare new_packages for what would actually be added.",
   "packages[].cost.new_packages":
@@ -85,16 +98,17 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].cost.bundle.gzip_bytes_node_full_import":
     'Gzipped bytes of the Node build ("node" export conditions, Node built-ins external) of the full import; null when it failed, and often set while the browser size is null for Node-only packages.',
   "packages[].cost.bundle.browser_compatible":
-    "false when the browser build needs Node built-ins, true when it built without them, null when it failed for another reason.",
+    "false when the browser build needs Node built-ins or native .node files, true when it built without them, null when it failed for another reason.",
   "packages[].cost.bundle.browser_named_exports":
     "Count of named exports (not default) of the browser entry; 0 means the entry exports nothing, null means not browser-compatible or not statically known (CommonJS).",
   "packages[].cost.bundle.unresolved_imports":
-    "Bare imports that could not be resolved and were left external to finish the build (e.g. optional dependencies), so their size is not in the bundle numbers; empty when none.",
+    'Bare imports (e.g. optional dependencies), native .node files, or generated paths that could not be bundled and were left external to finish the build, so their size is not in the bundle numbers; many variants of one path may be collapsed into one entry such as "keyring.*.node (26 variants)"; empty when none.',
+  "packages[].cost.bundle.subpath_exports":
+    'Importable subpaths other than the root (e.g. "./element/adapter"): keys of the package.json exports map other than "." and "./package.json", or, when there is no exports map, folders that carry their own package.json with an entry point; code reachable only through a subpath is not in the full-import sizes; empty when there are none.',
   "packages[].cost.bundle.errors":
     'Build failure messages, each prefixed with its build ("browser: ..." or "node: ..."); empty when both builds succeeded.',
 
-  "packages[].compatibility":
-    "Facts from `version`'s package.json, compared with the project where noted; null when error is set.",
+  "packages[].compatibility": `Facts from \`version\`'s package.json, compared with the project where noted; ${NULL_SECTION}.`,
   "packages[].compatibility.module_format":
     'Module system `version` ships: "esm", "cjs", or "dual" (both).',
   "packages[].compatibility.side_effects_free":
@@ -123,7 +137,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].compatibility.licenses_in_tree":
     "Distinct licenses across `version`'s dependency tree, its own included.",
 
-  "packages[].maintenance": `Release and repository activity; npm fields are always set, GitHub fields are ${GITHUB_NULL}; null when error is set.`,
+  "packages[].maintenance": `Release and repository activity; npm fields are always set, GitHub fields are ${GITHUB_NULL}; ${NULL_SECTION}.`,
   "packages[].maintenance.deprecated":
     "npm deprecation message for `version`, verbatim; null when not deprecated.",
   "packages[].maintenance.published_at": "ISO 8601 time `version` was published to npm.",
@@ -159,7 +173,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].maintenance.open_prs": `Open GitHub pull requests; ${GITHUB_NULL}.`,
   "packages[].maintenance.issues_median_days_to_close": `Median days from open to close over the last 100 issues that were closed; null when there are none, or ${NO_GITHUB}.`,
 
-  "packages[].security": "Vulnerability advisories from OSV; null when error is set.",
+  "packages[].security": `Vulnerability advisories from OSV; ${NULL_SECTION}.`,
   "packages[].security.advisories":
     "Every published advisory for this package, affecting any version; use affects_version and affects_newest_installed to see which apply here; empty when none.",
   "packages[].security.advisories[].id": 'OSV id, e.g. "GHSA-xxxx-xxxx-xxxx".',

@@ -9,9 +9,11 @@ export type Command =
   | { kind: "run"; specs: string[]; cwd: string | null; output: OutputMode | "auto" }
   | { kind: "usage-error"; message: string };
 
-export const USAGE = `Usage: depfit <pkg[@range]>... [options]
+export const USAGE = `Usage: depfit <spec>... [options]
 
 Compare npm packages by what they would cost this repo and how they are maintained.
+A spec is an npm package with an optional range (zod, zod@^3) or a runtime builtin
+(node:sqlite, bun:sqlite).
 
 Options:
   --cwd <dir>    Project to compare against (default: current directory)
