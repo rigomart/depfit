@@ -170,3 +170,81 @@ Re-ran the same 10 probes after the v2 changes:
 | Engine checks always null | `project.runtime` detects bun; `engine_satisfied` filled |
 | 429s | Retried with backoff |
 | Capability facts (scope) | npm `description` and `keywords`, verbatim; no curation |
+
+---
+
+# Round 2: schema v2 with a control group
+
+Projects:
+
+- **Bun monorepo**: Cloudflare Workers API (Hono, Drizzle, valibot) plus React web and shared packages, ~800 lockfile packages. 6 comparisons.
+- **Large pnpm monorepo**: Electron desktop, Node server, and React web, ~1,800 lockfile packages, with native modules. 6 comparisons.
+
+Per project, two Sonnet agents answered the same questions:
+- **depfit**: blind; depfit JSON plus `depfit --schema` only.
+- **control**: no depfit; could read the repo, run `npm view`, and search the web.
+
+## Decisions
+
+| Project | Question | depfit agent | Control agent | Same? |
+|---|---|---|---|---|
+| Bun monorepo | Validation for shared contracts | keep valibot (high) | keep valibot (high) | yes |
+| Bun monorepo | HTTP framework on Workers | keep hono (high) | keep hono (high) | yes |
+| Bun monorepo | Query layer on Workers | keep drizzle-orm (high) | keep drizzle-orm (high) | yes |
+| Bun monorepo | Drag and drop | keep @dnd-kit/core (medium) | keep @dnd-kit/core (medium) | yes |
+| Bun monorepo | Transactional email on Workers | resend (medium) | resend (medium) | yes |
+| Bun monorepo | Toasts for the web app | reuse installed sonner (high) | sonner, already used in the shared UI package (high) | yes |
+| pnpm monorepo | OS keychain for Electron | keep @napi-rs/keyring (high) | keep @napi-rs/keyring (high) | yes |
+| pnpm monorepo | SQLite for the server | @libsql/client, already transitive (low-medium) | **none: the server already uses built-in `node:sqlite`** (high) | **no** |
+| pnpm monorepo | Pseudo-terminal | **@lydell/node-pty** (low-medium) | **keep node-pty, declared and used** (high) | **no** |
+| pnpm monorepo | Request validation | effect (high) | effect (high) | yes |
+| pnpm monorepo | Syntax highlighting | shiki at installed 4.2.0 (medium-high) | none needed; shiki already comes via @pierre/diffs (medium) | close |
+| pnpm monorepo | Drag and drop | keep @dnd-kit/core (high) | keep @dnd-kit/core (high) | yes |
+
+The agents agreed on 10/12. The control used about 10–11 tool calls per project and reached the same
+repo facts on its own. In both disagreements the control was right.
+
+## What the control found that depfit didn't show
+
+1. **A built-in was the real incumbent.** The server uses `node:sqlite`. depfit only sees the
+   candidates it is given, so the transitively installed @libsql/client looked like the "free"
+   choice. Fact-based fix: accept built-ins as candidates (`depfit node:sqlite better-sqlite3`) and
+   report the files that import them.
+2. **Usage in sibling workspaces.** sonner is installed and used by the shared UI package. depfit
+   showed `installed_versions: ["2.0.7"]` with empty `pulled_in_by` and `files_using`: workspace
+   packages are skipped as dependents, and `files_using` scans only the current workspace.
+3. **Deploy target.** Three questions said Cloudflare Workers; `project.runtime` reported "bun".
+   wrangler config and deps should set the runtime to `workerd`/"cloudflare-workers".
+
+## Bugs (verified)
+
+1. **Cost computed for `latest` even when the project declares a newer prerelease.** node-pty is
+   declared `^1.2.0-beta.15` and used in 2 files, but depfit costed `latest` 1.1.0
+   (`version_change_from_installed: "older"`, +1 package, install script). That pushed the agent to
+   the fork. Fix: when the package is declared in the workspace, resolve `version` to what the
+   declared range resolves to; otherwise latest.
+2. **`types_source: "none"` for packages that ship types.** effect 4.0.2 (implicit `index.d.ts` next to
+   the JS entry) and kysely (a `types@<5.4` export condition). Fix: detect from installed files
+   (sibling `.d.ts` of the resolved entry) and from any `types*` condition key.
+3. **Subpath-only packages.** @atlaskit/pragmatic-drag-and-drop's root exports nothing (147 B,
+   `browser_named_exports: 0`); its code lives in subpaths. Facts are correct but the full-import
+   bundle is meaningless here. Needs usage/subpath-aware bundling, or a `root_entry_empty` fact.
+4. **Native and generated-code packages fail to bundle** (keytar, @napi-rs/keyring: `.node` loaders;
+   @prisma/client: generated `.prisma/client`). Mark `.node` files and generated paths external
+   and record them in `unresolved_imports`.
+
+## Rejected evaluator claims
+
+- **better-sqlite3 `install_scripts: []` is wrong.** Correct: v13 has no install script.
+
+## Takeaways
+
+- depfit's facts let a blind agent match a repo-exploring agent on 10/12 decisions, without reading
+  the repo. The control needed ~10 tool calls per project to get there.
+- Both misses came from the same blind spot: depfit describes candidates, not the project's
+  existing solution for the same job (a built-in, a sibling workspace, a newer declared version).
+  When the incumbent sits outside the candidate list or outside the current workspace, a
+  "reuse what's installed" signal can point the wrong way.
+- Next changes, by impact: (1) resolve `version` from the declared range; (2) whole-repo `files_using`
+  with workspace dependents; (3) built-in candidates (`node:*`); (4) types detection; (5) a Workers
+  runtime; (6) bundling fixes for native, generated, and subpath-only packages.
