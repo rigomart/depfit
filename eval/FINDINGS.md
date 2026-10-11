@@ -248,3 +248,43 @@ repo facts on its own. In both disagreements the control was right.
 - Next changes, by impact: (1) resolve `version` from the declared range; (2) whole-repo `files_using`
   with workspace dependents; (3) built-in candidates (`node:*`); (4) types detection; (5) a Workers
   runtime; (6) bundling fixes for native, generated, and subpath-only packages.
+
+---
+
+# Round 3: schema v3, same questions
+
+The same 12 probes were re-run on v3. Two new blind depfit evaluators were compared with the round 2 control answers.
+
+| Project | Question | Round 2 (v2) | Round 3 (v3) | Control |
+|---|---|---|---|---|
+| Bun monorepo | 6 questions | 6/6 match control | 6/6 match control (sonner: "reuse the shared UI package's wrapper") | |
+| pnpm monorepo | Keychain | keep @napi-rs/keyring | keep @napi-rs/keyring | same |
+| pnpm monorepo | SQLite | @libsql/client | better-sqlite3 | **built-in `node:sqlite`** |
+| pnpm monorepo | Pseudo-terminal | **@lydell/node-pty** | **keep node-pty** | keep node-pty |
+| pnpm monorepo | Validation | effect | effect | effect |
+| pnpm monorepo | Highlighting | shiki 4.2.0 | shiki 4.2.0 | none needed (shiki via @pierre/diffs) |
+| pnpm monorepo | Drag and drop | keep @dnd-kit/core | keep @dnd-kit/core | same |
+
+**11/12 now match the control.** The pseudo-terminal miss is fixed: the declared prerelease range
+resolves to 1.2.0-beta.15 ("same", 0 new packages).
+
+The remaining SQLite miss is expected. The probe did not list `node:sqlite` as a candidate, and
+depfit only reports on candidates it is given. With the agent instruction ("include built-ins the
+project could use instead"), `depfit node:sqlite better-sqlite3` reports 10 files already importing
+the built-in.
+
+## New verified issues
+
+1. **browser_compatible false positive for native wrappers.** @lydell/node-pty reports `true`
+   (1,332 B) while `native_binaries` lists `@lydell/node-pty-darwin-arm64`. Its root loads the
+   platform package through a dynamic require that esbuild leaves alone. Fix: false whenever the
+   tree installs a native binary.
+2. **No cost for the installed version.** shiki 4.2.0 is already in the lockfile, but `cost` is for
+   latest 4.5.0 (+8 packages). Both evaluators asked for the "use what's installed" cost as a number.
+   This is the third round the request has come up. Fix: add `cost_at_newest_installed` (new
+   packages + bytes) when `version` differs from `newest_installed`.
+3. **Advisories only checked against the newest installed copy.** hono 4.12.18 and 4.13.13 are both
+   installed; `affects_newest_installed` covers only one. Fix: `affects_installed_versions: string[]`.
+4. **Meaningless full-import sizes** for re-exports of generated code (@prisma/client 523 B) and empty
+   roots. Facts are correct; the size needs a caveat field or should be null when `unresolved_imports`
+   covers the root's re-exports.
