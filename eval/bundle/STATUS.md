@@ -3,7 +3,31 @@
 Work in progress on branch `t3/b368aecf`, saved as a WIP commit. Read SPEC.md first: it is the bar,
 the decisions, and the stop conditions.
 
-## Where things stand
+## Where things stand (2026-10-16, end of step 1)
+
+**Step 1 passes**, with the known limits in SPEC.md ("Known limits (step 1)"). depfit measures a
+snippet with a real `vite build` (Vite 8.3.4 on rolldown 1.2.14, in a clean Node child process), and
+every honesty check reads only what Vite resolved, logged and emitted.
+
+| Gate | Result |
+|---|---|
+| A | Pass (8/8 null codes, 0 gross errors) |
+| B | Pass: 24/26 in band, 2 reviewed exceptions (ws-default, node-pty-named) |
+| C | Pass: 12/12 equal a stock `vite build` (min bytes exact) |
+| D, E, F | Pass |
+| W | Pass: (i) 0, (ii) 0 with 2 reviewed exceptions (tldts, server-only), (iii) 0 |
+| H0 | Pass: 3/3 blind readers, all six questions |
+
+Review rounds after the switch to Vite each found a gap, and all were fixed: an alias to a Node
+built-in; source-syntax URL checks (replaced by the Vite-only rule); inline workers (every worker is
+now step 4); a peer bundled through an alias, then a nested peer copy (`PEER_IN_BUNDLE`, by owning
+package). The last findings were constructed packages and changed no wild result, so the user chose
+to fix them, write the remaining limits down, and stop the review rounds. Code size grew to about 700
+lines (`bundle.ts` plus `vite-build.mjs`), against 403 before.
+
+Earlier history follows.
+
+## Earlier state
 
 **depfit now measures with a real `vite build`** (PLAN-vite.md, implemented 2026-10-16):
 `src/collect/vite-build.mjs` runs Vite 8.3.4 on rolldown 1.2.14 (pinned, with `overrides`) in a
@@ -175,7 +199,7 @@ in step 1.
 3. **Vite arbiter (gate W):** see above. Stop condition 3 tripped (bar changes after results) and
    the user chose this, pending Codex agreement.
 
-## Open decisions (for Codex review round 3, then the user)
+## Open decisions at round 3 (historical, since resolved)
 
 - **node-pty JSON:** depfit 1184 B gzip, rollup 894, Vite 1591. Vite runs rolldown's
   `viteJsonPlugin` (`namedExports: true`, `stringify: "auto"`, `minify: true`) on every `.json`
@@ -197,8 +221,8 @@ in step 1.
 
 ## To resume
 
-1. Final focused Codex check of the peer-alias and auditor fixes.
-2. Then stop and present to the user before step 2.
+Step 1 is done. Next is step 2 (repo usage, `--bundle` derived from `in_repo.files_using`), which
+starts with the user.
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and
 `method.md` (bundler study).

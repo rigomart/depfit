@@ -255,6 +255,15 @@ export function importsOutsideBundle(
 
 // --- labels ---------------------------------------------------------------------------------------
 
+/** The package a module file belongs to: the name after its last `node_modules/`, or null. */
+export function owningPackage(id: string): string | null {
+  const at = id.lastIndexOf("node_modules/");
+  if (at < 0) return null;
+  const [first, second] = id.slice(at + "node_modules/".length).split("/");
+  if (!first) return null;
+  return first.startsWith("@") && second ? `${first}/${second}` : first;
+}
+
 /** "pkg/lib/file.js" for a file in node_modules, the base name otherwise. */
 export function moduleLabel(id: string): string {
   const path = id.split("?")[0] ?? id;
@@ -337,9 +346,14 @@ export function problemsFromBuild(
       const match = /__vite-optional-peer-dep:([^:]+)/.exec(id);
       if (match) problems.push({ code: "UNRESOLVED_IMPORT", specifier: match[1] ?? id });
       // A peer's own files in the output: imported through an alias (`#peer`, a relative path),
-      // which the name-based exclusion does not see, so the bytes would include the peer.
-      const peer = peers.find((name) => id.startsWith(`node_modules/${name}/`));
-      if (peer) problems.push({ code: "PEER_IN_BUNDLE", specifier: peer });
+      // which the name-based exclusion does not see, so the bytes would include the peer. A file
+      // belongs to the package of its innermost `node_modules/<name>`, wherever that is installed
+      // (a copy nested under the candidate too). A non-peer package with a peer's name is also
+      // reported: a conservative null.
+      const owner = owningPackage(id);
+      if (owner && peers.includes(owner)) {
+        problems.push({ code: "PEER_IN_BUNDLE", specifier: owner });
+      }
     }
   }
   for (const error of result.errors ?? []) {

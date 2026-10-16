@@ -128,6 +128,7 @@ function isWebpackChunkLoader(
   source: Node,
   chunkFilenameOwners: Set<string>,
   chunkDirs: Set<string>,
+  importerDir: string,
 ): boolean {
   // Exactly `"<relative dir>" + r.u(id)`, the form webpack emits for these builds.
   if (source.type !== "BinaryExpression" || source.operator !== "+") return false;
@@ -141,10 +142,10 @@ function isWebpackChunkLoader(
   const [argument] = Array.isArray(last.arguments) ? last.arguments : [];
   if (literalValue(argument) !== null) return false;
   const prefix = literalValue(source.left);
-  // A relative directory, as webpack writes it, that holds emitted chunks.
+  // A relative directory, as webpack writes it, that holds emitted chunks: resolved against the
+  // importing chunk's own directory, then compared with the chunks' directories.
   if (prefix === null || !(prefix.startsWith("./") || prefix.startsWith("../"))) return false;
-  const dir = posix.normalize(prefix);
-  return chunkDirs.has(dir.endsWith("/") ? dir : `${dir}/`);
+  return chunkDirs.has(posix.normalize(posix.join(importerDir, prefix, ".")));
 }
 
 /**
@@ -155,6 +156,7 @@ function fetchSites(
   code: string,
   parse: ParseModule,
   chunkNames: Set<string>,
+  importer: string,
 ): { imports: ImportSite[]; scripts: number[] } | null {
   let program: unknown;
   try {
@@ -183,13 +185,16 @@ function fetchSites(
   };
   // An owner assigned `.u` more than once is not trusted: the loader may call either.
   const assignments = new Map<string, number>();
-  // Directories of emitted chunks relative to the output root, as `./` or `./dir/`.
+  // Directories of the other emitted chunks relative to the output root, normalized (`.` is the
+  // root): the importer itself is not a chunk the loader can fetch.
+  const self = posix.normalize(importer);
   const chunkDirs = new Set(
-    [...chunkNames].map((name) => {
-      const dir = posix.dirname(posix.normalize(name));
-      return dir === "." ? "./" : `./${dir}/`;
-    }),
+    [...chunkNames]
+      .map((name) => posix.normalize(name))
+      .filter((name) => name !== self)
+      .map((name) => posix.dirname(name)),
   );
+  const importerDir = posix.dirname(self);
   /** Owners `r` of every `r.u` a write target names (plain, destructuring, defaults, rest). */
   const writtenOwners = (target: unknown): string[] => {
     if (!isNode(target)) return [];
@@ -223,7 +228,9 @@ function fetchSites(
       // one that is not a plain filename function, or a second write, means the loader may call
       // something else.
       const target = node.left;
+      // Only a plain `=` of a function can be trusted; `||=`, `??=` and others may keep another value.
       const plain =
+        node.operator === "=" &&
         target.type === "MemberExpression" &&
         (node.right.type === "FunctionExpression" || node.right.type === "ArrowFunctionExpression");
       for (const owner of writtenOwners(target)) {
@@ -232,6 +239,9 @@ function fetchSites(
       }
     } else if (node.type === "UpdateExpression") {
       for (const owner of writtenOwners(node.argument)) assignments.set(owner, 2);
+    } else if (node.type === "ForOfStatement" || node.type === "ForInStatement") {
+      // `for (r.u of xs)` writes `r.u` each iteration.
+      for (const owner of writtenOwners(node.left)) assignments.set(owner, 2);
     }
   });
   for (const [owner, count] of assignments) if (count > 1) chunkFilenameOwners.delete(owner);
@@ -242,7 +252,12 @@ function fetchSites(
             literal: literalValue(node.source),
             at: node.start,
             source: node.source.start,
-            webpackLoader: isWebpackChunkLoader(node.source, chunkFilenameOwners, chunkDirs),
+            webpackLoader: isWebpackChunkLoader(
+              node.source,
+              chunkFilenameOwners,
+              chunkDirs,
+              importerDir,
+            ),
           },
         ]
       : [],
@@ -352,7 +367,7 @@ export function auditChunk(
   const chunks = new Set(chunkNames.map((chunk) => posix.normalize(chunk)));
   const masked = code.replace(WEBPACK_GLOBAL_HELPER, "");
   const taken: Array<[number, number]> = [];
-  const parsed = parse ? fetchSites(code, parse, chunks) : null;
+  const parsed = parse ? fetchSites(code, parse, chunks, name) : null;
   const fetches = parsed
     ? parsed.scripts.length
       ? [

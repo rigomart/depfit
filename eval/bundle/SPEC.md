@@ -177,6 +177,32 @@ patching forward.
    build dumped 3 esbuild logs there.
 6. **Readers misread a field:** any H0 or H miss on what a number includes.
 
+## Known limits (step 1)
+
+Step 1 passes its gates with these limits, written down instead of patched further (user decision,
+2026-10-16, after review findings had become constructed edge cases with no effect on the wild
+corpus):
+
+- **What the number is:** a standalone `vite build` of the snippet with depfit's documented
+  configuration (SETTINGS.md). An app's own plugins, aliases, `define`, `base` or target can change
+  it, and other bundlers can differ by a factor of two or more.
+- **Runtime loads are outside the claim:** files the code loads by a path at runtime
+  (`new Worker("./w.js")`, a missing asset left as a URL), `fetch`, `require` and `eval` are not in
+  the number. `IMPORT_OUTSIDE_BUNDLE` is the only runtime-load check.
+- **Workers are step 4:** every worker Vite builds, inline or not, gives `NON_JS_IMPORT worker`.
+- **Peers are excluded by name.** A peer's own files that still reach the output (through an alias,
+  or a copy nested under another package) give `PEER_IN_BUNDLE`. A non-peer package that shares a
+  peer's name gives it too, a conservative null. Symlinked installs are not covered; depfit installs
+  with npm into its own isolated directory, which makes none.
+- **`browser` field mappings** are honored only from the importing package's nearest package.json,
+  and never for a `#` import alias. Any other mapping to false gives a conservative null.
+- **Toolchain:** a Vite or rolldown other than the evaluated pin gives `TOOLCHAIN_MISMATCH`.
+- **Reviewed exceptions:** four size discrepancies are explained in `exceptions.json` (ws,
+  node-pty, tldts, server-only).
+- **Eval tooling:** the gate W auditor's webpack-loader exemption models bindings by name (shadowing,
+  `Object.assign` and reassigning the owner are not modeled). Gate C compares bytes, not the chunk
+  graph, because the CLI output exposes no chunks.
+
 ## Settled questions
 
 - Dynamic imports: eager and lazy are reported separately.

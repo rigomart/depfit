@@ -351,6 +351,30 @@ describe("problemsFromBuild", () => {
     ]);
   });
 
+  it("reports a peer's own files wherever they are installed, not a package nested inside it", () => {
+    const chunk = (moduleIds: string[]) => ({
+      fileName: "entry.js",
+      isEntry: true,
+      imports: [],
+      dynamicImports: [],
+      moduleIds,
+      code: "export{};",
+    });
+    const codes = (moduleIds: string[]) =>
+      problemsFromBuild(result({ chunks: [chunk(moduleIds)] }), ["peer", "@scope/p"], "x", parse);
+    expect(codes(["node_modules/peer/index.js"])).toEqual([
+      { code: "PEER_IN_BUNDLE", specifier: "peer" },
+    ]);
+    expect(codes(["node_modules/x/node_modules/peer/index.js"])).toEqual([
+      { code: "PEER_IN_BUNDLE", specifier: "peer" },
+    ]);
+    expect(codes(["node_modules/@scope/p/dist/a.js"])).toEqual([
+      { code: "PEER_IN_BUNDLE", specifier: "@scope/p" },
+    ]);
+    expect(codes(["node_modules/peer/node_modules/other/index.js"])).toEqual([]);
+    expect(codes(["node_modules/peerless/index.js"])).toEqual([]);
+  });
+
   it("keeps a bare specifier as written", () => {
     const problems = problemsFromBuild(
       result({

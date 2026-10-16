@@ -91,6 +91,8 @@ describe("gate W auditor", () => {
       `${loader}const l = (id) => import("/not-emitted/" + r.u(id));`,
       `${loader}const l = (id) => import("./not-emitted/" + r.u(id));`,
       `${loader}({ u: r.u } = globalThis.other); const l = (id) => import("./" + r.u(id));`,
+      `${loader}for (r.u of [globalThis.f]) {} const l = (id) => import("./" + r.u(id));`,
+      'const r = { u: globalThis.f }; r.u ||= (e) => e + ".js"; const l = (id) => import("./" + r.u(id));',
       `${loader}r.u = (id) => "https://cdn/" + id; const l = (id) => import("./" + r.u(id));`,
       'const a = () => import("../chunk-x.js");',
     ]) {
@@ -107,6 +109,11 @@ describe("gate W auditor", () => {
     expect(
       fetches('const a = () => import("./axe.js");', ["assets/i.js", "assets/axe.js"]),
     ).toEqual([false, false]);
+    // The loader's directory is resolved from the importing chunk: a nested importer's "./" is
+    // its own directory, which holds no chunk here; "../" reaches the root's chunks.
+    const nested = ["nested/entry.js", "chunk.js"];
+    expect(fetches(`${loader}const l = (e) => import("./" + r.u(e));`, nested)[0]).toBe(true);
+    expect(fetches(`${loader}const l = (e) => import("../" + r.u(e));`, nested)[0]).toBe(false);
     // Text mode cannot tell a string from a call; it errs toward reporting.
     expect(fetches('const s = "import(";')).toEqual([false, true]);
   });
