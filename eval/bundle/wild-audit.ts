@@ -70,9 +70,13 @@ const WEBPACK_GLOBAL_HELPER = /try\{return this\|\|new Function\("return this"\)
 const IMPORT_CALL = new RegExp(`${B}import\\s*\\(`, "g");
 /**
  * webpack's ESM chunk loader as text: `import("./" + r.p + r.u(id))` or `import("<dir>" + r.u(id))`,
- * where `.u()` is webpack's chunk-filename function. Only that form is exempt, not any `"./" + x`.
+ * ending right after the `.u()` call. It is exempt only when the same chunk defines `r.u = ...`,
+ * webpack's chunk-filename function (round 4: any `.u()` call was not enough).
  */
-const WEBPACK_CHUNK_LOADER = /^\s*["'][^"']*["']\s*\+\s*(?:[\w$]+\.p\s*\+\s*)?[\w$]+\.u\(/;
+/** A URL with a scheme, or protocol-relative: never webpack's own (relative) chunk directory. */
+const REMOTE = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
+const WEBPACK_CHUNK_LOADER =
+  /^\s*["'][^"']*["']\s*\+\s*(?:[\w$]+\.p\s*\+\s*)?([\w$]+)\.u\(\s*[\w$]+\s*\)\s*\)/;
 
 const CONTEXT = 40;
 
@@ -122,16 +126,21 @@ function memberName(node: Node): string | null {
 
 /**
  * webpack's ESM chunk loader: `"<dir>" + ... + r.u(id)`, a string concatenation that starts with a
- * literal and ends in a call to `.u()`, webpack's chunk-filename function.
+ * literal and ends in a call to `r.u()`, where `r` is a binding the chunk assigns a function to
+ * `r.u` (webpack's chunk-filename function). `chunkFilenameOwners` are those binding names.
  */
-function isWebpackChunkLoader(source: Node): boolean {
+function isWebpackChunkLoader(source: Node, chunkFilenameOwners: Set<string>): boolean {
   if (source.type !== "BinaryExpression" || source.operator !== "+") return false;
   const last = source.right;
   if (!isNode(last) || last.type !== "CallExpression" || !isNode(last.callee)) return false;
-  if (memberName(last.callee) !== "u") return false;
+  const callee = last.callee;
+  if (memberName(callee) !== "u" || !isNode(callee.object)) return false;
+  const owner = callee.object.type === "Identifier" ? callee.object.name : null;
+  if (typeof owner !== "string" || !chunkFilenameOwners.has(owner)) return false;
   let first: unknown = source.left;
   while (isNode(first) && first.type === "BinaryExpression") first = first.left;
-  return literalValue(first) !== null;
+  const prefix = literalValue(first);
+  return prefix !== null && !REMOTE.test(prefix);
 }
 
 /**
@@ -149,22 +158,39 @@ function fetchSites(
     return null;
   }
   if (!isNode(program)) return null;
-  const imports: ImportSite[] = [];
   const scripts: number[] = [];
+  const importNodes: Node[] = [];
+  // Bindings `r` with `r.u = function` / `r.u = () => ...`: webpack's chunk-filename function.
+  const chunkFilenameOwners = new Set<string>();
   walk(program, (node) => {
     if (node.type === "ImportExpression" && isNode(node.source)) {
-      imports.push({
-        literal: literalValue(node.source),
-        at: node.start,
-        source: node.source.start,
-        webpackLoader: isWebpackChunkLoader(node.source),
-      });
+      importNodes.push(node);
     } else if (node.type === "CallExpression" && isNode(node.callee)) {
       const callee = node.callee;
       const name = callee.type === "Identifier" ? callee.name : memberName(callee);
       if (name === "importScripts") scripts.push(node.start);
+    } else if (node.type === "AssignmentExpression" && isNode(node.left) && isNode(node.right)) {
+      const target = node.left;
+      const isFunction =
+        node.right.type === "FunctionExpression" || node.right.type === "ArrowFunctionExpression";
+      if (isFunction && memberName(target) === "u" && isNode(target.object)) {
+        const owner = target.object.type === "Identifier" ? target.object.name : null;
+        if (typeof owner === "string") chunkFilenameOwners.add(owner);
+      }
     }
   });
+  const imports = importNodes.flatMap((node): ImportSite[] =>
+    isNode(node.source)
+      ? [
+          {
+            literal: literalValue(node.source),
+            at: node.start,
+            source: node.source.start,
+            webpackLoader: isWebpackChunkLoader(node.source, chunkFilenameOwners),
+          },
+        ]
+      : [],
+  );
   return { imports, scripts };
 }
 
@@ -212,12 +238,13 @@ function textImportSites(code: string): ImportSite[] {
     const at = match.index ?? 0;
     const source = at + match[0].length;
     const { literal, raw } = importTarget(code, source);
-    return {
-      literal,
-      at,
-      source,
-      webpackLoader: literal === null && WEBPACK_CHUNK_LOADER.test(raw),
-    };
+    const loader = literal === null ? WEBPACK_CHUNK_LOADER.exec(raw) : null;
+    const prefix = loader ? /^\s*["']([^"']*)["']/.exec(raw)?.[1] : undefined;
+    const owner = prefix !== undefined && !REMOTE.test(prefix) ? loader?.[1] : undefined;
+    const defined = owner
+      ? new RegExp(`${B}${owner.replace(/\$/g, "\\$")}\\.u\\s*=`).test(code)
+      : false;
+    return { literal, at, source, webpackLoader: defined };
   });
 }
 

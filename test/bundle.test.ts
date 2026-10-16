@@ -14,8 +14,10 @@ import {
   importsOutsideBundle,
   isNonJsModule,
   moduleLabel,
+  problemsFromBuild,
   splitChunks,
   unresolvedProblem,
+  type ViteBuildResult,
 } from "../src/collect/bundle.ts";
 import { prepareBundleEntries } from "../src/collect/bundle-entry.ts";
 
@@ -171,13 +173,83 @@ describe("bundleEntry on fixture packages", () => {
   });
 
   it("measures JSON as Vite does: required whole, imported by name per field", async () => {
+    // A require() of package.json keeps the whole JSON module, its 600-character description too.
     const required = await build('import { version } from "json-cjs"', ["json-cjs"]);
     expect(required.problems).toEqual([]);
-    expect(required.bytes?.eager_js_min_bytes).toBeGreaterThan(0);
+    expect(required.bytes?.eager_js_min_bytes).toBeGreaterThan(600);
     // data.json holds a 4000-character field the package never reads.
     const named = await build('import { read } from "json-named"', ["json-named"]);
     expect(named.problems).toEqual([]);
     expect(named.bytes?.eager_js_min_bytes).toBeLessThan(1000);
+  });
+
+  it("measures Vite's production build, whatever the shell's NODE_ENV and VITE_ variables", async () => {
+    const shell = { NODE_ENV: process.env.NODE_ENV, VITE_LEAK: process.env.VITE_LEAK };
+    process.env.NODE_ENV = "development";
+    process.env.VITE_LEAK = "from-shell";
+    try {
+      const outcome = await build('import { mode } from "env-dev"', ["env-dev"]);
+      expect(outcome.problems).toEqual([]);
+      // The development branch holds an 800-character warning; production drops it.
+      expect(outcome.bytes?.eager_js_min_bytes).toBeLessThan(200);
+    } finally {
+      for (const [key, value] of Object.entries(shell)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+
+  it("measures a package's browser:false mapping, and gives no number for a Node built-in", async () => {
+    const mapped = await build('import { run } from "browser-false"', ["browser-false"]);
+    expect(mapped.problems).toEqual([]);
+    // server.js holds 4000 characters and is mapped away for browsers (Vite's stub is ~600 bytes).
+    expect(mapped.bytes?.eager_js_min_bytes).toBeLessThan(2000);
+    expect(await build('import { read } from "uses-fs"', ["uses-fs"])).toEqual({
+      bytes: null,
+      problems: [{ code: "UNRESOLVED_IMPORT", specifier: "node:fs" }],
+    });
+  });
+
+  it("measures a browser:false mapping of a Node built-in name, and a Worker made from bundled code", async () => {
+    const mapped = await build('import { random } from "browser-false-builtin"', [
+      "browser-false-builtin",
+    ]);
+    expect(mapped.problems).toEqual([]);
+    const blob = await build('import { start } from "blob-worker"', ["blob-worker"]);
+    expect(blob.problems).toEqual([]);
+  });
+
+  it("gives no number when Vite replaces a missing optional peer or member", async () => {
+    const peer = await build('import { useMid } from "optional-peer-outer"', [
+      "optional-peer-outer",
+      "optional-peer-mid",
+    ]);
+    expect(peer.bytes).toBeNull();
+    expect(peer.problems).toContainEqual({ code: "UNRESOLVED_IMPORT", specifier: "not-installed" });
+    const member = await build('import * as m from "named"; m.nope', ["named"]);
+    expect(member.bytes).toBeNull();
+    expect(member.problems.map((p) => p.code)).toContain("MISSING_EXPORT");
+  });
+
+  it.each([
+    "asset-url",
+    "asset-url-large",
+    "asset-url-missing",
+    "worker-url",
+    "worker-inline",
+    "css-import",
+  ])("gives no number for the non-JS import in %s", async (name) => {
+    const outcome = await build(`import * as m from "${name}"`, [name]);
+    expect(outcome.bytes).toBeNull();
+    expect(new Set(outcome.problems.map((p) => p.code))).toEqual(new Set(["NON_JS_IMPORT"]));
+  });
+
+  it("turns a CommonJS require() of a peer into an import, with no runtime require helper", async () => {
+    const outcome = await build('import { make } from "cjs-peer"', ["cjs-peer", "peer"], ["peer"]);
+    expect(outcome.problems).toEqual([]);
+    // With plain `external`, Vite's runtime `require` shim makes this 536 bytes.
+    expect(outcome.bytes?.eager_js_min_bytes).toBeLessThan(400);
   });
 
   it("measures a binding named globalThis like any other name", async () => {
@@ -185,6 +257,66 @@ describe("bundleEntry on fixture packages", () => {
     const renamed = await build('import { small as globalThis } from "named"', ["named"]);
     expect(plain.problems).toEqual([]);
     expect(renamed).toEqual(plain);
+  });
+});
+
+describe("problemsFromBuild", () => {
+  const result = (rest: Partial<ViteBuildResult>): ViteBuildResult => ({
+    vite: "8.3.4",
+    rolldown: "1.2.14",
+    resolutions: [],
+    logs: [],
+    sourceRefs: [],
+    chunks: [],
+    assets: [],
+    errors: null,
+    ...rest,
+  });
+  const parse = (code: string) => parseAst(code, { lang: "js", sourceType: "module" });
+
+  it("names a module by its path inside node_modules, never the install directory", () => {
+    const log = (exporter: string) => ({
+      level: "warn",
+      code: "MISSING_EXPORT",
+      plugin: null,
+      exporter,
+      id: null,
+    });
+    const problems = problemsFromBuild(
+      result({
+        logs: [
+          log("/private/var/folders/x/depfit-abc/node_modules/unicorn-magic/default.js"),
+          log("node_modules/other/index.js"),
+        ],
+      }),
+      [],
+      "execa",
+      parse,
+    );
+    expect(problems.map((p) => p.specifier)).toEqual([
+      "unicorn-magic/default.js",
+      "other/index.js",
+    ]);
+  });
+
+  it("keeps a bare specifier as written", () => {
+    const problems = problemsFromBuild(
+      result({
+        logs: [
+          {
+            level: "warn",
+            code: "UNRESOLVED_IMPORT",
+            plugin: null,
+            exporter: "@scope/pkg",
+            id: null,
+          },
+        ],
+      }),
+      [],
+      "x",
+      parse,
+    );
+    expect(problems).toEqual([{ code: "UNRESOLVED_IMPORT", specifier: "@scope/pkg" }]);
   });
 });
 
@@ -210,14 +342,12 @@ describe("bundle reasons and labels", () => {
   });
 
   it("calls the snippet's own unresolvable import of the candidate NO_ENTRY", () => {
-    const entries = ["/var/t/__depfit_entry.mjs", "/private/var/t/__depfit_entry.mjs"];
-    const at = (source: string, importer?: string) =>
-      unresolvedProblem(source, importer, entries, "@biomejs/biome").code;
-    expect(at("@biomejs/biome", "/private/var/t/__depfit_entry.mjs")).toBe("NO_ENTRY");
-    expect(at("@biomejs/biome/nope", "/var/t/__depfit_entry.mjs")).toBe("NO_ENTRY");
-    expect(at("fs", "/var/t/__depfit_entry.mjs")).toBe("UNRESOLVED_IMPORT");
-    expect(at("@biomejs/biome", "/var/t/node_modules/x/index.js")).toBe("UNRESOLVED_IMPORT");
-    expect(at("fs")).toBe("UNRESOLVED_IMPORT");
+    const at = (source: string, fromEntry: boolean) =>
+      unresolvedProblem(source, fromEntry, "@biomejs/biome").code;
+    expect(at("@biomejs/biome", true)).toBe("NO_ENTRY");
+    expect(at("@biomejs/biome/nope", true)).toBe("NO_ENTRY");
+    expect(at("fs", true)).toBe("UNRESOLVED_IMPORT");
+    expect(at("@biomejs/biome", false)).toBe("UNRESOLVED_IMPORT");
   });
 
   it("labels modules by their path inside node_modules", () => {

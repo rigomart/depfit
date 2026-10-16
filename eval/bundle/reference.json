@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T14:11:04.578Z",
+  "generated_at": "2026-10-16T16:46:23.914Z",
   "tools": {
     "node": "24.14.1",
     "rollup": "4.64.7",
@@ -155,12 +155,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3412,
-        "gzip_bytes": 1685,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "lucide-namespace-all": {
@@ -200,12 +194,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 776414,
-        "gzip_bytes": 193243,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "immutable-map": {
@@ -290,12 +278,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 78569,
-        "gzip_bytes": 22414,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "zod-namespace-members": {
@@ -330,12 +312,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 78569,
-        "gzip_bytes": 22414,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "lodash-default-debounce": {
@@ -370,12 +346,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 71699,
-        "gzip_bytes": 25941,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "lodash-subpath-debounce": {
@@ -569,12 +539,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 20405,
-        "gzip_bytes": 6161,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "pdnd-root": {
@@ -609,12 +573,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 196,
-        "gzip_bytes": 180,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "react-dom-client": {
@@ -646,19 +604,13 @@
         "wasm_bytes": 0
       },
       "vite": {
-        "min_bytes": 210947,
-        "gzip_bytes": 65019,
+        "min_bytes": 210684,
+        "gzip_bytes": 64906,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 210947,
-        "gzip_bytes": 65019,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "react-dom-server-workerd": {
@@ -730,12 +682,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 33461,
-        "gzip_bytes": 9280,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "recharts-named": {
@@ -926,12 +872,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3432,
-        "gzip_bytes": 1591,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       }
     },
     "better-sqlite3-default": {
@@ -1003,19 +943,13 @@
         "wasm_bytes": 0
       },
       "vite": {
-        "min_bytes": 151885,
-        "gzip_bytes": 46555,
-        "lazy_min_bytes": 9939087,
-        "lazy_gzip_bytes": 1814130,
+        "min_bytes": 151743,
+        "gzip_bytes": 46500,
+        "lazy_min_bytes": 9939294,
+        "lazy_gzip_bytes": 1814332,
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 141076,
-        "gzip_bytes": 44139,
-        "lazy_min_bytes": 9939087,
-        "lazy_gzip_bytes": 1814190
       }
     },
     "md-editor-default": {
@@ -1245,6 +1179,45 @@
       "webpack": {
         "min_bytes": 54364,
         "gzip_bytes": 16172,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "zustand-devtools": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "immer",
+        "react",
+        "use-sync-external-store"
+      ],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3473,
+        "gzip_bytes": 1537,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3468,
+        "gzip_bytes": 1533,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 3200,
+        "gzip_bytes": 1476,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,

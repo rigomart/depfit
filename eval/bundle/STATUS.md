@@ -5,33 +5,49 @@ the decisions, and the stop conditions.
 
 ## Where things stand
 
-**Step 1** (`--bundle-entry '<js>'`, browser, JS only, opt-in) is implemented in
-`src/collect/bundle.ts` and `src/collect/bundle-entry.ts`, with schema v5 and rolldown 1.2.14 (pinned
-exactly; the JSON plugin comes from `rolldown/experimental`). All Codex round 3 fixes are applied.
-Then the user chose to raise the band's absolute slack from 100 B to 1000 B (SPEC "Band", with the
-evidence); **Codex round 4 rejected it** (see below).
+**depfit now measures with a real `vite build`** (PLAN-vite.md, implemented 2026-10-16):
+`src/collect/vite-build.mjs` runs Vite 8.3.4 on rolldown 1.2.14 (pinned, with `overrides`) in a
+clean Node child process; `src/collect/bundle.ts` turns its output into bytes or reasons
+(`problemsFromBuild`). Settings: SETTINGS.md (the old hand-copied rolldown setup is in
+SETTINGS-rolldown-v1.md).
 
-Scorecards, 2026-10-16 15:13 (corpus) and 15:22 (wild):
+Scorecards, 2026-10-16 (corpus 17:3x, wild 17:30):
 
 | Gate | Result |
 |---|---|
-| A | Pass |
-| B | **Fail**: 24/25, node-pty-named min bytes 3,424 vs band max 3,119 (rollup only; gzip passes) |
-| C | Pass, 11/11 |
-| D, E, F | Pass |
-| W | Pass: (i) 0, (ii) 0 with 1 reviewed exception (tldts), (iii) 0 |
-| H0 | Pass: 3/3 blind readers, all six questions |
+| A | Pass (8/8 null codes, 0 gross errors) |
+| B | Pass: 24/26 in band, 2 reviewed exceptions (ws-default, node-pty-named) |
+| C | Pass: 12/12 mandatory cases equal a stock `vite build` (min bytes exact) |
+| D | Pass, 34/34 |
+| E | Pass, 34/34 (zustand-devtools has no v4 key baseline; noted, not failed) |
+| F | Pass: neither Vite nor rolldown loaded without bundling; median overhead 4 ms |
+| W | Pass: (i) 0, (ii) 0 with 2 reviewed exceptions (tldts, server-only), (iii) 0 |
+| H0 | Pass: 3/3 blind Haiku readers correct on all six questions (Vite-based output, new docs) |
 
-**What the 1000 B slack absorbed** (all match Vite): ws-default in the corpus (708 B vs 271-274;
-rolldown's CommonJS interop helper), and in the wild corpus server-only (its exception was
-removed), brorand (1,507 vs 1,820-1,986), and constants-browserify (7,733 vs 4,711-6,779; that one
-is Vite's JSON handling, not wrapper code).
+**Found and fixed during the implementation, by the gates:**
+- D: a MISSING_EXPORT reason held the temp install path (different every run); log paths are
+  now labeled `pkg/file.js`.
+- C: under Bun, Vite emits a different preload helper (it is built from function source text) and
+  shiki was 2 B off a stock build; the child now runs on Node, as Vite users do.
+- W: `new Worker(...)` from in-bundle code (fflate, a Blob URL) was wrongly NON_JS_IMPORT; only
+  `new URL(..., import.meta.url)` and asset queries count. brorand maps the built-in name `crypto`
+  to false in its `browser` field; that mapping is now honored like `./file.js: false`. Resolver
+  errors (storybook) are recorded as unresolved, so NO_ENTRY is back.
+- E: the round-4 key fix had changed the v4 shape comparison; shapes are computed as recorded.
 
-**node-pty:** depfit 3,424 / 1,600 B, Vite 3,432 / 1,591. Its band is rollup only (webpack built a
-context module). Codex round 3 said to keep it mandatory and failing. It is still open.
+**Watch item, missed target:** code size. The plan aimed below the old module's 403 lines;
+`bundle.ts` is 510 and `vite-build.mjs` 191 (about 700). The growth is the runner protocol (types
+and guards for its JSON), one structural check per quiet Vite success, and the child process.
 
-**Other observations:** the one wild package that was null with `JSON_PARSE` is now null with a bare
-`PLUGIN_ERROR` (the JSON plugin's error has no file name); it also nulls on Node built-ins.
+**Reviewed exceptions** (`exceptions.json`, causes written there): ws-default (rolldown's CJS
+interop helper), node-pty-named (Vite's JSON namespace; rollup-only band), tldts (oxc string
+duplication), server-only (reference wrapper code). The two corpus ones need Codex's review.
+
+**Other changes:** reference builds define Vite's production `import.meta.env` for rollup and
+webpack; a new mandatory case zustand-devtools (`import.meta.env.MODE`); the band slack is back to
+100 B; round-4 harness fixes (resume cache keyed by inputs with verdicts recomputed; webpack loader
+tied to its `.u` definition and a relative prefix; gate E keeps keys); tests for gate E and the
+auditor in `test/eval-bundle.test.ts`.
 
 ## Codex review round 4 (2026-10-16): still unfinished
 
@@ -140,12 +156,8 @@ in step 1.
 
 ## To resume
 
-Paused by the user after round 4, then the user chose to switch depfit to running `vite build` itself
-(after a depfit comparison of bundlers). The plan, revised after a Codex review of it, is
-`PLAN-vite.md`. The user confirmed its two decisions (count Vite's preload helper; replace gate C with a
-small conformance check). The spike is done and passed: every changed number is explained (see the plan).
-Next: the implementation (step 2 of the plan). Reproductions for rounds 3-5 are
-in `results/research/review3/`, `review4/` and `review5/` (gitignored).
+1. Codex review of the Vite implementation (including the two corpus exceptions).
+2. Then stop and present to the user before step 2.
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and
 `method.md` (bundler study).

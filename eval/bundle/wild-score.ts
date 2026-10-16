@@ -5,18 +5,28 @@
  *
  * Pass: (i) no package where depfit gives a number and the auditor found code fetched from outside
  * the bundle (`import()` of a non-chunk target, `importScripts`), (ii) no gross error against the
- * references, except a reviewed one in wild-exceptions.json whose recorded package, lock, depfit
- * bytes and reference bytes all still match exactly, (iii) every null carries a code.
+ * references, except a reviewed one in exceptions.json whose recorded package, snippet, lock,
+ * toolchain, depfit bytes and reference bytes all still match exactly, (iii) every null carries a
+ * code. `--resume` reuses a cached measurement only when its inputs are unchanged, and recomputes
+ * every verdict.
  * The null rate by code is reported, with no threshold. Other auditor findings (require, eval,
  * Function) are information only.
  */
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { bundlerName } from "../../src/collect/bundle.ts";
 import { asNumber, asRecord, asString } from "../../src/collect/util.ts";
 import { entryArgs, loadWild, loadWildPackages } from "./cases.ts";
 import {
+  exceptionMismatch,
+  loadExceptions,
+  lockSha256,
+  type ReviewedException,
+} from "./exceptions.ts";
+import {
   BYTE_FIELDS,
+  type ByteField,
   depfit,
   grossError,
   inBand,
@@ -24,7 +34,6 @@ import {
   REPORT_FIELD,
   referenceRanges,
   scratchProject,
-  viteValue,
 } from "./harness.ts";
 import { type Hit, hasFetch } from "./wild-audit.ts";
 
@@ -45,7 +54,7 @@ type WildResult = {
   downloads_last_month: number;
   outcome: Outcome;
   /** The four byte fields when outcome is "number". */
-  bytes: Record<string, number | null> | null;
+  bytes: Record<ByteField, number | null> | null;
   /** Code of the first `bundle:` entry in `unavailable` when outcome is "null". */
   code: string | null;
   /** All `bundle:` entries of `unavailable`. */
@@ -59,7 +68,7 @@ type WildResult = {
   auditor_fetch: boolean;
   /** Gate W (ii): gross errors against the references, unless a reviewed exception matches. */
   gross: string[];
-  /** Gross errors a reviewed exception in wild-exceptions.json covers: listed, not failed. */
+  /** Gross errors a reviewed exception in exceptions.json covers: listed, not failed. */
   reviewed_exception: string[];
   out_of_band: string[];
 };
@@ -86,152 +95,141 @@ const describeHits = (hits: Hit[] | null) =>
           .join("\n    ")
       : "(no matches)";
 
-/**
- * A gross error reviewed and explained by hand (wild-exceptions.json). It covers one package only
- * while everything it was reviewed on is unchanged: version, frozen lock, depfit's four byte fields,
- * and both references' four byte fields. Any difference makes the gross error count again.
- */
-type ReviewedException = {
-  id: string;
-  version: string;
-  lock_sha256: string;
-  bytes: Record<string, number>;
-  rollup: Record<string, number>;
-  webpack: Record<string, number>;
-  cause: string;
+/** What the CLI printed for one package, cached across `--resume` runs; verdicts are not. */
+type Measurement = {
+  outcome: Outcome;
+  bytes: Record<ByteField, number | null> | null;
+  code: string | null;
+  reasons: string[];
+  problem: string | null;
+  bundler: string | null;
+  ms: number;
 };
 
-async function loadExceptions(): Promise<ReviewedException[]> {
-  const raw = asRecord(JSON.parse(await readFile(join(HERE, "wild-exceptions.json"), "utf8")));
-  const numbers = (value: unknown) =>
-    Object.fromEntries(BYTE_FIELDS.map((field) => [field, asNumber(asRecord(value)[field]) ?? -1]));
-  return (Array.isArray(raw.exceptions) ? raw.exceptions : []).map((item) => {
-    const entry = asRecord(item);
-    return {
-      id: asString(entry.id) ?? "",
-      version: asString(entry.version) ?? "",
-      lock_sha256: asString(entry.lock_sha256) ?? "",
-      bytes: numbers(entry.bytes),
-      rollup: numbers(entry.rollup),
-      webpack: numbers(entry.webpack),
-      cause: asString(entry.cause) ?? "",
-    };
-  });
+/** The depfit sources a measurement depends on; a change to any of them invalidates the cache. */
+const DEPFIT_SOURCES = [
+  "../../src/collect/bundle.ts",
+  "../../src/collect/bundle-entry.ts",
+  "../../src/collect/vite-build.mjs",
+  "../../package.json",
+].map((path) => join(HERE, path));
+
+/**
+ * Identity of a measurement: toolchain, depfit's bundle code, the snippet and the frozen tree. A
+ * cached measurement is reused only when its key is equal (round 4: resuming must not reuse stale
+ * numbers).
+ */
+async function measurementKey(snippet: string, lock: string): Promise<string> {
+  const hash = createHash("sha256");
+  hash.update(await bundlerName());
+  for (const file of DEPFIT_SOURCES) hash.update(await readFile(file));
+  hash.update(snippet).update(lock);
+  return hash.digest("hex");
 }
 
-export async function lockSha256(id: string): Promise<string> {
-  const lock = await readFile(join(HERE, "locks", "wild", `${id}.json`));
-  return createHash("sha256").update(lock).digest("hex");
-}
-
-/** Why a reviewed exception does not cover this result, or null when it does. */
-function exceptionMismatch(
-  exception: ReviewedException,
-  version: string,
-  lock: string,
-  bytes: Record<string, number | null>,
-  reference: Record<string, unknown>,
-): string | null {
-  if (exception.version !== version) return `version ${version} vs reviewed ${exception.version}`;
-  if (exception.lock_sha256 !== lock) return "lock changed since review";
-  for (const field of BYTE_FIELDS) {
-    if (bytes[field] !== exception.bytes[field]) return `depfit ${field} changed since review`;
-    for (const side of ["rollup", "webpack"] as const) {
-      const now = asNumber(asRecord(reference[side])[field]);
-      if (now !== exception[side][field]) return `${side} ${field} changed since review`;
-    }
-  }
-  return null;
-}
-
-async function measureOne(
-  scratch: string,
-  reference: Record<string, unknown>,
-  pkg: { id: string; name: string; version: string; downloads: number },
-  args: string[],
-  exception: ReviewedException | null,
-): Promise<WildResult> {
-  const cli = await depfit([`${pkg.name}@${pkg.version}`, ...args], scratch);
+async function measureCli(scratch: string, spec: string, args: string[]): Promise<Measurement> {
+  const cli = await depfit([spec, ...args], scratch);
   const seen = observe(cli);
-  const ranges = referenceRanges(reference);
+  if ("problem" in seen) {
+    const base = { bytes: null, code: null, reasons: [], bundler: null, ms: cli.ms };
+    return { ...base, outcome: "error", problem: seen.problem };
+  }
+  const nulls = BYTE_FIELDS.filter((field) => seen.bundle[field] === null);
+  if (!nulls.length) {
+    return {
+      outcome: "number",
+      bytes: seen.bundle,
+      code: null,
+      reasons: seen.reasons,
+      problem: null,
+      bundler: seen.bundler,
+      ms: cli.ms,
+    };
+  }
+  const reasons = seen.reasons;
+  const partial = nulls.length < BYTE_FIELDS.length;
+  return {
+    outcome: partial || !reasons.length ? "error" : "null",
+    bytes: null,
+    code: reasons[0]?.split(" ")[1] ?? null,
+    reasons,
+    problem: partial
+      ? "only some byte fields are null"
+      : reasons.length
+        ? null
+        : "null without a `bundle:` entry in unavailable",
+    bundler: seen.bundler,
+    ms: cli.ms,
+  };
+}
+
+/** Gate W verdicts for one measurement against the current references, audit and exceptions. */
+function scoreOne(
+  pkg: { id: string; name: string; version: string; downloads: number },
+  m: Measurement,
+  reference: Record<string, unknown>,
+  context: { exception: ReviewedException | null; snippet: string; lock: string },
+): WildResult {
   const audit: Audit = {
     rollup: parseHits(asRecord(reference.audit).rollup),
     webpack: parseHits(asRecord(reference.audit).webpack),
   };
-  const base = {
+  const ranges = referenceRanges(reference);
+  let gross: string[] = [];
+  let reviewed: string[] = [];
+  const outOfBand: string[] = [];
+  const bytes = m.bytes;
+  if (m.outcome === "number" && bytes && ranges) {
+    for (const field of BYTE_FIELDS) {
+      const x = bytes[field] ?? 0;
+      const range = ranges[field];
+      const text = `${REPORT_FIELD[field]} ${x} vs ${range.lo}..${range.hi}`;
+      if (grossError(x, range)) gross.push(text);
+      else if (!inBand(x, range)) outOfBand.push(text);
+    }
+    if (gross.length && context.exception) {
+      const mismatch = exceptionMismatch(context.exception, {
+        version: pkg.version,
+        entry: context.snippet,
+        lock: context.lock,
+        bundler: m.bundler ?? "",
+        bytes,
+        reference,
+      });
+      if (mismatch) gross = gross.map((text) => `${text} (reviewed exception stale: ${mismatch})`);
+      else [reviewed, gross] = [[...gross, `cause: ${context.exception.cause}`], []];
+    }
+  }
+  return {
     id: pkg.id,
     name: pkg.name,
     version: pkg.version,
     downloads_last_month: pkg.downloads,
-    ms: cli.ms,
+    outcome: m.outcome,
+    bytes: m.outcome === "number" ? m.bytes : null,
+    code: m.code,
+    reasons: m.reasons,
+    problem: m.problem,
+    ms: m.ms,
     reference: {
       rollup: asNumber(asRecord(reference.rollup).gzip_bytes) !== null,
       webpack: asNumber(asRecord(reference.webpack).gzip_bytes) !== null,
     },
     audit,
     auditor_fetch: hasFetch(audit.rollup ?? []) || hasFetch(audit.webpack ?? []),
-    gross: [] as string[],
-    reviewed_exception: [] as string[],
-    out_of_band: [] as string[],
-  };
-  if ("problem" in seen) {
-    return {
-      ...base,
-      outcome: "error",
-      bytes: null,
-      code: null,
-      reasons: [],
-      problem: seen.problem,
-    };
-  }
-  const nulls = BYTE_FIELDS.filter((field) => seen.bundle[field] === null);
-  if (nulls.length) {
-    const reasons = seen.reasons;
-    const code = reasons[0]?.split(" ")[1] ?? null;
-    const partial = nulls.length < BYTE_FIELDS.length;
-    return {
-      ...base,
-      outcome: partial || !reasons.length ? "error" : "null",
-      bytes: null,
-      code,
-      reasons,
-      problem: partial
-        ? "only some byte fields are null"
-        : reasons.length
-          ? null
-          : "null without a `bundle:` entry in unavailable",
-    };
-  }
-  let gross: string[] = [];
-  let reviewed: string[] = [];
-  const outOfBand: string[] = [];
-  if (ranges) {
-    for (const field of BYTE_FIELDS) {
-      const x = seen.bundle[field] ?? 0;
-      const range = ranges[field];
-      const text = `${REPORT_FIELD[field]} ${x} vs ${range.lo}..${range.hi}, vite ${viteValue(reference, field) ?? "not built"}`;
-      if (grossError(x, range)) gross.push(text);
-      else if (!inBand(x, range)) outOfBand.push(text);
-    }
-  }
-  if (gross.length && exception) {
-    const lock = await lockSha256(pkg.id);
-    const mismatch = exceptionMismatch(exception, pkg.version, lock, seen.bundle, reference);
-    if (mismatch) gross = gross.map((text) => `${text} (reviewed exception stale: ${mismatch})`);
-    else [reviewed, gross] = [[...gross, `cause: ${exception.cause}`], []];
-  }
-  return {
-    ...base,
-    outcome: "number",
-    bytes: seen.bundle,
-    code: null,
-    reasons: seen.reasons,
-    problem: null,
     gross,
     reviewed_exception: reviewed,
     out_of_band: outOfBand,
   };
 }
+
+const isMeasurement = (value: unknown): value is Measurement =>
+  typeof value === "object" &&
+  value !== null &&
+  "outcome" in value &&
+  (value.outcome === "number" || value.outcome === "null" || value.outcome === "error") &&
+  "reasons" in value &&
+  Array.isArray(value.reasons);
 
 async function runAll(resume: boolean): Promise<WildResult[]> {
   const packages = await loadWild();
@@ -241,46 +239,56 @@ async function runAll(resume: boolean): Promise<WildResult[]> {
   const references = asRecord(
     asRecord(JSON.parse(await readFile(join(HERE, "wild-reference.json"), "utf8"))).cases,
   );
-  const exceptions = await loadExceptions();
+  const exceptions = (await loadExceptions()).filter((e) => e.set === "wild");
   if (!resume) await rm(RUN_DIR, { recursive: true, force: true });
   await mkdir(RUN_DIR, { recursive: true });
   const scratch = await scratchProject("browser");
   const queue = [...packages];
   const done: WildResult[] = [];
+  let reused = 0;
   try {
     const workers = Array.from({ length: CONCURRENCY }, async (_, index) => {
       await new Promise((resolve) => setTimeout(resolve, index * (PAUSE_MS / CONCURRENCY)));
       for (let c = queue.shift(); c; c = queue.shift()) {
+        const args = entryArgs(c.imports);
+        const snippet = args[1] ?? "";
+        const lock = await lockSha256("wild", c.id);
+        const key = await measurementKey(snippet, lock);
         const file = join(RUN_DIR, `${c.id}.json`);
-        const cached = resume ? await readFile(file, "utf8").catch(() => null) : null;
-        if (cached) {
-          done.push(JSON.parse(cached));
-          continue;
+        const cached = resume
+          ? asRecord(JSON.parse(await readFile(file, "utf8").catch(() => "{}")))
+          : {};
+        let measurement =
+          cached.key === key && isMeasurement(cached.measurement) ? cached.measurement : null;
+        if (measurement) reused += 1;
+        else {
+          measurement = await measureCli(scratch, `${c.package}@${c.version}`, args);
+          await writeFile(file, `${JSON.stringify({ key, measurement })}\n`);
+          await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
         }
-        const result = await measureOne(
-          scratch,
-          asRecord(references[c.id]),
-          {
-            id: c.id,
-            name: c.package,
-            version: c.version,
-            downloads: downloads.get(c.package) ?? 0,
-          },
-          entryArgs(c.imports),
-          exceptions.find((e) => e.id === c.id) ?? null,
-        );
-        await writeFile(file, `${JSON.stringify(result)}\n`);
+        const pkg = {
+          id: c.id,
+          name: c.package,
+          version: c.version,
+          downloads: downloads.get(c.package) ?? 0,
+        };
+        const exception = exceptions.find((e) => e.id === c.id) ?? null;
+        const result = scoreOne(pkg, measurement, asRecord(references[c.id]), {
+          exception,
+          snippet,
+          lock,
+        });
         done.push(result);
         console.log(
           `${done.length}/${packages.length} ${c.package}: ${result.outcome}${result.code ? ` ${result.code}` : ""}${result.auditor_fetch ? " [auditor: fetch]" : ""}`,
         );
-        await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
       }
     });
     await Promise.all(workers);
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
+  if (resume) console.log(`reused ${reused} cached measurements with unchanged inputs`);
   const order = new Map(packages.map((c, i) => [c.id, i]));
   return done.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 }
@@ -338,9 +346,7 @@ export async function runWild(options: { resume: boolean }): Promise<void> {
     for (const r of grossErrors) lines.push(`  ${r.name}@${r.version}: ${r.gross.join(", ")}`);
   }
   if (reviewedExceptions.length) {
-    lines.push(
-      "\ngross errors covered by a reviewed exception (wild-exceptions.json, not failed):",
-    );
+    lines.push("\ngross errors covered by a reviewed exception (exceptions.json, not failed):");
     for (const r of reviewedExceptions)
       lines.push(`  ${r.name}@${r.version}: ${r.reviewed_exception.join(", ")}`);
   }

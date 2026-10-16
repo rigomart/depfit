@@ -1,9 +1,10 @@
 /**
  * Builds the reference sizes in eval/bundle/reference.json: every case's imports through rollup 4
  * (+ terser) and webpack 5, which share no resolver, CJS transform, tree-shaker or minifier with
- * rolldown/oxc. Semantics follow eval/bundle/SETTINGS.md. Mandatory browser measure cases also go
- * through a real `vite build` (the `vite` key, gate C's anchor; it is not part of the rollup/webpack
- * band, because Vite 8 bundles with rolldown).
+ * rolldown/oxc, with the same production semantics (`process.env.NODE_ENV`, `import.meta.env`).
+ * Mandatory browser measure cases also get gate C's conformance build, a stock `vite build` with
+ * depfit's documented configuration (the `vite` key; not part of the rollup/webpack band, because
+ * depfit is Vite).
  *   bun eval/bundle/reference.ts [caseId...]
  * Re-runs itself under Node when started with Bun, so gzip (node:zlib) is the same either way.
  */
@@ -42,6 +43,10 @@ if (process.versions.bun) {
   process.exit(rerun.status ?? 1);
 }
 
+// Vite reads the process environment: build as a clean production shell would (SETTINGS.md).
+process.env.NODE_ENV = "production";
+for (const key of Object.keys(process.env)) if (key.startsWith("VITE_")) delete process.env[key];
+
 const run = promisify(execFile);
 const WILD = process.argv.includes("--wild");
 const REFERENCE_FILE = join(import.meta.dirname, WILD ? "wild-reference.json" : "reference.json");
@@ -71,6 +76,21 @@ const CONDITIONS: Record<Target, string[]> = {
 
 const NPM_FLAGS = ["--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error"];
 const NODE_ENV = JSON.stringify("production");
+/**
+ * What Vite defines in a production client build, given to rollup and webpack too so all three
+ * share production semantics: `import.meta.env` branches are dead code (zustand's devtools).
+ */
+const IMPORT_META_ENV = { BASE_URL: "/", MODE: "production", DEV: false, PROD: true, SSR: false };
+const PRODUCTION_DEFINES: Record<string, string> = {
+  "process.env.NODE_ENV": NODE_ENV,
+  "import.meta.env": JSON.stringify(IMPORT_META_ENV),
+  ...Object.fromEntries(
+    Object.entries(IMPORT_META_ENV).map(([key, value]) => [
+      `import.meta.env.${key}`,
+      JSON.stringify(value),
+    ]),
+  ),
+};
 const CSS_FILE = /\.css(\?.*)?$/;
 const WASM_FILE = /\.wasm(\?.*)?$/;
 const ASSET_FILE =
@@ -97,7 +117,18 @@ type SideFile = { name: string; bytes: number };
 
 async function installTools(): Promise<{ dir: string; versions: Record<string, string> }> {
   const dir = join(tmpdir(), "depfit-eval-bundle-tools");
-  const manifest = JSON.stringify({ name: "tools", private: true, dependencies: PINNED_TOOLS });
+  // Vite's rolldown is pinned like depfit's own (package.json `overrides`), so gate C compares the
+  // same engine.
+  const depfitManifest = asRecord(
+    JSON.parse(await readFile(join(import.meta.dirname, "../../package.json"), "utf8")),
+  );
+  const overrides = asRecord(depfitManifest.overrides);
+  const manifest = JSON.stringify({
+    name: "tools",
+    private: true,
+    dependencies: PINNED_TOOLS,
+    overrides,
+  });
   const current = await readFile(join(dir, "package.json"), "utf8").catch(() => "");
   const ready = await stat(join(dir, "node_modules", "webpack")).then(
     () => true,
@@ -337,7 +368,7 @@ async function buildRollup(input: BuildInput): Promise<Measured> {
         if (code === "UNRESOLVED_IMPORT") unresolved.push(String(exporter));
       },
       plugins: [
-        replace({ preventAssignment: true, values: { "process.env.NODE_ENV": NODE_ENV } }),
+        replace({ preventAssignment: true, values: PRODUCTION_DEFINES }),
         nodeResolve({
           rootDir: dir,
           browser: true,
@@ -410,6 +441,11 @@ function contextModules(compilation: Record<string, unknown>): string[] {
 async function buildWebpack(input: BuildInput): Promise<Measured> {
   const { toolsDir, dir, entry, target, external, builtins } = input;
   const webpack = await loadFunction(toolsDir, "webpack");
+  // webpack's module is a function with its plugins as properties.
+  const webpackModule: unknown = createRequire(join(toolsDir, "package.json"))("webpack");
+  const DefinePlugin: unknown =
+    typeof webpackModule === "function" ? Reflect.get(webpackModule, "DefinePlugin") : undefined;
+  if (typeof DefinePlugin !== "function") throw new Error("webpack: no DefinePlugin");
   const out = await mkdtemp(join(tmpdir(), "depfit-ref-out-"));
   try {
     const config = {
@@ -439,6 +475,14 @@ async function buildWebpack(input: BuildInput): Promise<Measured> {
           { test: NON_JS_FILE, type: "asset/resource" },
         ],
       },
+      // webpack's production mode defines process.env.NODE_ENV itself.
+      plugins: [
+        Reflect.construct(DefinePlugin, [
+          Object.fromEntries(
+            Object.entries(PRODUCTION_DEFINES).filter(([key]) => key !== "process.env.NODE_ENV"),
+          ),
+        ]),
+      ],
       stats: "errors-only",
     };
     const compilation = await new Promise<Record<string, unknown>>((done, fail) => {
@@ -478,83 +522,61 @@ async function buildWebpack(input: BuildInput): Promise<Measured> {
 }
 
 /**
- * A real Vite production client build of the snippet, in app mode (an index.html entry, no
- * `build.lib`) with Vite's defaults except: no asset inlining, peers external, no modulepreload
- * polyfill, no CSS code split. Output chunks are measured like the other builders'.
- *
- * With `preloadRuntime: false`, Vite's `native:import-analysis-build` plugin is removed from the
- * resolved config. That plugin is what wraps each `import()` in the preload helper, adds the
- * `__vite__mapDeps` table and emits the helper, in every client app build (`build.modulePreload:
- * false` does not stop it). Without it the chunks hold only the bundler's output for the package,
- * which is what depfit measures (README "Gate C normalization"). A Vite version without that
- * plugin fails the build instead of measuring the runtime.
+ * Gate C's conformance build: a stock `vite build` of the snippet with the configuration
+ * SETTINGS.md documents for depfit, written here without depfit's code. A JS entry, no config,
+ * `.env` or public dir, nothing written, peers external through Vite's `esmExternalRequirePlugin`.
+ * The process runs with `NODE_ENV=production` and no `VITE_*` variables (set at startup).
+ * Output chunks are measured like the other builders'.
  */
-async function buildVite(input: BuildInput, preloadRuntime = true): Promise<Measured> {
+async function buildVite(input: BuildInput): Promise<Measured> {
   const { toolsDir, dir, entry, external } = input;
-  const build = await loadFunction(toolsDir, "vite", "build");
-  const withoutRuntime = {
-    name: "depfit:without-preload-runtime",
-    configResolved(config: { plugins: { name: string }[] }) {
-      const at = config.plugins.findIndex((plugin) => plugin.name === VITE_RUNTIME_PLUGIN);
-      if (at < 0) throw new Error(`vite: no ${VITE_RUNTIME_PLUGIN} plugin to remove`);
-      config.plugins.splice(at, 1);
-    },
-  };
-  const html = join(dir, "index.html");
-  await writeFile(
-    html,
-    `<!doctype html><html><body><script type="module" src="./${basename(entry)}"></script></body></html>\n`,
-  );
-  try {
-    const result = await build({
-      root: dir,
-      configFile: false,
-      envFile: false,
-      logLevel: "error",
-      plugins: preloadRuntime ? [] : [withoutRuntime],
-      build: {
-        write: false,
-        assetsInlineLimit: 0,
-        cssCodeSplit: false,
-        modulePreload: { polyfill: false },
-        reportCompressedSize: false,
-        rollupOptions: { external: external ? (id: string) => external.test(id) : undefined },
-      },
-    });
-    // One output per environment/format; an app build yields a single one.
-    const items = (Array.isArray(result) ? result : [result])
-      .flatMap((item) => asArray(asRecord(item).output))
-      .map(asRecord);
-    const chunks = items.filter((item) => item.type === "chunk");
-    const byName = new Map(chunks.map((chunk) => [asString(chunk.fileName), chunk]));
-    const eager = new Set<string>();
-    const visit = (name: string) => {
-      if (eager.has(name)) return;
-      eager.add(name);
-      for (const next of asStringArray(byName.get(name)?.imports)) visit(next);
-    };
-    for (const chunk of chunks) if (chunk.isEntry === true) visit(String(chunk.fileName));
-    const files = items.flatMap((item) => {
-      const name = asString(item.fileName);
-      const source = item.source;
-      if (item.type !== "asset" || !name || !NON_JS_FILE.test(name)) return [];
-      const bytes = typeof source === "string" ? bytesOf(source) : sizeOf(source);
-      return [{ name, bytes }];
-    });
-    return measure(
-      chunks.map((chunk) => ({
-        code: asString(chunk.code) ?? "",
-        eager: eager.has(String(chunk.fileName)),
-      })),
-      files,
-    );
-  } finally {
-    await rm(html, { force: true });
+  const file = createRequire(join(toolsDir, "package.json")).resolve("vite");
+  const vite = asRecord(await import(pathToFileURL(file).href));
+  const { build, esmExternalRequirePlugin } = vite;
+  if (typeof build !== "function" || typeof esmExternalRequirePlugin !== "function") {
+    throw new Error("vite: no build or esmExternalRequirePlugin export");
   }
+  const result = await build({
+    root: dir,
+    configFile: false,
+    envDir: false,
+    envPrefix: [],
+    mode: "production",
+    publicDir: false,
+    base: "/",
+    cacheDir: join(dir, ".vite-cache"),
+    logLevel: "silent",
+    plugins: external ? [esmExternalRequirePlugin({ external: [external] })] : [],
+    build: { write: false, reportCompressedSize: false, rollupOptions: { input: entry } },
+  });
+  // One output per environment/format; an app build yields a single one.
+  const items = (Array.isArray(result) ? result : [result])
+    .flatMap((item) => asArray(asRecord(item).output))
+    .map(asRecord);
+  const chunks = items.filter((item) => item.type === "chunk");
+  const byName = new Map(chunks.map((chunk) => [asString(chunk.fileName), chunk]));
+  const eager = new Set<string>();
+  const visit = (name: string) => {
+    if (eager.has(name)) return;
+    eager.add(name);
+    for (const next of asStringArray(byName.get(name)?.imports)) visit(next);
+  };
+  for (const chunk of chunks) if (chunk.isEntry === true) visit(String(chunk.fileName));
+  const files = items.flatMap((item) => {
+    const name = asString(item.fileName);
+    const source = item.source;
+    if (item.type !== "asset" || !name || !NON_JS_FILE.test(name)) return [];
+    const bytes = typeof source === "string" ? bytesOf(source) : sizeOf(source);
+    return [{ name, bytes }];
+  });
+  return measure(
+    chunks.map((chunk) => ({
+      code: asString(chunk.code) ?? "",
+      eager: eager.has(String(chunk.fileName)),
+    })),
+    files,
+  );
 }
-
-/** The Vite plugin that injects its dynamic-import runtime (preload helper and wrapping). */
-const VITE_RUNTIME_PLUGIN = "native:import-analysis-build";
 
 function sizeOf(value: unknown): number {
   return value instanceof Uint8Array ? value.byteLength : 0;
@@ -594,13 +616,6 @@ const groups = new Map<string, Case[]>();
 for (const c of cases) {
   const spec = `${c.package}@${c.version}`;
   groups.set(spec, [...(groups.get(spec) ?? []), c]);
-}
-
-/** Gate C's anchor for one case: the Vite build without its injected runtime, all four fields. */
-function viteAnchor(withoutRuntime: Outcome | null) {
-  if (!withoutRuntime || "error" in withoutRuntime) return null;
-  const { min_bytes, gzip_bytes, lazy_min_bytes, lazy_gzip_bytes } = withoutRuntime;
-  return { min_bytes, gzip_bytes, lazy_min_bytes, lazy_gzip_bytes };
 }
 
 function caseHeader(c: Case, peers: string[]) {
@@ -668,23 +683,17 @@ async function referenceGroup(spec: string, group: Case[]): Promise<void> {
           },
         }),
       );
-      // Gate C's anchor (mandatory browser measure cases of step 1), and evidence for gate W's
-      // reviewed exceptions (every wild package).
+      // Gate C's conformance build: mandatory browser measure cases of step 1.
       const anchored =
-        WILD || (c.mandatory && c.expect === "measure" && c.target === "browser" && c.step === "1");
+        !WILD && c.mandatory && c.expect === "measure" && c.target === "browser" && c.step === "1";
       const vite = anchored
         ? await attempt(() => buildVite({ ...base, builtins: new Set() }))
-        : null;
-      // The same build without Vite's injected dynamic-import runtime (gate C's normalized anchor).
-      const viteWithoutRuntime = anchored
-        ? await attempt(() => buildVite({ ...base, builtins: new Set() }, false))
         : null;
       // Gate W: what the independent auditor finds in the outputs that built (null: no output).
       const audit: Record<string, Hit[] | null> = {
         rollup: rollupChunks ? auditBuild(rollupChunks, peers, parseChunk) : null,
         webpack: webpackChunks ? auditBuild(webpackChunks, peers, parseChunk) : null,
       };
-      const anchor = viteAnchor(viteWithoutRuntime);
       results[c.id] = {
         ...caseHeader(c, peers),
         ...(WILD ? { package: c.package, version: c.version } : { peer_only_packages: peerOnly }),
@@ -701,15 +710,9 @@ async function referenceGroup(spec: string, group: Case[]): Promise<void> {
         rollup,
         webpack,
         ...(vite ? { vite } : {}),
-        ...(viteWithoutRuntime && "error" in viteWithoutRuntime
-          ? { vite_without_runtime_error: viteWithoutRuntime.error }
-          : {}),
-        ...(anchor ? { vite_anchor: anchor } : {}),
         ...(WILD ? { audit } : {}),
       };
-      const viteNote = vite
-        ? ` | vite ${show(vite)} / without runtime ${show(viteWithoutRuntime ?? vite)}`
-        : "";
+      const viteNote = vite ? ` | vite ${show(vite)}` : "";
       console.log(`${c.id}: rollup ${show(rollup)} | webpack ${show(webpack)}${viteNote}`);
     }
   } finally {

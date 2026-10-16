@@ -1036,5 +1036,22 @@
         "unresolved_imports": []
       }
     }
+  },
+  {
+    "id": "zustand-devtools",
+    "package": "zustand",
+    "version": "5.0.15",
+    "imports": [
+      {
+        "from": "zustand/middleware",
+        "named": ["devtools"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["import-meta-env", "subpath"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "zustand's devtools middleware branches on `import.meta.env.MODE`. Vite's production build defines it, so the development branch is dead code; Codex review round 4 found the old rolldown setup kept such branches (a silent wrong number). The rollup and webpack references define the same production `import.meta.env`. All peers (react, immer, use-sync-external-store) are optional and external."
   }
 ]

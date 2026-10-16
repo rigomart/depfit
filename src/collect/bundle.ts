@@ -1,29 +1,28 @@
 /**
- * Bundle size of a `--bundle-entry` snippet: rolldown configured like Vite 8's client build,
- * run on the candidate's isolated install. Settings: eval/bundle/SETTINGS.md; contract:
- * eval/bundle/SPEC.md. rolldown is loaded with a dynamic import, only when bundling is requested.
+ * Bundle size of a `--bundle-entry` snippet: a real `vite build` (Vite's production defaults) of
+ * the snippet, run in its own Node process on the candidate's isolated install (`vite-build.mjs`).
+ * Settings: eval/bundle/SETTINGS.md; contract: eval/bundle/SPEC.md. Nothing of Vite or rolldown is
+ * loaded unless bundling is requested.
  *
  * Unmeasurable builds give null bytes and `bundle: <CODE> [names]` reasons, never a smaller
- * number: unresolved imports are errors, and output that still imports a module the bundle does
- * not contain is rejected after the fact. The bytes are what the bundler emits; they make no
- * claim that the code runs in a browser.
+ * number. Vite turns several broken inputs into a quiet success (a Node built-in becomes an empty
+ * stub, a missing optional peer a throw, a missing namespace member `undefined`, an asset a URL),
+ * so each is checked from its own structural signal (`problemsFromBuild`). The bytes are what Vite
+ * emits; they make no claim that the code runs in a browser.
  */
-import { realpath, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { readFile, writeFile } from "node:fs/promises";
+import { builtinModules, createRequire } from "node:module";
 import { join, posix } from "node:path";
+import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
-import type { OutputChunk, Plugin, RolldownLog } from "rolldown";
 import type { ESTree } from "rolldown/utils";
 import { type BundleEntry, entryModuleSource, isCandidateSource } from "./bundle-entry.ts";
 import { isRecord } from "./util.ts";
 
-/** Vite's client conditions; rolldown adds import/require/default per import kind. */
-const CONDITIONS = ["module", "browser", "production"];
-const MAIN_FIELDS = ["browser", "module", "main"];
-/** Vite 8's default `build.target` (baseline widely available). */
-const TARGET = ["chrome111", "edge111", "firefox114", "safari16.4", "ios16.4"];
 const ENTRY_FILE = "__depfit_entry.mjs";
-/** Vite 8's `json` defaults in a build (`namedExports`, `stringify: "auto"`, minified). */
-const VITE_JSON = { namedExports: true, stringify: "auto", minify: true } as const;
+const RUNNER = fileURLToPath(new URL("./vite-build.mjs", import.meta.url));
+const BUILD_TIMEOUT_MS = 5 * 60_000;
 
 /** Module extensions that hold JS (or JSON, which bundles to JS); others are CSS, wasm, assets. */
 const JS_EXTENSIONS = new Set([
@@ -38,9 +37,13 @@ const JS_EXTENSIONS = new Set([
   ".json",
 ]);
 
+/** Vite's import queries that turn a file into a URL, a string, a worker or a wasm instance. */
+const ASSET_QUERY = /[?&](url|raw|inline|worker|sharedworker|init)\b/;
+const NODE_BUILTINS = new Set(builtinModules);
+
 /**
  * One reason a bundle is unmeasurable. `code` is UNRESOLVED_IMPORT, MISSING_EXPORT,
- * IMPORT_OUTSIDE_BUNDLE, NO_ENTRY, or NON_JS_IMPORT (SPEC.md), or rolldown's own code for any other
+ * IMPORT_OUTSIDE_BUNDLE, NO_ENTRY, or NON_JS_IMPORT (SPEC.md), or Vite's own code for any other
  * build error (e.g. PARSE_ERROR).
  */
 export type BundleProblem = { code: string; specifier: string | null };
@@ -55,6 +58,52 @@ export type BundleBytes = {
 export type BundleOutcome =
   | { bytes: BundleBytes; problems: [] }
   | { bytes: null; problems: BundleProblem[] };
+
+// --- what vite-build.mjs reads and prints -----------------------------------------------------
+
+export type ViteBuildRequest = { root: string; entry: string; peers: string[] };
+
+export type ViteResolution = {
+  source: string;
+  /** Relative to the root; null for the entry itself. */
+  importer: string | null;
+  /** Relative to the root, or Vite's id (`\0...`, `__vite-browser-external...`); null if unresolved. */
+  id: string | null;
+  external: boolean;
+  /** Resolved to Vite's empty stub because the importing package maps it to false (`browser`). */
+  browserFalse: boolean;
+};
+
+export type ViteLog = {
+  level: string;
+  code: string | null;
+  /** The plugin that raised an error (`PLUGIN_ERROR`), e.g. `builtin:vite-json`. */
+  plugin: string | null;
+  exporter: string | null;
+  id: string | null;
+};
+
+export type ViteChunk = {
+  fileName: string;
+  isEntry: boolean;
+  imports: string[];
+  dynamicImports: string[];
+  moduleIds: string[];
+  code: string;
+};
+
+export type ViteBuildResult = {
+  vite: string;
+  rolldown: string;
+  resolutions: ViteResolution[];
+  logs: ViteLog[];
+  /** `new URL(..., import.meta.url)` in package sources (assets, worker files), by module. */
+  sourceRefs: { kind: string; id: string }[];
+  chunks: ViteChunk[];
+  assets: string[];
+  /** The build failed: Vite's (or rolldown's) errors, with their codes. */
+  errors: ViteLog[] | null;
+};
 
 /**
  * Peer dependencies (optional ones too) as an external pattern: the name and its subpaths.
@@ -126,9 +175,7 @@ export function chunkBytes(chunks: ChunkInfo[]): BundleBytes {
   };
 }
 
-// --- imports outside the bundle -------------------------------------------------------------------
-
-type Parse = (code: string) => ESTree.Program;
+// --- reasons --------------------------------------------------------------------------------------
 
 /** How many names one `unavailable` entry lists before it only counts the rest. */
 const NAMES_PER_REASON = 3;
@@ -155,6 +202,10 @@ export function bundleReasons(problems: BundleProblem[]): string[] {
     })
     .sort();
 }
+
+// --- imports outside the bundle -------------------------------------------------------------------
+
+type Parse = (code: string) => ESTree.Program;
 
 /** The value of a string literal or a template literal without expressions, else null. */
 function stringValue(node: unknown): string | null {
@@ -219,38 +270,7 @@ export function importsOutsideBundle(
   return [...new Set(outside)];
 }
 
-// --- running rolldown ----------------------------------------------------------------------------
-
-type Rolldown = typeof import("rolldown");
-
-let loaded: Promise<{
-  rolldown: Rolldown;
-  plugins: typeof import("rolldown/plugins");
-  viteJsonPlugin: typeof import("rolldown/experimental").viteJsonPlugin;
-  parse: Parse;
-}> | null = null;
-
-/** rolldown, its plugins (Vite's JSON one included) and parser, loaded once on first use. */
-function loadRolldown() {
-  loaded ??= Promise.all([
-    import("rolldown"),
-    import("rolldown/plugins"),
-    import("rolldown/parseAst"),
-    import("rolldown/experimental"),
-  ]).then(([rolldown, plugins, { parseAst }, { viteJsonPlugin }]) => ({
-    rolldown,
-    plugins,
-    viteJsonPlugin,
-    parse: (code: string) => parseAst(code, { lang: "js", sourceType: "module" }),
-  }));
-  return loaded;
-}
-
-/** `rolldown@<version>`; starts loading rolldown. */
-export async function bundlerName(): Promise<string> {
-  const { rolldown } = await loadRolldown();
-  return `rolldown@${rolldown.VERSION}`;
-}
+// --- labels ---------------------------------------------------------------------------------------
 
 /** "pkg/lib/file.js" for a file in node_modules, the base name otherwise. */
 export function moduleLabel(id: string): string {
@@ -272,61 +292,201 @@ export function isNonJsModule(id: string): boolean {
   return extension !== "" && extension !== ".node" && !JS_EXTENSIONS.has(extension);
 }
 
-function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+/** `fs`, `node:fs`, `fs/promises`: names Vite replaces with an empty browser stub. */
+function isNodeBuiltin(specifier: string): boolean {
+  return (
+    specifier.startsWith("node:") ||
+    NODE_BUILTINS.has(specifier) ||
+    NODE_BUILTINS.has(specifier.split("/")[0] ?? "")
+  );
 }
+
+// --- what the build means -------------------------------------------------------------------------
 
 /**
  * An import that does not resolve: NO_ENTRY when it is the snippet's own import of the candidate
- * (the package has no entry point for it), else UNRESOLVED_IMPORT. `entryFiles` are the entry
- * module's paths as written and as resolved through symlinks.
+ * (the package has no entry point for it), else UNRESOLVED_IMPORT.
  */
 export function unresolvedProblem(
   source: string,
-  importer: string | undefined,
-  entryFiles: string[],
+  fromEntry: boolean,
   candidate: string,
 ): BundleProblem {
-  const fromEntry = importer !== undefined && entryFiles.includes(importer);
   const noEntry = fromEntry && isCandidateSource(source, candidate);
   return { code: noEntry ? "NO_ENTRY" : "UNRESOLVED_IMPORT", specifier: source };
 }
 
+/** A log's subject: a module path as "pkg/file.js", a bare specifier as written. */
+const logSubject = (log: ViteLog): string | null => {
+  const subject = log.exporter ?? log.id ?? log.plugin;
+  if (subject === null) return null;
+  const isPath =
+    subject.startsWith("/") || subject.startsWith(".") || subject.includes("node_modules/");
+  return isPath ? moduleLabel(subject) : subject;
+};
+
+const logProblem = (log: ViteLog, code: string): BundleProblem => ({
+  code,
+  specifier: logSubject(log),
+});
+
 /**
- * Records every import that does not resolve and every non-JS module, and loads non-JS modules
- * as empty JS so the build goes on and reports every problem at once.
+ * Why a `vite build` result is unmeasurable, each from its own structural signal (SPEC.md); empty
+ * when the bytes can be reported. `peers` are the externals; `candidate` the snippet's package.
  */
-function probePlugin(
-  unresolved: (source: string, importer: string | undefined) => BundleProblem,
-  problems: BundleProblem[],
-): Plugin {
-  return {
-    name: "depfit-probe",
-    async resolveId(source, importer, options) {
-      const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
-      if (resolved === null) {
-        problems.push(unresolved(source, importer));
-      } else if (!resolved.external && isNonJsModule(resolved.id)) {
-        problems.push({ code: "NON_JS_IMPORT", specifier: moduleLabel(resolved.id) });
-      }
-      // Let rolldown resolve again with its own defaults, so resolution is unchanged.
-      return null;
-    },
-    load(id) {
-      return isNonJsModule(id) ? { code: "", moduleType: "js" } : null;
-    },
-  };
+export function problemsFromBuild(
+  result: ViteBuildResult,
+  peers: string[],
+  candidate: string,
+  parse: Parse,
+): BundleProblem[] {
+  const problems: BundleProblem[] = [];
+  const unresolved = new Set<string>();
+  for (const { source, importer, id, external, browserFalse } of result.resolutions) {
+    if (id === null) {
+      unresolved.add(source);
+      problems.push(unresolvedProblem(source, importer === ENTRY_FILE, candidate));
+    } else if (id.includes("__vite-browser-external") && isNodeBuiltin(source) && !browserFalse) {
+      // A package's own `browser` mapping to false (`"./x.js": false`, or `"crypto": false`)
+      // resolves to the same stub and is measured; only an unmapped Node built-in is not.
+      problems.push({ code: "UNRESOLVED_IMPORT", specifier: source });
+    } else if (
+      !external &&
+      !id.startsWith("\0") &&
+      (ASSET_QUERY.test(source) || ASSET_QUERY.test(id) || isNonJsModule(id))
+    ) {
+      problems.push({ code: "NON_JS_IMPORT", specifier: moduleLabel(id) });
+    }
+  }
+  for (const log of result.logs) {
+    if (log.code === "UNRESOLVED_IMPORT" && !unresolved.has(log.exporter ?? "")) {
+      problems.push(logProblem(log, "UNRESOLVED_IMPORT"));
+    } else if (log.code === "MISSING_EXPORT" || log.code === "IMPORT_IS_UNDEFINED") {
+      problems.push(logProblem(log, "MISSING_EXPORT"));
+    }
+  }
+  for (const ref of result.sourceRefs) {
+    problems.push({ code: "NON_JS_IMPORT", specifier: `${ref.kind} in ${moduleLabel(ref.id)}` });
+  }
+  for (const asset of result.assets) problems.push({ code: "NON_JS_IMPORT", specifier: asset });
+  for (const chunk of result.chunks) {
+    for (const id of chunk.moduleIds) {
+      // `__vite-optional-peer-dep:<peer>:<importer>`: Vite replaced a missing optional peer.
+      const match = /__vite-optional-peer-dep:([^:]+)/.exec(id);
+      if (match) problems.push({ code: "UNRESOLVED_IMPORT", specifier: match[1] ?? id });
+    }
+  }
+  for (const error of result.errors ?? []) {
+    problems.push(logProblem(error, error.code ?? "BUILD_ERROR"));
+  }
+  if (problems.length) return problems;
+  return importsOutsideBundle(result.chunks, parse, peers).map((specifier) => ({
+    code: "IMPORT_OUTSIDE_BUNDLE",
+    specifier,
+  }));
 }
 
-function problemsFromError(error: unknown): BundleProblem[] {
-  const errors = isRecord(error) && Array.isArray(error.errors) ? error.errors : [error];
-  return errors.map((item): BundleProblem => {
-    const log = isRecord(item) ? item : {};
-    const code = typeof log.code === "string" ? log.code : "BUILD_ERROR";
-    const at =
-      typeof log.exporter === "string" ? log.exporter : typeof log.id === "string" ? log.id : null;
-    return { code, specifier: at === null ? null : moduleLabel(at) };
+// --- running Vite ---------------------------------------------------------------------------------
+
+/**
+ * The child's environment: `NODE_ENV=production` and nothing from the shell that Vite reads
+ * (`NODE_ENV`, `VITE_*`), only what a process needs to start.
+ */
+function childEnv(): Record<string, string> {
+  const keep = ["PATH", "HOME", "TMPDIR", "TEMP", "TMP", "SYSTEMROOT", "SystemRoot", "USERPROFILE"];
+  const env: Record<string, string> = { NODE_ENV: "production" };
+  for (const key of keep) {
+    const value = process.env[key];
+    if (value !== undefined) env[key] = value;
+  }
+  return env;
+}
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+
+function isBuildResult(value: unknown): value is ViteBuildResult {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.vite === "string" &&
+    Array.isArray(value.resolutions) &&
+    Array.isArray(value.logs) &&
+    Array.isArray(value.sourceRefs) &&
+    Array.isArray(value.chunks) &&
+    value.chunks.every(isChunk) &&
+    isStringArray(value.assets) &&
+    (value.errors === null || Array.isArray(value.errors))
+  );
+}
+
+function isChunk(value: unknown): value is ViteChunk {
+  return (
+    isRecord(value) &&
+    typeof value.fileName === "string" &&
+    typeof value.isEntry === "boolean" &&
+    typeof value.code === "string" &&
+    isStringArray(value.imports) &&
+    isStringArray(value.dynamicImports) &&
+    isStringArray(value.moduleIds)
+  );
+}
+
+/**
+ * Runs `vite-build.mjs` with Node, in `request.root`. Node, not depfit's own runtime: Vite's output
+ * depends on the runtime (its preload helper is built from function source text), and Vite users run
+ * Node. Node is already required for npm.
+ */
+function runViteBuild(request: ViteBuildRequest): Promise<ViteBuildResult> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("node", [RUNNER], {
+      cwd: request.root,
+      env: childEnv(),
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: BUILD_TIMEOUT_MS,
+    });
+    const out: Buffer[] = [];
+    let err = "";
+    child.stdout.on("data", (data: Buffer) => out.push(data));
+    child.stderr.on("data", (data: Buffer) => {
+      err += String(data);
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      let parsed: unknown = null;
+      try {
+        parsed = JSON.parse(Buffer.concat(out).toString("utf8"));
+      } catch {
+        // Reported below with the child's stderr.
+      }
+      if (isBuildResult(parsed)) resolve(parsed);
+      else reject(new Error(`vite build exited ${code}: ${err.trim().split("\n")[0] ?? ""}`));
+    });
+    child.stdin.end(JSON.stringify(request));
   });
+}
+
+let parser: Promise<Parse> | null = null;
+
+/** rolldown's parser (the one Vite uses), loaded once on first use. */
+function loadParser(): Promise<Parse> {
+  parser ??= import("rolldown/parseAst").then(
+    ({ parseAst }) =>
+      (code: string) =>
+        parseAst(code, { lang: "js", sourceType: "module" }),
+  );
+  return parser;
+}
+
+/** `vite@<version> (rolldown@<version>)` of the Vite that `vite-build.mjs` imports. */
+export async function bundlerName(): Promise<string> {
+  const require = createRequire(RUNNER);
+  const versionOf = async (manifest: string) => {
+    const parsed: unknown = JSON.parse(await readFile(manifest, "utf8"));
+    return isRecord(parsed) && typeof parsed.version === "string" ? parsed.version : "?";
+  };
+  const viteManifest = require.resolve("vite/package.json");
+  const rolldownManifest = createRequire(viteManifest).resolve("rolldown/package.json");
+  return `vite@${await versionOf(viteManifest)} (rolldown@${await versionOf(rolldownManifest)})`;
 }
 
 /**
@@ -338,74 +498,13 @@ export async function bundleEntry(
   entry: BundleEntry,
   externals: string[],
 ): Promise<BundleOutcome> {
-  const { rolldown, plugins, viteJsonPlugin, parse } = await loadRolldown();
   const entryFile = join(dir, ENTRY_FILE);
   await writeFile(entryFile, entryModuleSource(entry));
-  const entryFiles = [entryFile, await realpath(entryFile)];
-  const unresolved = (source: string, importer: string | undefined) =>
-    unresolvedProblem(source, importer, entryFiles, entry.candidate);
-
-  const problems: BundleProblem[] = [];
-  const external = externals.flatMap((name) => [name, new RegExp(`^${escapeRegExp(name)}/`)]);
-  let chunks: OutputChunk[];
-  try {
-    const build = await rolldown.rolldown({
-      input: entryFile,
-      cwd: dir,
-      platform: "browser",
-      resolve: { conditionNames: CONDITIONS, mainFields: MAIN_FIELDS },
-      transform: { define: { "process.env.NODE_ENV": '"production"' }, target: TARGET },
-      preserveEntrySignatures: false,
-      plugins: [
-        probePlugin(unresolved, problems),
-        // Peers are external; a CommonJS require() of one becomes an import of it, as it would
-        // be in an app that has the peer, instead of a runtime require() helper.
-        ...(external.length ? [plugins.esmExternalRequirePlugin({ external })] : []),
-        // Vite's JSON handling with its defaults for a build: named exports, JSON.parse for
-        // large files, minified. A require() of JSON then gets the same interop as in Vite.
-        viteJsonPlugin(VITE_JSON),
-      ],
-      onLog(level, log: RolldownLog) {
-        // rolldown only warns about an unresolved import and leaves it external.
-        if (log.code === "UNRESOLVED_IMPORT") {
-          problems.push(
-            log.exporter
-              ? unresolved(log.exporter, log.id)
-              : { code: "UNRESOLVED_IMPORT", specifier: null },
-          );
-        } else if (level === "warn" && log.code === "MISSING_EXPORT") {
-          problems.push({
-            code: "MISSING_EXPORT",
-            specifier: log.exporter ? moduleLabel(log.exporter) : null,
-          });
-        }
-      },
-    });
-    try {
-      const { output } = await build.generate({
-        format: "esm",
-        minify: true,
-        topLevelVar: true,
-        comments: { legal: false, annotation: false, jsdoc: false },
-        sourcemap: false,
-      });
-      chunks = output.filter((item): item is OutputChunk => item.type === "chunk");
-    } finally {
-      await build.close();
-    }
-  } catch (error) {
-    // Non-JS modules were loaded as empty JS, so the errors that follow from that are not news.
-    const nonJs = problems.some((problem) => problem.code === "NON_JS_IMPORT");
-    return { bytes: null, problems: nonJs ? problems : [...problems, ...problemsFromError(error)] };
-  }
+  const [result, parse] = await Promise.all([
+    runViteBuild({ root: dir, entry: entryFile, peers: externals }),
+    loadParser(),
+  ]);
+  const problems = problemsFromBuild(result, externals, entry.candidate, parse);
   if (problems.length) return { bytes: null, problems };
-
-  const outside = importsOutsideBundle(chunks, parse, externals);
-  if (outside.length) {
-    return {
-      bytes: null,
-      problems: outside.map((specifier) => ({ code: "IMPORT_OUTSIDE_BUNDLE", specifier })),
-    };
-  }
-  return { bytes: chunkBytes(chunks), problems: [] };
+  return { bytes: chunkBytes(result.chunks), problems: [] };
 }

@@ -22,11 +22,13 @@ import {
   isRecord,
 } from "../../src/collect/util.ts";
 import { type Case, CLI, COMPREHENSION_CASES, entryArgs, loadCases } from "./cases.ts";
-import { compareContract, type Diff, withoutBundle } from "./contract.ts";
+import { compareContract, type Diff, LIVE_MAINTENANCE, withoutBundle } from "./contract.ts";
+import { exceptionMismatch, loadExceptions, lockSha256 } from "./exceptions.ts";
 import {
   BYTE_FIELDS,
   type CliRun,
   depfit,
+  GZIP_RUNTIME_TOLERANCE,
   grossError,
   hasCode,
   inBand,
@@ -35,7 +37,6 @@ import {
   REPORT_FIELD,
   referenceRanges,
   scratchProject,
-  VITE_TOLERANCE,
   viteReference,
 } from "./harness.ts";
 import { runWild } from "./wild-score.ts";
@@ -59,7 +60,6 @@ const DOC_PATHS = [
   "packages[].bundle.external_packages",
 ];
 
-const VITE_FIELDS = ["gzip_bytes", "min_bytes"] as const;
 /** Pause after each CLI run, as eval/run.ts does: npm's downloads API rate-limits bursts. */
 const PAUSE_MS = 3000;
 /** Longer pause before the one retry of a pair that differed because of a network source. */
@@ -71,7 +71,7 @@ const MAX_OVERHEAD_MS = 1500;
 const GATES = {
   A: "Honesty",
   B: "Accuracy",
-  C: "Vite anchor",
+  C: "Vite conformance",
   D: "Determinism",
   E: "Contract",
   F: "Cost",
@@ -129,8 +129,12 @@ function keyPaths(value: unknown, prefix = ""): string[] {
 const shape = (report: Record<string, unknown> | null) => {
   const { packages, ...rest } = withoutBundle(report);
   const stripped = asArray(packages).map((item) => {
-    const { unavailable, ...pkg } = asRecord(item);
-    return pkg;
+    const { unavailable, maintenance, ...pkg } = asRecord(item);
+    // As the v4 baseline was recorded: live maintenance counts left out.
+    const stable = Object.entries(asRecord(maintenance)).filter(
+      ([key]) => !LIVE_MAINTENANCE.includes(key),
+    );
+    return { ...pkg, maintenance: Object.fromEntries(stable) };
   });
   return [...new Set(keyPaths({ ...rest, packages: stripped }))].sort();
 };
@@ -156,7 +160,14 @@ type CaseResult = {
   /** Gates whose totals include this case. */
   counted: Gate[];
   /** B outcome for measure cases. */
-  accuracy: "in_band" | "null_with_code" | "out_of_band" | "failed" | "no_reference" | null;
+  accuracy:
+    | "in_band"
+    | "reviewed_exception"
+    | "null_with_code"
+    | "out_of_band"
+    | "failed"
+    | "no_reference"
+    | null;
   /** Full `--json` package entry of the first run, kept for the cases gate H0 shows to a reader. */
   report: unknown;
   drift: Drift;
@@ -196,6 +207,7 @@ const selected = (await loadCases(options.positionals)).filter(
     stepOption === c.step,
 );
 
+const exceptions = (await loadExceptions()).filter((e) => e.set === "corpus");
 const referenceCases = asRecord(
   asRecord(JSON.parse(await readFile(join(HERE, "reference.json"), "utf8"))).cases,
 );
@@ -316,8 +328,10 @@ try {
         "E",
         `non-bundle field differs with --bundle-entry: ${otherFields.path} (without ${shortJson(otherFields.without_bundle)}, with ${shortJson(otherFields.with_bundle)})`,
       );
-    } else if (!baselineShape.length) fail("E", "no v4 baseline (run --record-v4 on v4 code)");
-    else if (shape(without.report).join() !== baselineShape.join()) {
+    } else if (!baselineShape.length) {
+      // A case added after v4 has no baseline to compare keys with; the rest of E still applies.
+      result.notes.push("no v4 baseline (case added after v4): output keys not compared");
+    } else if (shape(without.report).join() !== baselineShape.join()) {
       fail("E", "output keys without --bundle-entry differ from v4");
     }
 
@@ -371,36 +385,50 @@ try {
         const describe = ({ field, x, range }: (typeof observed)[number]) =>
           `${REPORT_FIELD[field]} ${x} vs ${range.lo}..${range.hi}`;
         const gross = observed.filter(({ x, range }) => grossError(x, range));
-        if (gross.length) fail("A", `gross error: ${gross.map(describe).join(", ")}`);
         const bad = observed.filter(({ x, range }) => !inBand(x, range));
-        result.accuracy = bad.length ? "out_of_band" : "in_band";
-        if (bad.length) fail("B", `outside band: ${bad.map(describe).join(", ")}`);
+        const exception = bad.length ? exceptions.find((e) => e.id === c.id) : undefined;
+        const mismatch = exception
+          ? exceptionMismatch(exception, {
+              version: c.version,
+              entry: entryArgs(c.imports)[1] ?? "",
+              lock: await lockSha256("corpus", c.id),
+              bundler: seen.bundler ?? "",
+              bytes: seen.bundle,
+              reference: refs,
+            })
+          : null;
+        if (exception && mismatch === null) {
+          result.accuracy = "reviewed_exception";
+          result.notes.push(
+            `reviewed exception (exceptions.json): ${bad.map(describe).join(", ")}`,
+          );
+        } else {
+          const stale = mismatch ? ` (reviewed exception stale: ${mismatch})` : "";
+          if (gross.length) fail("A", `gross error: ${gross.map(describe).join(", ")}${stale}`);
+          result.accuracy = bad.length ? "out_of_band" : "in_band";
+          if (bad.length) fail("B", `outside band: ${bad.map(describe).join(", ")}${stale}`);
+        }
       }
     }
 
-    // Gate C: mandatory browser measure cases must match a real `vite build` within +-3%, built
-    // with Vite's dynamic-import runtime removed (README "Gate C"). A case without a usable
-    // reference is counted as failing, never excluded.
+    // Gate C: mandatory browser measure cases must equal a stock `vite build` of the same snippet
+    // with depfit's documented configuration, made by reference.ts without depfit's code (README
+    // "Gate C"). A case without a usable reference is counted as failing, never excluded.
     if (scored && c.expect === "measure" && c.mandatory && c.target === "browser") {
       const vite = viteReference(refs);
       result.counted.push("C");
-      if (!vite) fail("C", "no usable `vite_anchor` reference");
+      if (!vite) fail("C", "no usable `vite` reference");
       else if ("problem" in seen) fail("C", seen.problem);
       else {
-        const off = VITE_FIELDS.flatMap((field) => {
+        const off = BYTE_FIELDS.flatMap((field) => {
           const x = seen.bundle[field];
           const ref = vite[field];
-          if (x !== null && Math.abs(x - ref) <= VITE_TOLERANCE * ref) return [];
-          const delta = x === null ? "null" : `${(((x - ref) / ref) * 100).toFixed(1)}%`;
-          return [`${REPORT_FIELD[field]} ${x} vs vite ${ref} (${delta})`];
+          const gzip = field === "gzip_bytes" || field === "lazy_gzip_bytes";
+          const ok =
+            x !== null && (gzip ? Math.abs(x - ref) <= GZIP_RUNTIME_TOLERANCE * ref : x === ref);
+          return ok ? [] : [`${REPORT_FIELD[field]} ${x} vs vite ${ref}`];
         });
         if (off.length) fail("C", off.join(", "));
-      }
-      const stock = asNumber(asRecord(refs.vite).gzip_bytes);
-      if (vite && stock !== null && stock !== vite.gzip_bytes) {
-        result.notes.push(
-          `stock vite build eager gzip ${stock} B; ${stock - vite.gzip_bytes} B is Vite's injected preload runtime, removed for C`,
-        );
       }
     }
 
@@ -446,7 +474,10 @@ const gross = scoredResults.filter((r) => r.failures.A?.startsWith("gross error"
 const measured = scoredResults.filter((r) => r.accuracy && r.accuracy !== "no_reference");
 const count = (kind: CaseResult["accuracy"]) => measured.filter((r) => r.accuracy === kind).length;
 const mandatoryMissed = measured.filter(
-  (r) => caseById.get(r.id)?.mandatory && r.accuracy !== "in_band",
+  (r) =>
+    caseById.get(r.id)?.mandatory &&
+    r.accuracy !== "in_band" &&
+    r.accuracy !== "reviewed_exception",
 ).length;
 const mandatoryNullMissed = nullCases.filter(
   (r) => caseById.get(r.id)?.mandatory && r.failures.A,
@@ -474,11 +505,11 @@ const verdicts: Record<Gate, Verdict> = {
       mandatoryMissed === 0 &&
       mandatoryNullMissed === 0 &&
       tolerableNulls <= 2,
-    summary: `measure cases in band ${count("in_band")}/${measured.length}, coded nulls ${tolerableNulls} (max 2), out-of-band ${count("out_of_band")} (max 0), failed ${count("failed")} (max 0), mandatory missed ${mandatoryMissed + mandatoryNullMissed} (max 0)`,
+    summary: `measure cases in band ${count("in_band")}/${measured.length}, reviewed exceptions ${count("reviewed_exception")}, coded nulls ${tolerableNulls} (max 2), out-of-band ${count("out_of_band")} (max 0), failed ${count("failed")} (max 0), mandatory missed ${mandatoryMissed + mandatoryNullMissed} (max 0)`,
   },
   C: {
     pass: counted("C").length > 0 && passed("C") === counted("C").length,
-    summary: `mandatory browser cases within ${VITE_TOLERANCE * 100}% of vite without its preload runtime ${passed("C")}/${counted("C").length} (eager gzip and min), counted failing for lack of a reference ${noViteReference}`,
+    summary: `mandatory browser cases equal to a stock vite build ${passed("C")}/${counted("C").length} (min bytes exact, gzip within ${GZIP_RUNTIME_TOLERANCE * 100}% for the runtime's zlib), counted failing for lack of a reference ${noViteReference}`,
   },
   D: {
     pass: runs >= 2 && counted("D").length > 0 && passed("D") === counted("D").length,
@@ -492,7 +523,7 @@ const verdicts: Record<Gate, Verdict> = {
   },
   F: {
     pass: overhead !== null && overhead <= MAX_OVERHEAD_MS && rolldownLoaded.length === 0,
-    summary: `no-bundle runs that loaded rolldown ${rolldownLoaded.length} (max 0), median overhead ${overhead === null ? "n/a (no successful runs)" : `${overhead}ms`} (max ${MAX_OVERHEAD_MS})`,
+    summary: `no-bundle runs that loaded rolldown or vite ${rolldownLoaded.length} (max 0), median overhead ${overhead === null ? "n/a (no successful runs)" : `${overhead}ms`} (max ${MAX_OVERHEAD_MS})`,
     advisory: `no-bundle median ${nowMedian}ms vs v4 ${v4Median === null ? "n/a (no baseline)" : `${v4Median}ms${nowMedian === null ? "" : ` (${(((nowMedian - v4Median) / v4Median) * 100).toFixed(1)}%)`}`}; network noise is about +-20%, never fails the gate`,
   },
 };

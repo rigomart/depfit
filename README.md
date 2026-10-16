@@ -51,7 +51,7 @@ depfit zod valibot \
 
 A snippet holds imports from one candidate (or its subpaths) and member statements like `z.object` on the imported names. A name with no member statements is kept whole, so `import * as Icons from "lucide-react"` measures every icon. Give one snippet per candidate.
 
-depfit bundles the snippet for the browser with rolldown, configured like a Vite production build, and reports minified and gzip bytes for what loads up front and for chunks behind dynamic `import()`. Peer dependencies are left out of the bundle. When a build can't give an honest number (a Node built-in, code loaded at runtime that the bundle doesn't contain, CSS or wasm), the bytes are `null` and `unavailable` gives the reason.
+depfit builds the snippet with Vite's production build (`vite build`, Vite's defaults, no project config) and reports minified and gzip bytes for what loads up front and for chunks behind dynamic `import()`. Peer dependencies are left out of the bundle. When a build can't give an honest number (a Node built-in, code loaded at runtime that the bundle doesn't contain, CSS or wasm), the bytes are `null` and `unavailable` gives the reason.
 
 ## Example
 

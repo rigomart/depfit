@@ -15,7 +15,11 @@ number.
 
 - **Input:** a JS snippet the agent writes (step 1) or the repo's own imports (step 2). Never an
   assumed full-package import.
-- **Engine:** rolldown, configured like Vite 8's client build (Vite 8 bundles with rolldown).
+- **Engine:** a real `vite build` (Vite 8, on rolldown), Vite's production defaults plus depfit's
+  documented choices (SETTINGS.md: isolation, a JS entry, peers external). The number is a
+  standalone build with that configuration; an app's own plugins, aliases or settings can change it.
+  Until 2026-10-16 depfit ran rolldown with Vite's settings copied by hand; three missed settings
+  were silent wrong numbers (PLAN-vite.md).
   Settings are in `SETTINGS.md`.
 - **Target:** `browser` only until step 3 (Workers).
 - **Peers:** installed as today, so the `cost` fields keep their peers. Excluded only at bundle
@@ -64,7 +68,7 @@ CLI: `depfit zod --bundle-entry 'import { z } from "zod"; z.object; z.string'`
 
 | Field | Meaning |
 |---|---|
-| `bundler` | e.g. `rolldown@1.2.14` |
+| `bundler` | e.g. `vite@8.3.4 (rolldown@1.2.14)` |
 | `target` | `browser` |
 | `entry` | Normalized snippet that was measured |
 | `entry_source` | `requested` (step 1); `repo_usage` (step 2) |
@@ -87,37 +91,42 @@ All cases use public packages at pinned versions, so the suite is committed.
   `npm ci`. When depfit's resolved tree (`cost.new_packages` in an empty project) differs, the case
   is reported as **drifted** (re-baseline), not scored.
 - **`reference.json`:** sizes from **rollup 4 + terser** and **webpack 5**, pinned, with the same
-  semantic settings. They share no resolver, CJS transform, tree-shaker, or minifier with
-  rolldown/oxc. Reference disagreements above 10% are investigated per case, never absorbed by
+  production semantics (`process.env.NODE_ENV`, Vite's `import.meta.env`). They share no resolver,
+  CJS transform, tree-shaker, or minifier with Vite's rolldown/oxc. Mandatory browser measure cases
+  also get gate C's conformance build. Reference disagreements above 10% are investigated per case, never absorbed by
   widening the band.
 - **`score.ts`:** runs the CLI on every case and prints the scorecard. Results go to `results/`
   (gitignored).
 
-**Band:** `0.90 × min(ref) − 1000 B ≤ x ≤ 1.10 × max(ref) + 1000 B`, applied to gzip and min bytes, both
-eager and lazy. This is provisional. It was derived from 9 single-chunk snippets (gzip spread ≤ 5.3%,
-min spread ≤ 9.2%) and is recalibrated on the full corpus before step 1 ships.
-**Gross error:** a number outside `[0.5 × min(ref) − 1000 B, 2 × max(ref) + 1000 B]`.
+**Band:** `0.90 × min(ref) − 100 B ≤ x ≤ 1.10 × max(ref) + 100 B`, applied to gzip and min bytes, both
+eager and lazy. It was derived from 9 single-chunk snippets (gzip spread ≤ 5.3%, min spread ≤ 9.2%).
+**Gross error:** a number outside `[0.5 × min(ref) − 100 B, 2 × max(ref) + 100 B]`.
 
-**Absolute slack history.** It was 100 B (enough for the reference's keep-alive line on an empty
-bundle). Raised to 1000 B after the round 3 fixes, by user decision, then **rejected by Codex round 4**
-because it hid a real 16.7% error (`import.meta.env` not replaced; see STATUS.md): bundlers
-add a fixed amount of wrapper code per bundle that differs between them, measured at about 430 B
-(rolldown's CommonJS interop on ws, which Vite emits identically), 400-900 B (rollup's and
-webpack's on server-only, a single `throw`), and 200-400 B (webpack's strict ESM interop on small
-wild CommonJS packages). A percentage cannot absorb a fixed difference on a small bundle. depfit
-still reports the number; `schema-docs` says small bundles can differ by about 1 KB.
+**Absolute slack history.** 100 B covers the reference's keep-alive line on an empty bundle. It was
+raised to 1000 B after Codex round 3, by user decision, to absorb bundlers' differing wrapper code
+on small bundles (about 430 B for rolldown's CommonJS interop on ws, 400-900 B for rollup's and
+webpack's on server-only). Codex round 4 rejected that: it hid a real 16.7% error
+(`import.meta.env` not replaced). So the slack is 100 B, and an explained difference becomes a
+reviewed exception instead.
+
+**Reviewed exceptions (`exceptions.json`).** A size discrepancy against the references that is
+explained in writing and independently reviewed. It waives that case's gross error (gates A, W) and
+out-of-band result (gate B) only while the package version, snippet, frozen lock (sha256), toolchain
+(`bundle.bundler`) and all four byte fields of depfit and of both references equal what was reviewed.
+Any change makes it fail again as stale. It never waives an expected null code or an honesty check.
+Agreement with Vite alone is not a reason, because depfit is Vite.
 
 ## Gates
 
 | Gate | Pass condition | Steps |
 |---|---|---|
 | **A. Honesty** | Every null case returns its expected code (and specifier). 0 gross errors in any case. | 1+ |
-| **B. Accuracy** | Every mandatory measure case is in band on all four byte fields. Each other measure case is in band, or null with a code; at most 2 such nulls and 0 out-of-band numbers. | 1+ |
-| **C. Vite anchor** | Every mandatory browser measure case is within ±3% of a real `vite build` of the same snippet, on eager gzip and min. Vite's injected dynamic-import runtime is removed by a case-independent method (README "Gate C normalization"). A case without a usable anchor fails. This is a regression check for "matches what Vite ships", not ground truth. | 1+ |
+| **B. Accuracy** | Every mandatory measure case is in band on all four byte fields, or covered by a reviewed exception. Each other measure case is in band (or covered), or null with a code; at most 2 such nulls and 0 out-of-band numbers. | 1+ |
+| **C. Vite conformance** | Every mandatory browser measure case equals a stock `vite build` of the same snippet with SETTINGS.md's configuration, made by `reference.ts` without depfit's code: minified bytes identical on all four fields, gzip within 1% (depfit gzips with its runtime's zlib). It checks how depfit drives Vite, generates the entry and counts chunks, not ground truth. A case without a usable build fails. | 1+ |
 | **D. Determinism** | Two runs give identical bytes. Drifted cases are listed separately. | 1+ |
 | **E. Contract** | Every package has a `bundle` key. Every new field is in `schema-docs`. All other fields are identical with and without `--bundle-entry`. | 1+ |
-| **F. Cost** | Without bundling, rolldown is never loaded (hard check). With bundling, median overhead is ≤ 1.5 s per package beyond the existing install. Runtime without bundling vs v4 is advisory, because network noise is about ±20% run to run. | 1+ |
-| **W. Wild corpus** | About 200 popular browser packages, chosen by a fixed rule that depfit's results never influence, never tuned against, each measured as `import * as m`. Pass conditions: (i) an independent auditor finds 0 numbers whose reference output fetches code from outside the bundle (`import()` of a non-chunk target, `importScripts`); other hidden loads are reported as information only; (ii) 0 gross errors against the references, except one listed in `wild-exceptions.json` with a written, independently reviewed cause, which covers that package only while its version, lock, depfit bytes and reference bytes are unchanged (agreement with Vite alone is not a reason: Vite shares depfit's engine); (iii) every null carries a code, and the null rate is reported by code. | 1+ |
+| **F. Cost** | Without bundling, neither Vite nor rolldown is loaded (hard check). With bundling, median overhead is ≤ 1.5 s per package beyond the existing install. Runtime without bundling vs v4 is advisory, because network noise is about ±20% run to run. | 1+ |
+| **W. Wild corpus** | About 200 popular browser packages, chosen by a fixed rule that depfit's results never influence, never tuned against, each measured as `import * as m`. Pass conditions: (i) an independent auditor finds 0 numbers whose reference output fetches code from outside the bundle (`import()` of a non-chunk target, `importScripts`); other hidden loads are reported as information only; (ii) 0 gross errors against the references, except a reviewed exception (see "Reviewed exceptions"); (iii) every null carries a code, and the null rate is reported by code. | 1+ |
 | **H0. Comprehension** | A blind small-model reader given only JSON plus `--schema` answers 6 fixed questions correctly in 3/3 runs: what the number includes, that it is standalone and not marginal, eager vs lazy, what a null code means, that peers are excluded, and (for node-pty, which now has a number) that the number does not mean the package works in a browser, citing `native_binaries`. | 1+ |
 | **G. Repo usage** | On fixture projects the derived entries equal a hand-written expected set, static and dynamic usage stay separate, and sizes are in band. | 2+ |
 | **H. Decisions** | A local blind eval on browser probes produces decisions that are justified by the facts, with no bundle-field confusion in the reviews. | 6 |
@@ -167,8 +176,12 @@ patching forward.
 - Bundlers can also disagree through their minifiers: oxc (Vite 8, depfit) copies a large string
   constant into each use site, where terser and webpack's minifier keep one binding (one wild
   package: about 2x). `schema-docs` says other bundlers can differ by a factor of two or more. Such
-  a package is a gate W gross error unless it has a reviewed exception (gate W). A blanket "within
-  3% of Vite" rule was tried and rejected by Codex round 3.
+  a package is a gross error unless it has a reviewed exception. A blanket "within 3% of Vite" rule
+  was tried and rejected by Codex round 3.
+- Vite's preload helper (about 1.6 KB min, with the wrapping of each `import()`) is counted when the
+  snippet has lazy chunks: it is what a standalone build ships, there is no supported switch to drop
+  it, and that an app already ships it is a marginal-bytes question (step 5). User decision after
+  the Codex review of the Vite plan.
 - Empty roots (pdnd `*`): the measured bytes are what that import ships. The agent chooses the entry.
 - Version: the report's `version`.
 - No entry given: `bundle: null`. depfit never assumes `*`.

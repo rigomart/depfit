@@ -2,7 +2,7 @@
 
 Status: proposed 2026-10-16 after Codex review round 4, revised after a Codex review of the plan
 (reproductions in `results/research/review5/`), decisions confirmed by the user, spike done (below).
-The implementation (step 2 of Order) is not started.
+Implemented 2026-10-16; see STATUS.md for the scorecard and what the gates found.
 
 ## Why
 

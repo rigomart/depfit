@@ -23,11 +23,11 @@ Non-JS and Workers cases (`step` other than `"1"`) are excluded unless `--step` 
 | Gate | What `score.ts` checks |
 |---|---|
 | A. Honesty | Every `null` case returns its expected `bundle: <code>` (and specifier). No number is a gross error (outside `[0.5 x min(ref), 2 x max(ref)]`) on any of the four byte fields. |
-| B. Accuracy | Every `measure` case, eager and lazy, minified and gzip 9 (four fields), is inside the rollup/webpack band `0.90 x min(ref) - 1000 B .. 1.10 x max(ref) + 1000 B` (SPEC "Band" for the slack). Mandatory cases must be in band; the others may be null with a code (at most 2). |
-| C. Vite anchor | For each `mandatory` browser measure case, `eager_js_gzip9_bytes` and `eager_js_min_bytes` are within +-3% of a real `vite build` of the same snippet with Vite's own injected dynamic-import runtime removed (the `vite_anchor` entry in `reference.json`, see "Gate C normalization"). A regression check for "matches what Vite ships", not ground truth. Vite is not part of the band in B. A case without a usable anchor counts as failing; none is excluded. |
+| B. Accuracy | Every `measure` case, eager and lazy, minified and gzip 9 (four fields), is inside the rollup/webpack band `0.90 x min(ref) - 100 B .. 1.10 x max(ref) + 100 B` (SPEC "Band"), or covered by a reviewed exception in `exceptions.json` (SPEC "Reviewed exceptions"; a stale one fails). Mandatory cases must be in band or covered; the others may be null with a code (at most 2). |
+| C. Vite conformance | For each `mandatory` browser measure case, depfit's four byte fields equal the `vite` entry in `reference.json`, a stock `vite build` with SETTINGS.md's configuration made without depfit's code: minified bytes identical, gzip within 1% (see "Gate C conformance"). Vite is not part of the band in B. A case without a usable build counts as failing; none is excluded. |
 | D. Determinism | Two runs (`--runs 2`) give identical bytes and reasons. |
 | E. Contract | Every package has a `bundle` key (null without `--bundle-entry`); the SPEC's `packages[].bundle.*` fields have `schema-docs` entries; every other field is identical with and without `--bundle-entry`; the output keys match the v4 baseline. When a non-bundle field differs, the failure line and the results file (`contract_diff`) hold its path and both values, so a flaky live source can be told from a real leak. A difference that disappears once failed network sources are ignored (an `unavailable` entry from osv, osv dependencies, github, downloads or types that responded 429/5xx or timed out, with only the fields that source feeds, listed in `contract.ts`; any other difference, including an unrelated null or a missing key, still counts) makes `score.ts` run that case's pair once more after a pause; if it persists it is listed as a "network flake", apart from real failures, and does not fail E. Any other difference fails. `score.ts` pauses 3 s after every CLI run, like `eval/run.ts`, so a full run does not trigger the 429s itself. |
-| F. Cost | Pass: rolldown is never loaded without bundling, and the median overhead of `--bundle-entry` is at most 1500 ms. The no-bundle runtime against the v4 baseline is printed as advisory (network noise is about +-20%) and never fails the gate. |
+| F. Cost | Pass: neither Vite nor rolldown is loaded without bundling, and the median overhead of `--bundle-entry` is at most 1500 ms. The no-bundle runtime against the v4 baseline is printed as advisory (network noise is about +-20%) and never fails the gate. |
 | H0. Comprehension | Not run by `score.ts`. `comprehension.ts` writes `results/comprehension/prompt.md` (depfit's `--json` for `sonner-named`, `shiki-codeToHtml`, `node-pty-named` and `simple-git-default`, `depfit --schema`, and six questions) and `results/comprehension/comprehension-key.md` (the answers; never show it to the reader). Give a blind small-model reader only the prompt; the gate passes when it answers all six correctly in 3 of 3 runs (question 6: node-pty has a number; does that mean it works in a browser, and which fields say whether it can). |
 
 `score.ts` stores the full `--json` output of the four H0 cases in its results file, and
@@ -56,27 +56,24 @@ so `reference.ts` records what npm adds to the frozen lock when peers are honore
 comparisons and totals; it still counts for D, E and F. The scorecard prints how many cases were excluded and
 which, so they are re-baselined rather than forgotten.
 
-### Gate C normalization
+### Gate C conformance
 
-Vite instruments dynamic `import()` in every client app build: it wraps the call in its preload
-helper (`__vitePreload(() => import("./x.js"), __vite__mapDeps([...]), import.meta.url)`), adds the
-`__vite__mapDeps` table, and emits the helper. That is Vite's runtime, not the package's, and depfit
-(plain rolldown) does not add it. Comparing against stock Vite therefore excluded every case with
-lazy chunks, which was a weaker gate.
+depfit runs `vite build` itself (SETTINGS.md), so gate C no longer checks closeness to Vite. It
+checks that depfit drives Vite, generates the entry and counts chunks correctly. `reference.ts`
+makes the same build for each mandatory browser measure case without depfit's code: Vite 8 on the
+same rolldown (pinned through depfit's own `overrides`), a JS entry, SETTINGS.md's isolation
+settings, peers through `esmExternalRequirePlugin`, `NODE_ENV=production` and no `VITE_*` variables.
+The result is the `vite` key in `reference.json`. Minified bytes must be identical on all four
+fields. gzip may differ by 1%, because depfit gzips with its runtime's zlib (Bun) and `reference.ts`
+with Node's.
 
-`vite_anchor` is a second Vite build of the same snippet with Vite's `native:import-analysis-build`
-plugin removed from the resolved config. That plugin is what injects the runtime; nothing is
-subtracted afterwards, and the method looks at no case. If a Vite release renames the plugin, the
-build fails instead of measuring the runtime.
-
-**Amended after Codex review round 3 (2026-10-16).** The first method (`build.modulePreload: false`,
-then subtracting a helper measured on a control) was wrong. Vite inserts the wrapping whenever
-`insertPreload` holds (every client app build), whatever `modulePreload` is, so stock and
-"no-preload" builds could be identical and both instrumented: @storybook/addon-a11y measured 9,206 B
-against rolldown's 7,511, and is 7,470 with the plugin removed. All reference builds also use a
-`.mjs` entry like depfit's, because CommonJS interop differs between a `.js` entry in a package
-without `"type"` and an ES module entry (isarray: 711 vs 668 B). A `.mjs` entry gives the same bytes
-as a create-vite app (`"type": "module"`, `.js` or `.ts` entry).
+**History.** While depfit imitated Vite with rolldown, gate C compared it with a Vite build stripped
+of Vite's preload runtime, first by subtracting a measured helper (wrong: Vite wraps imports in every
+client app build whatever `modulePreload` is), then by removing Vite's `native:import-analysis-build`
+plugin (which also removed its import-attribute cleanup). Both are gone: depfit now counts the
+preload helper, as Vite ships it (SPEC settled questions). All reference builds use a `.mjs` entry
+like depfit's, because CommonJS interop differs between a `.js` entry in a package without `"type"`
+and an ES module entry (isarray: 711 vs 668 B).
 
 `reference.ts` re-runs itself under Node so gzip (`node:zlib`, level 9) is identical whichever
 runtime started it. Bundlers are installed into a temp dir at the exact versions pinned in
@@ -123,13 +120,10 @@ Example: `{ "from": "zod", "named": ["z"], "members": ["z.object", "z.string"] }
   level 9 per chunk, summed), `lazy_min_bytes`, `lazy_gzip_bytes` (every chunk reached only
   through `import()`, each counted once), `css_bytes_unminified`, `asset_bytes_not_inlined`,
   `wasm_bytes`, or `{ error }`. Only the four JS fields are scored. `mandatory` browser measure
-  cases also get a `vite` entry with the same fields, from a real `vite build` (pinned exactly):
-  library-less app mode from an `index.html`, Vite's default client production settings except no
-  asset inlining, peers external, no modulepreload polyfill and no CSS code split. Those cases and
-  every wild package also get `vite_anchor` (the same build without Vite's runtime, all four
-  fields; see "Gate C normalization"), the anchor gate C scores. It is kept apart from the
-  rollup/webpack band because Vite 8 bundles with rolldown, like depfit. Tool versions (including
-  Vite's rolldown and webpack's acorn) are recorded in the file. Every builder's entry is
+  cases also get a `vite` entry with the same fields, gate C's conformance build (see "Gate C
+  conformance"); it is kept apart from the rollup/webpack band because depfit is Vite. rollup and
+  webpack get Vite's production `process.env.NODE_ENV` and `import.meta.env` defines. Tool versions
+  (including Vite's rolldown and webpack's acorn) are recorded in the file. Every builder's entry is
   `__depfit_entry.mjs`, like depfit's. A snippet that keeps nothing (side-effect-only imports) is
   built without the `globalThis.__depfit = [...]` keep-alive line, so the reference measures exactly
   what the CLI measures.
@@ -227,19 +221,19 @@ four null, with a `bundle: <CODE>` entry) or a CLI **error** (anything else).
 | Check | Pass |
 |---|---|
 | (i) | 0 packages where depfit gives a number and the auditor found a `fetch` hit (code fetched from outside the bundle) in the rollup or webpack output. All of them are listed with the matches. |
-| (ii) | 0 gross errors: no number outside `[0.5 x min(ref) - 1000 B, 2 x max(ref) + 1000 B]` on any of the four fields, over the rollup and webpack builds that succeeded (a bundler in the case's `band_excluded` is left out), unless `wild-exceptions.json` lists that package with a written, reviewed cause and its recorded version, lock hash, depfit bytes and reference bytes all still match exactly. Covered ones are listed, not failed; a stale exception fails. |
+| (ii) | 0 gross errors: no number outside `[0.5 x min(ref) - 100 B, 2 x max(ref) + 100 B]` on any of the four fields, over the rollup and webpack builds that succeeded (a bundler in the case's `band_excluded` is left out), unless a reviewed exception in `exceptions.json` covers it (SPEC "Reviewed exceptions"): listed, not failed; a stale one fails. |
 | (iii) | Every package is a number or a null that carries a code. A CLI failure, or a null without a `bundle:` entry, fails. |
 
-**Reviewed exceptions (amended after the first wild run and Codex review round 3, 2026-10-16).**
-Two packages were grossly off the references while matching Vite exactly: one whose 67 KB string
-constant oxc's minifier copies into each use site (Vite ships it three times too, about 2x the
-rollup and webpack output), and one that is a single `throw` (126 B in Vite; the references add
-400-500 B of CommonJS interop and runtime). A blanket "within 3% of Vite" exception was tried first
-and rejected by review: Vite shares depfit's engine, so it confirms alignment, not correctness, and
-a shared bug would pass. Instead each exception in `wild-exceptions.json` names its package, version,
-the sha256 of its frozen lock, depfit's and both references' four byte fields, and the cause, and it
-covers that package only while all of them are unchanged. Adding one needs a written cause and an
-independent review. `vite_anchor` is still built for every wild package, as evidence for that review.
+**Reviewed exceptions.** The first wild run found two packages grossly off the references while
+matching Vite exactly: one whose 67 KB string constant oxc's minifier copies into each use site
+(about 2x the rollup and webpack output), and one that is a single `throw` (126 B in Vite; the
+references add 400-900 B of CommonJS interop and runtime). A blanket "within 3% of Vite" exception
+was rejected in review (a shared engine bug would pass), so each one is an entry in `exceptions.json`
+(shared with gates A and B) with a written cause, exact-match conditions and a review.
+
+`--resume` reuses a package's cached measurement only when its key matches: the toolchain, depfit's
+bundle sources, the snippet and the lock hash. Ranges, audits and exceptions are recomputed on
+every run (Codex round 4: resuming reused stale verdicts).
 
 The report also gives the null rate by code (no threshold), numbers outside the band but not gross,
 numbers for which neither reference built (nothing to check them against), and how many numbers the

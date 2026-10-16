@@ -128,7 +128,7 @@ async function bundleSection(
   const bundler = await settle(bundlerName());
   return {
     bundle: {
-      bundler: bundler.ok ? bundler.value : "rolldown",
+      bundler: bundler.ok ? bundler.value : "vite",
       target: "browser",
       entry: normalizedSnippet(entry),
       entry_source: "requested",

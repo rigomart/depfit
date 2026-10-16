@@ -217,7 +217,7 @@ export type Security = {
  * in `unavailable` as "bundle: <CODE> [specifier]".
  */
 export type Bundle = {
-  /** e.g. "rolldown@1.2.14". */
+  /** e.g. "vite@8.3.4 (rolldown@1.2.14)". */
   bundler: string;
   target: "browser";
   /** The snippet that was measured, normalized. */

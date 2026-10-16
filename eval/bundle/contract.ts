@@ -25,11 +25,9 @@ export const NETWORK_ENTRY =
  * The fields under `packages[]` each network source feeds (src/collect/index.ts). When a source
  * failed in transit in either run, these fields, and nothing else, may differ between the runs.
  */
-const SOURCE_FIELDS: Record<string, [string, string][]> = {
-  osv: [
-    ["security", "advisories"],
-    ["security", "dependency_vulnerabilities"],
-  ],
+const SOURCE_FIELDS: Record<string, string[][]> = {
+  // A failed osv lookup nulls the whole section.
+  osv: [["security"]],
   "osv dependencies": [["security", "dependency_vulnerabilities"]],
   github: [
     ["maintenance", "archived"],
@@ -42,6 +40,21 @@ const SOURCE_FIELDS: Record<string, [string, string][]> = {
     ["compatibility", "types_package"],
   ],
 };
+
+/** What an ignored value compares as. */
+const IGNORED = "<ignored>";
+
+/**
+ * `record` with the value at `path` replaced by IGNORED, only where the key exists: a failed source
+ * may change a value, never remove a key (round 4: missing keys were excused).
+ */
+function ignoredAt(record: Record<string, unknown>, path: string[]): Record<string, unknown> {
+  const [key, ...rest] = path;
+  if (key === undefined || !(key in record)) return record;
+  const value = record[key];
+  if (!rest.length) return { ...record, [key]: IGNORED };
+  return isRecord(value) ? { ...record, [key]: ignoredAt(value, rest) } : record;
+}
 
 /** The network source an `unavailable` entry says failed in transit, or null. */
 const sourceOf = (entry: string) => NETWORK_ENTRY.exec(entry)?.[1]?.toLowerCase() ?? null;
@@ -68,19 +81,17 @@ export function withoutBundle(
       const others = asStringArray(unavailable).filter(
         (entry) => !entry.startsWith("bundle:") && !failed.has(sourceOf(entry) ?? ""),
       );
-      const stable = Object.entries(asRecord(maintenance)).filter(
-        ([key]) => !LIVE_MAINTENANCE.includes(key),
-      );
-      const sections: Record<string, unknown> = {
-        ...pkg,
-        unavailable: others,
-        maintenance: Object.fromEntries(stable),
-      };
-      for (const [section, field] of fed) {
-        // A section the failure nulled (osv: `security`) compares as an empty one.
-        const { [field]: _dropped, ...kept } = asRecord(sections[section]);
-        sections[section] = kept;
-      }
+      // Live counts keep their key, so a missing key still differs; only the value is ignored.
+      const stable = isRecord(maintenance)
+        ? Object.fromEntries(
+            Object.entries(maintenance).map(([key, value]) => [
+              key,
+              LIVE_MAINTENANCE.includes(key) ? IGNORED : value,
+            ]),
+          )
+        : maintenance;
+      let sections: Record<string, unknown> = { ...pkg, unavailable: others, maintenance: stable };
+      for (const path of fed) sections = ignoredAt(sections, path);
       return sections;
     }),
   };

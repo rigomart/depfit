@@ -164,8 +164,9 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     'Advisories affecting other packages in `version`\'s dependency tree, as "name@version:ID"; the package itself is covered by advisories; empty when none, or when the install or this lookup failed (see unavailable).',
 
   "packages[].bundle":
-    "Browser bundle size of the --bundle-entry snippet for this package, built standalone from `version`'s isolated install like a Vite production client build (minified, production conditions, process.env.NODE_ENV set to production); other bundlers and minifiers can emit different sizes for the same snippet, by a factor of two or more, and on small bundles by about 1 KB of their own wrapper code; it is not the marginal cost given what the repo already bundles; the bytes the bundler emits, not a claim that the code runs in a browser; null when no --bundle-entry was given for this package or error is set.",
-  "packages[].bundle.bundler": 'The bundler and its version, e.g. "rolldown@1.2.14".',
+    "Browser bundle size of the --bundle-entry snippet for this package, a standalone `vite build` (Vite's production defaults, no project config) from `version`'s isolated install, so an app's own plugins, aliases or settings can change it, and Vite's preload helper is included when the snippet has lazy chunks; other bundlers and minifiers can emit different sizes for the same snippet, by a factor of two or more, and on small bundles by about 1 KB of their own wrapper code; it is not the marginal cost given what the repo already bundles; the bytes Vite emits, not a claim that the code runs in a browser; null when no --bundle-entry was given for this package or error is set.",
+  "packages[].bundle.bundler":
+    'The bundler that measured the bytes, with its engine, e.g. "vite@8.3.4 (rolldown@1.2.14)".',
   "packages[].bundle.target": 'Runtime the bundle is built for; always "browser".',
   "packages[].bundle.entry":
     "The snippet that was measured, normalized: every imported binding with no member statements is kept whole, a binding with member statements keeps only those members, and a side-effect-only import keeps only what the package's side effects keep.",

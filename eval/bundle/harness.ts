@@ -49,7 +49,7 @@ export type CliRun = {
   report: Record<string, unknown> | null;
   /** First line of stderr when the CLI failed. */
   error: string | null;
-  /** Modules named rolldown* that were resolved during the run. */
+  /** Modules named rolldown* or vite* that were resolved during the run. */
   rolldownLoads: string[];
 };
 
@@ -108,7 +108,7 @@ export type Bundle = Record<ByteField, number | null>;
 /** Either a problem that makes the run unusable, or the bundle and its `bundle:` reasons. */
 export type Observed =
   | { problem: string }
-  | { bundle: Bundle; reasons: string[]; target: string | null };
+  | { bundle: Bundle; reasons: string[]; target: string | null; bundler: string | null };
 
 export function observe(cli: CliRun | undefined): Observed {
   if (!cli?.report) return { problem: `cli: ${cli?.error ?? "no output"}` };
@@ -123,7 +123,7 @@ export function observe(cli: CliRun | undefined): Observed {
     lazy_gzip_bytes: asNumber(raw[REPORT_FIELD.lazy_gzip_bytes]),
   };
   const reasons = asStringArray(pkg.unavailable).filter((entry) => entry.startsWith("bundle:"));
-  return { bundle, reasons, target: asString(raw.target) };
+  return { bundle, reasons, target: asString(raw.target), bundler: asString(raw.bundler) };
 }
 
 /** Does `unavailable` hold `bundle: <code>`, followed by the specifier when the case names one? */
@@ -155,11 +155,11 @@ export function referenceRange(refs: Record<string, unknown>, field: ByteField):
 }
 
 /**
- * Absolute slack of the band and the gross-error range. Bundlers differ by a fixed amount of wrapper
- * code per bundle (CommonJS interop, runtime), measured at 400-900 B, which a percentage cannot
- * absorb on small bundles (SPEC "Band").
+ * Absolute slack of the band and the gross-error range (SPEC "Band"). A larger one (1000 B) was
+ * rejected in Codex review round 4 because it hid a 16.7% error; explained differences in wrapper
+ * code go in exceptions.json instead.
  */
-export const SLACK_BYTES = 1000;
+export const SLACK_BYTES = 100;
 export const inBand = (x: number, r: Range) =>
   x >= 0.9 * r.lo - SLACK_BYTES && x <= 1.1 * r.hi + SLACK_BYTES;
 export const grossError = (x: number, r: Range) =>
@@ -174,23 +174,21 @@ export function referenceRanges(refs: Record<string, unknown>): Record<ByteField
 }
 
 /**
- * Gate C's anchor: the eager numbers of a real `vite build` with Vite's injected dynamic-import
- * runtime removed (`vite_anchor` in reference.json, see README "Gate C normalization"), or null
- * when it was not (or could not be) built.
+ * Gate C's conformance build: a stock `vite build` of the same snippet with depfit's documented
+ * configuration, made by reference.ts without depfit's code (`vite` in reference.json), all four
+ * fields; null when it was not (or could not be) built.
  */
-export function viteReference(
-  refs: Record<string, unknown>,
-): Record<"gzip_bytes" | "min_bytes", number> | null {
-  const vite = asRecord(refs.vite_anchor);
-  const gzip = asNumber(vite.gzip_bytes);
-  const min = asNumber(vite.min_bytes);
-  return gzip !== null && min !== null ? { gzip_bytes: gzip, min_bytes: min } : null;
+export function viteReference(refs: Record<string, unknown>): Record<ByteField, number> | null {
+  const vite = asRecord(refs.vite);
+  const values = BYTE_FIELDS.map((field) => asNumber(vite[field]));
+  const [min, gzip, lazyMin, lazyGzip] = values;
+  return min != null && gzip != null && lazyMin != null && lazyGzip != null
+    ? { min_bytes: min, gzip_bytes: gzip, lazy_min_bytes: lazyMin, lazy_gzip_bytes: lazyGzip }
+    : null;
 }
 
-/** Gate C's tolerance against Vite. */
-export const VITE_TOLERANCE = 0.03;
-
-/** Vite's number for one field, from `vite_anchor` (its build without the injected runtime). */
-export function viteValue(refs: Record<string, unknown>, field: ByteField): number | null {
-  return asNumber(asRecord(refs.vite_anchor)[field]);
-}
+/**
+ * Gate C: minified bytes must be identical (the same build); gzip may differ by this fraction,
+ * because depfit gzips with its runtime's zlib (Bun) and reference.ts with Node's.
+ */
+export const GZIP_RUNTIME_TOLERANCE = 0.01;

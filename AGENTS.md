@@ -24,8 +24,9 @@ or a logged-in `gh`; without one they are null and listed in `unavailable`.
 - `src/schema-docs.ts`: one sentence per JSON path, printed by `--schema`.
 - `src/collect/`: builds the `Report`. `facts.ts` and `lockfile.ts` are pure; the rest read the
   project or call npm, OSV, and GitHub. `bundle-entry.ts` validates `--bundle-entry` snippets;
-  `bundle.ts` bundles them with rolldown, which is imported dynamically and only when a snippet
-  is given (settings and acceptance bar: `eval/bundle/SPEC.md`).
+  `bundle.ts` measures them with a real `vite build`, run as a separate process
+  (`vite-build.mjs`, on Node) only when a snippet is given (settings and acceptance bar:
+  `eval/bundle/SPEC.md`).
 - `src/render/`: the human table, a view of the `Report`.
 - `test/fixtures/`: small projects for lockfile and workspace tests (see its README).
 - `eval/`: the evaluation harness (see Evaluation).

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T14:13:43.393Z",
+  "generated_at": "2026-10-16T16:49:03.807Z",
   "tools": {
     "node": "24.14.1",
     "rollup": "4.64.7",
@@ -41,21 +41,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 2377,
-        "gzip_bytes": 928,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 2377,
-        "gzip_bytes": 928,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -73,21 +58,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'buffer' in '<install>/node_modules/safe-buffer'"
-      },
-      "vite": {
-        "min_bytes": 4946,
-        "gzip_bytes": 1645,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4946,
-        "gzip_bytes": 1645,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -119,21 +89,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 668,
-        "gzip_bytes": 409,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 668,
-        "gzip_bytes": 409,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -164,21 +119,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 4417,
-        "gzip_bytes": 1626,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4417,
-        "gzip_bytes": 1626,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -208,21 +148,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 876,
-        "gzip_bytes": 463,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 876,
-        "gzip_bytes": 463,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -255,21 +180,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 941416,
-        "gzip_bytes": 308732,
-        "lazy_min_bytes": 373299,
-        "lazy_gzip_bytes": 112847,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 937891,
-        "gzip_bytes": 307477,
-        "lazy_min_bytes": 373299,
-        "lazy_gzip_bytes": 112849
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -300,21 +210,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 8414,
-        "gzip_bytes": 3236,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 8414,
-        "gzip_bytes": 3236,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -344,21 +239,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 27428,
-        "gzip_bytes": 8362,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 27428,
-        "gzip_bytes": 8362,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -392,21 +272,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:buffer\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 11419,
-        "gzip_bytes": 4614,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 11419,
-        "gzip_bytes": 4614,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -437,21 +302,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 950,
-        "gzip_bytes": 532,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 950,
-        "gzip_bytes": 532,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -481,21 +331,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 12320,
-        "gzip_bytes": 5011,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 12320,
-        "gzip_bytes": 5011,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -541,21 +376,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 58822,
-        "gzip_bytes": 18570,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 58822,
-        "gzip_bytes": 18570,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -585,21 +405,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 2076,
-        "gzip_bytes": 846,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 2076,
-        "gzip_bytes": 846,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -631,21 +436,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 11523,
-        "gzip_bytes": 4602,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 11523,
-        "gzip_bytes": 4602,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -675,21 +465,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 5462,
-        "gzip_bytes": 1883,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 5462,
-        "gzip_bytes": 1883,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -721,21 +496,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 1353,
-        "gzip_bytes": 777,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1353,
-        "gzip_bytes": 777,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -753,21 +513,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 4829810,
-        "gzip_bytes": 1117083,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4829810,
-        "gzip_bytes": 1117083,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -799,21 +544,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 5844,
-        "gzip_bytes": 2147,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 5844,
-        "gzip_bytes": 2147,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -843,21 +573,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 671,
-        "gzip_bytes": 396,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 671,
-        "gzip_bytes": 396,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -889,21 +604,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 68363,
-        "gzip_bytes": 27675,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 68363,
-        "gzip_bytes": 27675,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -921,21 +621,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/@babel/helper-module-imports/lib'"
-      },
-      "vite": {
-        "min_bytes": 3302629,
-        "gzip_bytes": 842020,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3302629,
-        "gzip_bytes": 842020,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -959,21 +644,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:fs\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 7425,
-        "gzip_bytes": 3269,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 5769,
-        "gzip_bytes": 2563,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -1004,21 +674,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 32991,
-        "gzip_bytes": 9139,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 32991,
-        "gzip_bytes": 9139,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -1064,21 +719,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 8650,
-        "gzip_bytes": 2918,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 8650,
-        "gzip_bytes": 2918,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1108,21 +748,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 264321,
-        "gzip_bytes": 111090,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 264321,
-        "gzip_bytes": 111090,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -1154,21 +779,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 31973,
-        "gzip_bytes": 12134,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 31973,
-        "gzip_bytes": 12134,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1198,21 +808,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 737,
-        "gzip_bytes": 458,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 737,
-        "gzip_bytes": 458,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -1244,21 +839,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 24727,
-        "gzip_bytes": 9316,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 24727,
-        "gzip_bytes": 9316,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1288,21 +868,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 13022,
-        "gzip_bytes": 4492,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 13022,
-        "gzip_bytes": 4492,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -1334,21 +899,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 6613,
-        "gzip_bytes": 2021,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 6613,
-        "gzip_bytes": 2021,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1378,21 +928,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 31293,
-        "gzip_bytes": 8965,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 31293,
-        "gzip_bytes": 8965,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -1462,21 +997,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 178885,
-        "gzip_bytes": 33671,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 178885,
-        "gzip_bytes": 33671,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [
           {
@@ -1545,21 +1065,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 1555,
-        "gzip_bytes": 670,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1555,
-        "gzip_bytes": 670,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1589,21 +1094,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 3643,
-        "gzip_bytes": 1509,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3643,
-        "gzip_bytes": 1509,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -1635,21 +1125,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 1044,
-        "gzip_bytes": 566,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1044,
-        "gzip_bytes": 566,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1680,21 +1155,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 50803,
-        "gzip_bytes": 15285,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 50803,
-        "gzip_bytes": 15285,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1712,21 +1172,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'crypto' in '<install>/node_modules/@next/env/dist'"
-      },
-      "vite": {
-        "min_bytes": 8752,
-        "gzip_bytes": 3940,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 8752,
-        "gzip_bytes": 3940,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -1757,21 +1202,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 29203,
-        "gzip_bytes": 11486,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 29203,
-        "gzip_bytes": 11486,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -1805,21 +1235,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 25364,
-        "gzip_bytes": 9981,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 25364,
-        "gzip_bytes": 9981,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -1849,21 +1264,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 151833,
-        "gzip_bytes": 24950,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 151833,
-        "gzip_bytes": 24950,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -1909,21 +1309,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 280,
-        "gzip_bytes": 230,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 280,
-        "gzip_bytes": 230,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1960,21 +1345,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 6066,
-        "gzip_bytes": 2396,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 6066,
-        "gzip_bytes": 2396,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -1992,21 +1362,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'events' in '<install>/node_modules/prompts/dist/elements'"
-      },
-      "vite": {
-        "min_bytes": 81299,
-        "gzip_bytes": 19357,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 81299,
-        "gzip_bytes": 19357,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -2026,21 +1381,6 @@
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/doctrine/lib'"
       },
-      "vite": {
-        "min_bytes": 534468,
-        "gzip_bytes": 145738,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 534468,
-        "gzip_bytes": 145738,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -2058,21 +1398,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 3897,
-        "gzip_bytes": 1832,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3897,
-        "gzip_bytes": 1832,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -2099,10 +1424,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "error": "Build failed with 1 error:"
-      },
-      "vite_without_runtime_error": "Build failed with 1 error:",
       "audit": {
         "rollup": null,
         "webpack": null
@@ -2132,21 +1453,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 37086,
-        "gzip_bytes": 7816,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 37086,
-        "gzip_bytes": 7816,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -2178,21 +1484,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 8808,
-        "gzip_bytes": 3185,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 8808,
-        "gzip_bytes": 3185,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2210,21 +1501,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 1180,
-        "gzip_bytes": 693,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1180,
-        "gzip_bytes": 693,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -2256,21 +1532,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 174,
-        "gzip_bytes": 166,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 174,
-        "gzip_bytes": 166,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2300,21 +1561,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 810,
-        "gzip_bytes": 479,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 810,
-        "gzip_bytes": 479,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -2346,21 +1592,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 44554,
-        "gzip_bytes": 15131,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 44554,
-        "gzip_bytes": 15131,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2391,21 +1622,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 323,
-        "gzip_bytes": 251,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 323,
-        "gzip_bytes": 251,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2423,21 +1639,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:process\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 7274,
-        "gzip_bytes": 2545,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 7274,
-        "gzip_bytes": 2545,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -2461,28 +1662,13 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 189232,
-        "gzip_bytes": 60732,
+        "min_bytes": 189210,
+        "gzip_bytes": 60721,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 193333,
-        "gzip_bytes": 61053,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 191617,
-        "gzip_bytes": 60486,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -2528,21 +1714,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 57545,
-        "gzip_bytes": 17575,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 57545,
-        "gzip_bytes": 17575,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2560,21 +1731,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 24167,
-        "gzip_bytes": 9573,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 24167,
-        "gzip_bytes": 9573,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -2605,21 +1761,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 9860,
-        "gzip_bytes": 3922,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 9860,
-        "gzip_bytes": 3922,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -2665,21 +1806,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 85380,
-        "gzip_bytes": 30427,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 85380,
-        "gzip_bytes": 30427,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2709,21 +1835,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 4774,
-        "gzip_bytes": 2008,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4774,
-        "gzip_bytes": 2008,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -2755,21 +1866,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 706,
-        "gzip_bytes": 409,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 706,
-        "gzip_bytes": 409,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2799,21 +1895,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 13276,
-        "gzip_bytes": 4011,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 13276,
-        "gzip_bytes": 4011,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -2845,21 +1926,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 513,
-        "gzip_bytes": 367,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 513,
-        "gzip_bytes": 367,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2890,21 +1956,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 535,
-        "gzip_bytes": 366,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 535,
-        "gzip_bytes": 366,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -2922,21 +1973,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 368151,
-        "gzip_bytes": 184851,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 368151,
-        "gzip_bytes": 184851,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -2968,21 +2004,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 200121,
-        "gzip_bytes": 67595,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 200121,
-        "gzip_bytes": 67595,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3013,21 +2034,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 4683,
-        "gzip_bytes": 1915,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4683,
-        "gzip_bytes": 1915,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3050,28 +2056,13 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 201156,
-        "gzip_bytes": 63773,
+        "min_bytes": 201134,
+        "gzip_bytes": 63763,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 198872,
-        "gzip_bytes": 62715,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 197165,
-        "gzip_bytes": 62060,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -3105,21 +2096,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 318355,
-        "gzip_bytes": 165124,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 318355,
-        "gzip_bytes": 165124,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -3150,21 +2126,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 774,
-        "gzip_bytes": 434,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 774,
-        "gzip_bytes": 434,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3182,21 +2143,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 360019,
-        "gzip_bytes": 181737,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 360019,
-        "gzip_bytes": 181737,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -3228,21 +2174,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 3711,
-        "gzip_bytes": 1366,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3711,
-        "gzip_bytes": 1366,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3272,21 +2203,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 29776,
-        "gzip_bytes": 10295,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 29776,
-        "gzip_bytes": 10295,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -3318,21 +2234,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 1822,
-        "gzip_bytes": 643,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1822,
-        "gzip_bytes": 643,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3363,21 +2264,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 10593,
-        "gzip_bytes": 4119,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 10593,
-        "gzip_bytes": 4119,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3395,21 +2281,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 27737,
-        "gzip_bytes": 10900,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 27737,
-        "gzip_bytes": 10900,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -3441,21 +2312,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 10964,
-        "gzip_bytes": 3741,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 10964,
-        "gzip_bytes": 3741,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3486,21 +2342,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 67685,
-        "gzip_bytes": 20982,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 67685,
-        "gzip_bytes": 20982,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3518,21 +2359,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 24018,
-        "gzip_bytes": 9569,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 24018,
-        "gzip_bytes": 9569,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -3564,21 +2390,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 834,
-        "gzip_bytes": 487,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 834,
-        "gzip_bytes": 487,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3596,21 +2407,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 28233,
-        "gzip_bytes": 11049,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 28233,
-        "gzip_bytes": 11049,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -3642,21 +2438,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 4444,
-        "gzip_bytes": 2007,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4444,
-        "gzip_bytes": 2007,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3686,21 +2467,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 7107,
-        "gzip_bytes": 2446,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 7107,
-        "gzip_bytes": 2446,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -3732,21 +2498,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 11997,
-        "gzip_bytes": 4999,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 11997,
-        "gzip_bytes": 4999,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3764,21 +2515,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 23914,
-        "gzip_bytes": 9542,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 23914,
-        "gzip_bytes": 9542,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -3798,21 +2534,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 341403,
-        "gzip_bytes": 174007,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 341403,
-        "gzip_bytes": 174007,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -3830,21 +2551,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 27490,
-        "gzip_bytes": 10818,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 27490,
-        "gzip_bytes": 10818,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -3864,21 +2570,6 @@
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/enquirer'"
       },
-      "vite": {
-        "min_bytes": 74721,
-        "gzip_bytes": 22459,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 74721,
-        "gzip_bytes": 22459,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -3896,21 +2587,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 24747,
-        "gzip_bytes": 9803,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 24747,
-        "gzip_bytes": 9803,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -3942,21 +2618,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 18142,
-        "gzip_bytes": 7280,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 18142,
-        "gzip_bytes": 7280,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -3975,21 +2636,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 25455,
-        "gzip_bytes": 10083,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 25455,
-        "gzip_bytes": 10083,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -4007,21 +2653,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 24513,
-        "gzip_bytes": 9795,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 24513,
-        "gzip_bytes": 9795,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -4053,21 +2684,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 13505,
-        "gzip_bytes": 4318,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 13505,
-        "gzip_bytes": 4318,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4097,21 +2713,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 957,
-        "gzip_bytes": 528,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 957,
-        "gzip_bytes": 528,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -4143,21 +2744,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 13816,
-        "gzip_bytes": 5181,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 13816,
-        "gzip_bytes": 5181,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4175,21 +2761,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'path' in '<install>/node_modules/interpret'"
-      },
-      "vite": {
-        "min_bytes": 7218,
-        "gzip_bytes": 1618,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 7218,
-        "gzip_bytes": 1618,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -4221,21 +2792,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 19280,
-        "gzip_bytes": 7674,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 19280,
-        "gzip_bytes": 7674,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4265,21 +2821,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 1251,
-        "gzip_bytes": 650,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1251,
-        "gzip_bytes": 650,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -4311,21 +2852,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 24144,
-        "gzip_bytes": 9040,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 24144,
-        "gzip_bytes": 9040,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4355,21 +2881,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 40267,
-        "gzip_bytes": 10783,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 40267,
-        "gzip_bytes": 10783,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -4401,21 +2912,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 9814,
-        "gzip_bytes": 3958,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 9814,
-        "gzip_bytes": 3958,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4445,21 +2941,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 27359,
-        "gzip_bytes": 12116,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 27359,
-        "gzip_bytes": 12116,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -4491,21 +2972,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 20960,
-        "gzip_bytes": 7247,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 20960,
-        "gzip_bytes": 7247,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4536,21 +3002,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 18014,
-        "gzip_bytes": 5800,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 18014,
-        "gzip_bytes": 5800,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4580,21 +3031,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 39088,
-        "gzip_bytes": 14256,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 39088,
-        "gzip_bytes": 14256,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -4640,21 +3076,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 1590,
-        "gzip_bytes": 820,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1590,
-        "gzip_bytes": 820,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4685,21 +3106,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 32122,
-        "gzip_bytes": 9405,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 32122,
-        "gzip_bytes": 9405,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4729,21 +3135,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 21889,
-        "gzip_bytes": 7552,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 21889,
-        "gzip_bytes": 7552,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -4801,21 +3192,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 1668,
-        "gzip_bytes": 934,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1668,
-        "gzip_bytes": 934,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4845,21 +3221,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 8549,
-        "gzip_bytes": 3293,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 8549,
-        "gzip_bytes": 3293,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -4891,21 +3252,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 263,
-        "gzip_bytes": 222,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 263,
-        "gzip_bytes": 222,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -4935,21 +3281,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 12799,
-        "gzip_bytes": 4905,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 12799,
-        "gzip_bytes": 4905,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -4981,21 +3312,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 279485,
-        "gzip_bytes": 96606,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 279485,
-        "gzip_bytes": 96606,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5026,21 +3342,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 16240,
-        "gzip_bytes": 5856,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 16240,
-        "gzip_bytes": 5856,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5059,21 +3360,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:fs\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 64752,
-        "gzip_bytes": 18496,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 64752,
-        "gzip_bytes": 18496,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -5091,21 +3377,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:process\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 30513,
-        "gzip_bytes": 10004,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 30513,
-        "gzip_bytes": 10004,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -5133,21 +3404,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:path\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 109251,
-        "gzip_bytes": 32930,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 109251,
-        "gzip_bytes": 32930,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -5179,21 +3435,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 4367,
-        "gzip_bytes": 1633,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4367,
-        "gzip_bytes": 1633,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5223,21 +3464,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 2310,
-        "gzip_bytes": 921,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 2310,
-        "gzip_bytes": 921,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -5269,21 +3495,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 34241,
-        "gzip_bytes": 10136,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 34241,
-        "gzip_bytes": 10136,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5313,21 +3524,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 8390,
-        "gzip_bytes": 2974,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 8390,
-        "gzip_bytes": 2974,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -5359,21 +3555,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 692,
-        "gzip_bytes": 420,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 692,
-        "gzip_bytes": 420,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5404,21 +3585,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 88673,
-        "gzip_bytes": 30510,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 88673,
-        "gzip_bytes": 30510,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5448,21 +3614,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 3743,
-        "gzip_bytes": 1608,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3743,
-        "gzip_bytes": 1608,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -5508,21 +3659,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 109561,
-        "gzip_bytes": 27943,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 109561,
-        "gzip_bytes": 27943,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [
           {
@@ -5555,10 +3691,6 @@
       "webpack": {
         "error": "Module not found: Error: \".\" is not exported under the conditions [\"typescript\",\"import\",\"module-sync\",\"module\",\"webpack\",\"production\",\"browser\"] from package <install>/node_modules/storybook (see exports field in <install>/node_modules/storybook/package.json)"
       },
-      "vite": {
-        "error": "Build failed with 1 error:"
-      },
-      "vite_without_runtime_error": "Build failed with 1 error:",
       "audit": {
         "rollup": null,
         "webpack": null
@@ -5588,21 +3720,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 151611,
-        "gzip_bytes": 51410,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 151611,
-        "gzip_bytes": 51410,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -5634,21 +3751,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 4460,
-        "gzip_bytes": 1896,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4460,
-        "gzip_bytes": 1896,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5679,21 +3781,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 12903,
-        "gzip_bytes": 4168,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 12903,
-        "gzip_bytes": 4168,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5711,21 +3798,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'buffer' in '<install>/node_modules/readable-stream/lib'"
-      },
-      "vite": {
-        "min_bytes": 41007,
-        "gzip_bytes": 11778,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 41007,
-        "gzip_bytes": 11778,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -5756,21 +3828,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 121010,
-        "gzip_bytes": 31857,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 121010,
-        "gzip_bytes": 31857,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -5816,21 +3873,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 90933,
-        "gzip_bytes": 31267,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 90933,
-        "gzip_bytes": 31267,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5860,21 +3902,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 280456,
-        "gzip_bytes": 92663,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 280456,
-        "gzip_bytes": 92663,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -5920,21 +3947,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 561,
-        "gzip_bytes": 350,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 561,
-        "gzip_bytes": 350,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -5953,21 +3965,6 @@
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/@babel/helper-module-imports/lib'"
       },
-      "vite": {
-        "min_bytes": 1291662,
-        "gzip_bytes": 321784,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1291662,
-        "gzip_bytes": 321784,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -5985,21 +3982,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/@babel/helper-module-imports/lib'"
-      },
-      "vite": {
-        "min_bytes": 454847,
-        "gzip_bytes": 109985,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 454847,
-        "gzip_bytes": 109985,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -6031,21 +4013,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 449,
-        "gzip_bytes": 268,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 449,
-        "gzip_bytes": 268,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6063,21 +4030,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 1604169,
-        "gzip_bytes": 420855,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1602501,
-        "gzip_bytes": 420117,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -6097,21 +4049,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:fs/promises\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 1251558,
-        "gzip_bytes": 315103,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1251558,
-        "gzip_bytes": 315103,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -6129,21 +4066,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'url' in '<install>/node_modules/@oozcitak/url/lib'"
-      },
-      "vite": {
-        "min_bytes": 111494,
-        "gzip_bytes": 27799,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 111494,
-        "gzip_bytes": 27799,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -6175,21 +4097,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 748,
-        "gzip_bytes": 387,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 748,
-        "gzip_bytes": 387,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6207,21 +4114,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'stream' in '<install>/node_modules/csv-parse/lib'"
-      },
-      "vite": {
-        "min_bytes": 31843,
-        "gzip_bytes": 8146,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 31843,
-        "gzip_bytes": 8146,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -6253,21 +4145,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 3358,
-        "gzip_bytes": 1498,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3358,
-        "gzip_bytes": 1498,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6298,21 +4175,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 253,
-        "gzip_bytes": 219,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 253,
-        "gzip_bytes": 219,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6337,21 +4199,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 1660073,
-        "gzip_bytes": 437118,
-        "lazy_min_bytes": 21441,
-        "lazy_gzip_bytes": 7959,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1658293,
-        "gzip_bytes": 436385,
-        "lazy_min_bytes": 21441,
-        "lazy_gzip_bytes": 7959
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -6369,21 +4216,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:net\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 990743,
-        "gzip_bytes": 251587,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 990743,
-        "gzip_bytes": 251587,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -6415,21 +4247,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 126,
-        "gzip_bytes": 115,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 126,
-        "gzip_bytes": 115,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6459,21 +4276,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 600,
-        "gzip_bytes": 372,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 600,
-        "gzip_bytes": 372,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -6505,21 +4307,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 9094,
-        "gzip_bytes": 1717,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 9094,
-        "gzip_bytes": 1717,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6549,21 +4336,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 19225,
-        "gzip_bytes": 10424,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 19225,
-        "gzip_bytes": 10424,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -6595,21 +4367,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 1131,
-        "gzip_bytes": 607,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1131,
-        "gzip_bytes": 607,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6639,21 +4396,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 418893,
-        "gzip_bytes": 127664,
-        "lazy_min_bytes": 30046,
-        "lazy_gzip_bytes": 11186,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 416994,
-        "gzip_bytes": 126892,
-        "lazy_min_bytes": 30046,
-        "lazy_gzip_bytes": 11185
       },
       "audit": {
         "rollup": [
@@ -6735,21 +4477,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 2236,
-        "gzip_bytes": 1125,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 2236,
-        "gzip_bytes": 1125,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6767,21 +4494,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'fs' in '<install>/node_modules/cosmiconfig/dist'"
-      },
-      "vite": {
-        "min_bytes": 79826,
-        "gzip_bytes": 29506,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 77971,
-        "gzip_bytes": 28788,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -6813,21 +4525,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 796,
-        "gzip_bytes": 478,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 796,
-        "gzip_bytes": 478,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6858,21 +4555,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 13151,
-        "gzip_bytes": 5907,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 13151,
-        "gzip_bytes": 5907,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -6902,21 +4584,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 65133,
-        "gzip_bytes": 19149,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 65133,
-        "gzip_bytes": 19149,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -6986,21 +4653,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 25981,
-        "gzip_bytes": 10521,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 25981,
-        "gzip_bytes": 10521,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7031,21 +4683,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 518272,
-        "gzip_bytes": 167399,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 518272,
-        "gzip_bytes": 167399,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7075,21 +4712,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 78583,
-        "gzip_bytes": 27569,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 78583,
-        "gzip_bytes": 27569,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -7135,21 +4757,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 2399,
-        "gzip_bytes": 1045,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 2399,
-        "gzip_bytes": 1045,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7179,21 +4786,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 251238,
-        "gzip_bytes": 74321,
-        "lazy_min_bytes": 747,
-        "lazy_gzip_bytes": 440,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 249487,
-        "gzip_bytes": 73653,
-        "lazy_min_bytes": 747,
-        "lazy_gzip_bytes": 440
       },
       "audit": {
         "rollup": [
@@ -7251,21 +4843,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 1865099,
-        "gzip_bytes": 478446,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1863394,
-        "gzip_bytes": 477742,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -7283,21 +4860,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 19231,
-        "gzip_bytes": 7375,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 19231,
-        "gzip_bytes": 7375,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -7329,21 +4891,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 49351,
-        "gzip_bytes": 14414,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 49351,
-        "gzip_bytes": 14414,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7361,21 +4908,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 676,
-        "gzip_bytes": 436,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 676,
-        "gzip_bytes": 436,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -7407,21 +4939,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 238,
-        "gzip_bytes": 217,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 238,
-        "gzip_bytes": 217,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7440,10 +4957,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "error": "Build failed with 1 error:"
-      },
-      "vite_without_runtime_error": "Build failed with 1 error:",
       "audit": {
         "rollup": null,
         "webpack": null
@@ -7461,21 +4974,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 19712,
-        "gzip_bytes": 7559,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 19712,
-        "gzip_bytes": 7559,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -7495,10 +4993,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "error": "Build failed with 1 error:"
-      },
-      "vite_without_runtime_error": "Build failed with 1 error:",
       "audit": {
         "rollup": null,
         "webpack": null
@@ -7516,21 +5010,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 48849,
-        "gzip_bytes": 16525,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 48849,
-        "gzip_bytes": 16525,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -7562,21 +5041,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 857,
-        "gzip_bytes": 514,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 857,
-        "gzip_bytes": 514,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7606,21 +5070,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 15231,
-        "gzip_bytes": 5816,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 15231,
-        "gzip_bytes": 5816,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -7666,21 +5115,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 132714,
-        "gzip_bytes": 40541,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 132714,
-        "gzip_bytes": 40541,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7711,21 +5145,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 640,
-        "gzip_bytes": 415,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 640,
-        "gzip_bytes": 415,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7755,21 +5174,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 7764,
-        "gzip_bytes": 2529,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 7764,
-        "gzip_bytes": 2529,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -7815,21 +5219,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 82363,
-        "gzip_bytes": 24839,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 82363,
-        "gzip_bytes": 24839,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7854,10 +5243,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"virtual:tanstack-rsc-browser-decode\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "error": "Build failed with 1 error:"
-      },
-      "vite_without_runtime_error": "Build failed with 1 error:",
       "audit": {
         "rollup": null,
         "webpack": null
@@ -7887,21 +5272,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 360965,
-        "gzip_bytes": 124087,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 359297,
-        "gzip_bytes": 123407,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -7947,21 +5317,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 13622,
-        "gzip_bytes": 4791,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 13622,
-        "gzip_bytes": 4791,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -7991,21 +5346,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 1099,
-        "gzip_bytes": 619,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1099,
-        "gzip_bytes": 619,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -8037,21 +5377,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 2254,
-        "gzip_bytes": 1018,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 2254,
-        "gzip_bytes": 1018,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -8081,21 +5406,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 108432,
-        "gzip_bytes": 33128,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 108432,
-        "gzip_bytes": 33128,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -8127,21 +5437,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 3975,
-        "gzip_bytes": 1781,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3975,
-        "gzip_bytes": 1781,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -8172,21 +5467,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 622,
-        "gzip_bytes": 383,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 622,
-        "gzip_bytes": 383,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -8205,10 +5485,6 @@
       "webpack": {
         "error": "Module parse failed: Unexpected token (27:7)"
       },
-      "vite": {
-        "error": "Build failed with 1 error:"
-      },
-      "vite_without_runtime_error": "Build failed with 1 error:",
       "audit": {
         "rollup": null,
         "webpack": null
@@ -8238,21 +5514,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 174,
-        "gzip_bytes": 166,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 174,
-        "gzip_bytes": 166,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [],
@@ -8284,21 +5545,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 1522,
-        "gzip_bytes": 672,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1522,
-        "gzip_bytes": 672,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -8316,21 +5562,6 @@
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
-      },
-      "vite": {
-        "min_bytes": 1881844,
-        "gzip_bytes": 480727,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1880158,
-        "gzip_bytes": 480128,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -8362,21 +5593,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 16802,
-        "gzip_bytes": 6242,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 16802,
-        "gzip_bytes": 6242,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -8407,21 +5623,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 4476,
-        "gzip_bytes": 1939,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 4476,
-        "gzip_bytes": 1939,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -8451,21 +5652,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 906009,
-        "gzip_bytes": 297076,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 906009,
-        "gzip_bytes": 297076,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -8518,8 +5704,8 @@
       "version": "12.12.0",
       "node_builtins_external": [],
       "rollup": {
-        "min_bytes": 185103,
-        "gzip_bytes": 59199,
+        "min_bytes": 184826,
+        "gzip_bytes": 59036,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
@@ -8534,21 +5720,6 @@
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 185526,
-        "gzip_bytes": 59851,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 185526,
-        "gzip_bytes": 59851,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": [
@@ -8586,28 +5757,13 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 8471,
-        "gzip_bytes": 3325,
+        "min_bytes": 8550,
+        "gzip_bytes": 3395,
         "lazy_min_bytes": 693294,
         "lazy_gzip_bytes": 192958,
         "css_bytes_unminified": 0,
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
-      },
-      "vite": {
-        "min_bytes": 9206,
-        "gzip_bytes": 3632,
-        "lazy_min_bytes": 687894,
-        "lazy_gzip_bytes": 194996,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 7470,
-        "gzip_bytes": 2920,
-        "lazy_min_bytes": 687894,
-        "lazy_gzip_bytes": 194997
       },
       "audit": {
         "rollup": [
@@ -8701,21 +5857,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 7733,
-        "gzip_bytes": 2674,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 7733,
-        "gzip_bytes": 2674,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -8729,15 +5870,11 @@
       "version": "5.0.5",
       "node_builtins_external": [],
       "rollup": {
-        "error": "UNRESOLVED_IMPORT assert, buffer, fs, node:crypto, node:fs, node:fs/promises, node:module, node:os, node:path, node:path/posix, node:querystring, node:url, path, stream, util, vite, zlib"
+        "error": "Expected ',', got 'ident' in <install>/node_modules/@vitest/browser/dist/index.js"
       },
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:crypto\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "error": "Build failed with 2 errors:"
-      },
-      "vite_without_runtime_error": "Build failed with 2 errors:",
       "audit": {
         "rollup": null,
         "webpack": null
@@ -8755,21 +5892,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'child_process' in '<install>/node_modules/better-opn/dist'"
-      },
-      "vite": {
-        "min_bytes": 6620,
-        "gzip_bytes": 2831,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 6620,
-        "gzip_bytes": 2831,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,
@@ -8801,21 +5923,6 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite": {
-        "min_bytes": 3402,
-        "gzip_bytes": 1565,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 3402,
-        "gzip_bytes": 1565,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": [],
         "webpack": []
@@ -8834,21 +5941,6 @@
       "webpack": {
         "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
       },
-      "vite": {
-        "min_bytes": 2519366,
-        "gzip_bytes": 666526,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 2517689,
-        "gzip_bytes": 665909,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
-      },
       "audit": {
         "rollup": null,
         "webpack": null
@@ -8866,21 +5958,6 @@
       },
       "webpack": {
         "error": "Module not found: Error: Can't resolve 'http' in '<install>/node_modules/https-browserify'"
-      },
-      "vite": {
-        "min_bytes": 1041,
-        "gzip_bytes": 561,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_anchor": {
-        "min_bytes": 1041,
-        "gzip_bytes": 561,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0
       },
       "audit": {
         "rollup": null,

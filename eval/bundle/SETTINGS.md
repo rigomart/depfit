@@ -1,98 +1,47 @@
 # Bundle measurement settings
 
-rolldown settings for depfit, from the bundler study (rolldown 1.2.14, Vite 8.3.4).
+depfit measures a snippet with a real `vite build` (`src/collect/vite-build.mjs`, run on Node), Vite 8.3.4 on
+rolldown 1.2.14, both pinned exactly (`package.json`, with an `overrides` entry so Vite uses the same
+rolldown). Vite's production defaults apply: target, minifier, resolve conditions and main fields,
+`define` (`process.env.NODE_ENV`, `import.meta.env`), JSON, CommonJS interop, and the preload helper
+for lazy chunks. SPEC.md wins on conflict.
 
-> **Amended after review (see SPEC.md, which wins on conflict).**
-> - **Step 1 scope:** browser target, JS only. The workerd rows and the Workers note are input for
->   step 3.
-> - **Non-JS imports:** a CSS, wasm, or asset import yields `NON_JS_IMPORT` (null) until step 4.
->   The `empty`/`asset` module types below produced code that built but was broken, e.g.
->   `(void 0).button` for CSS modules, and a tiktoken wasm namespace that held a URL instead of
->   exports.
-> - **Peers:** keep depfit's existing isolated install, which already installs required peers.
->   Exclude them in the bundler's `external`, not at install time, so `cost` is unchanged.
-> - **Opaque loads:** after a successful build, scan the output for a surviving `require(`,
->   `import(` with a non-literal argument, `createRequire`, or `process.dlopen`. If one is found,
->   return null with `OPAQUE_RUNTIME_LOAD`. Escalating warnings alone misses node-pty, which builds
->   to about 1.2 KB with zero warnings.
-> - **Field names:** `eager_js_min_bytes`, `eager_js_gzip9_bytes`, `lazy_js_min_bytes`,
->   `lazy_js_gzip9_bytes`.
+## depfit's choices (the complete list)
 
+| Setting | Why |
+|---|---|
+| A Node child process (not Bun: Vite builds its preload helper from function source text, which Bun prints differently; shiki was 2 B off) with `NODE_ENV=production` and only `PATH`, `HOME` and temp-dir variables from the shell | Vite reads the process environment: `NODE_ENV=development` selects development code even with `mode: "production"` (react-dom 210,684 → 399,473 B), and `VITE_*` variables land in the bundle |
+| `root`: the isolated install; `configFile: false`; `envDir: false`; `envPrefix: []`; `mode: "production"`; `publicDir: false`; `base: "/"`; `cacheDir` inside the install | No user, project or shell config; nothing written outside the disposable install |
+| `build.rollupOptions.input`: the generated `__depfit_entry.mjs` (a JS entry, not `index.html`) | An HTML entry adds Vite's modulepreload polyfill, an app-level constant |
+| `build.write: false` | Measured in memory (also turns off output clearing and public-file copying) |
+| Peers external through Vite's exported `esmExternalRequirePlugin` | Peers are excluded and listed. Plain `external` leaves a runtime `require` shim of a few hundred bytes for a CommonJS `require()` of a peer (the `cjs-peer` fixture: 536 B with plain `external`, under 400 B with the plugin); the plugin turns it into an import |
+| An observing plugin (`resolveId` returns null after recording, `transform` returns null after scanning) and an `onLog` that records | The honesty checks read resolutions, sources and log codes. A build without it emits the same output (spike) |
 
-Goal: same answer as a Vite 8 production client build of the snippet; anything that cannot be measured is
-an error with a reason, never a smaller number.
+Gzip is level 9 per chunk with the parent runtime's zlib (Bun's is +0.4% against Node's).
 
-**Entry.** Generate a virtual entry from the snippet and keep every binding alive:
-`import { format, parseISO } from "date-fns"; globalThis.__depfit = [format, parseISO];`. For a namespace
-import, keep only the members the snippet accesses (`[ns.object, ns.string]`); with no members given,
-keep `ns` whole and say so in a field (e.g. `namespace_kept_whole: true`). Side-effect imports
-(`import "pkg"`) are measured as-is.
+## Honesty checks (`problemsFromBuild` in `src/collect/bundle.ts`)
 
-**Input options**
+Vite turns several broken inputs into a quiet success, so each is read from its own signal:
 
-- `platform: "browser"` for both targets.
-- `resolve.conditionNames`: browser `["module", "browser", "production"]` (Vite's client set);
-  workerd `["workerd", "worker", "browser", "module", "production"]` (wrangler's set plus Vite's).
-  **Do not list `import`, `require` or `default`**: rolldown adds them per import kind. Listing `import`
-  made `require("style-to-object")` (from CJS style-to-js, inside react-markdown) resolve to the ESM
-  file, +0.4% and different modules than Vite.
-- `resolve.mainFields`: `["browser", "module", "main"]`. Honor the `browser` field object form (including
-  `false` → empty module); verify rolldown's alias-field default when implementing.
-- `transform.define`: `{ "process.env.NODE_ENV": "\"production\"" }`. Nothing else; do not stub
-  `process`/`global`, size does not depend on them.
-- `transform.target`: Vite's baseline (`chrome111, edge111, firefox114, safari16.4, ios16.4`), so syntax
-  lowering matches what Vite ships.
-- `preserveEntrySignatures: false`; default tree-shaking (honors `sideEffects` and `/*#__PURE__*/`).
-- `external`: the candidate's `peerDependencies` (optional ones too) and their subpaths
-  (`^(react|react-dom)(/.*)?$`), plus any the user names. Install the candidate without auto-installing
-  peers so a missing external cannot be bundled by accident. Record the list (`external_packages`).
-- `moduleTypes`:
-  - `.css`: `"empty"`. rolldown 1.2 errors `UNSUPPORTED_FEATURE: Bundling CSS is no longer supported`
-    otherwise. Report the CSS files imported and their raw byte size as separate facts
-    (e.g. `css_files`, `css_bytes_unminified`); never add them to the JS number.
-  - images, fonts, `.svg` used as URLs: `"asset"` (emitted file, JS keeps a URL). Report
-    `asset_bytes` separately. Note: Vite inlines assets under 4 KB as base64; depfit should not, and the
-    field name should say "not inlined".
-  - `.wasm`: `"asset"` and report `wasm_bytes` separately (default rolldown fails with a misleading
-    `PARSE_ERROR`). Workers import wasm as a module too, so the same treatment fits workerd.
-  - `.json`: rolldown's `viteJsonPlugin` with Vite's build defaults (`namedExports: true`,
-    `stringify: "auto"`, `minify: true`), as Vite runs it on every `.json` import (amended after
-    Codex review round 3). A `require()` of JSON then gets Vite's ESM interop; without it, node-pty
-    measured 1,179 B gzip against Vite's 1,591. Named-key tree-shaking still works.
-- `onLog`: **escalate `UNRESOLVED_IMPORT` to an error.** Default rolldown only *warns* and turns the
-  specifier into an external (`does-not-exist`, `node:fs`, `path` all "built" to 39–58 B). This is the
-  single most important setting. `MISSING_EXPORT` is already an error. Record the codes of any remaining
-  warnings as a fact (`bundle_warnings`), no prose.
-
-**Unmeasurable inputs → errors (verified with rolldown 1.2.14)**
-
-| Input | Target browser | Target workerd |
+| Input | Vite does | depfit reports |
 |---|---|---|
-| `node:*` or bare built-in (`fs`, `path`) | error `UNRESOLVED_IMPORT` (escalated), report the specifier | external, listed as `node_builtins` (nodejs_compat provides them; wrangler's unenv polyfills are out of scope) |
-| unresolvable bare import (optional dep, generated `.prisma/client`) | error, report specifier | same |
-| `.node` native addon | error `UNRESOLVED_IMPORT` on the `.node` path | same |
-| named export that does not exist | error `MISSING_EXPORT` | same |
-| package that is browser-incompatible through its own `browser` mapping (execa → unicorn-magic) | error `MISSING_EXPORT` (`toPath`) | same |
-| dynamic `import()` | builds; emit as chunks | same |
+| Import that does not resolve | warns `UNRESOLVED_IMPORT`, leaves it external | `UNRESOLVED_IMPORT` (`NO_ENTRY` for the snippet's own import of the candidate) |
+| Node built-in (`node:fs`, `fs`) | resolves to an empty `__vite-browser-external` stub, warns | `UNRESOLVED_IMPORT <name>` |
+| A package's `browser: { "./x.js": false }` | resolves to the same stub, no warning | measured (the package chose it) |
+| Missing optional peer of a dependency | replaces it with `__vite-optional-peer-dep:*`, a throw | `UNRESOLVED_IMPORT <peer>` |
+| Missing named export | error `MISSING_EXPORT` | `MISSING_EXPORT` |
+| Missing namespace member (`m.nope`) | warns `IMPORT_IS_UNDEFINED`, emits `undefined` | `MISSING_EXPORT` |
+| CSS, wasm, images, fonts; `?url`, `?raw`, `?inline`, `?worker`, `?init` queries; `new URL(..., import.meta.url)`; `new Worker(...)`; any emitted asset | inlines a URL, emits an asset, or a worker | `NON_JS_IMPORT` (step 1 is JS only) |
+| An `import()` or import left in the output that is no emitted chunk and no peer | builds | `IMPORT_OUTSIDE_BUNDLE <specifier>` |
+| Any other build error | fails | Vite's code (`PARSE_ERROR`, `PLUGIN_ERROR`, ...) |
 
-Never retry with unresolved imports marked external (the old `buildRetrying`): that is how wrong numbers
-were produced.
+Warnings in general, and package-authored stubs or loaders that throw, are not nulls: the number is
+emitted bytes, with no claim that the code runs (SPEC.md).
 
-**Output options**: `format: "esm"`, `minify: true` (oxc), `topLevelVar: true`,
-`comments: { legal: false, annotation: false, jsdoc: false }`, no sourcemap, `write: false` (use
-`generate`).
+## History
 
-**Measuring**
-
-- `eager` = entry chunk plus the closure of its static `imports`; `lazy` = chunks reachable only through
-  `dynamicImports`. Report both (`gzip_bytes`, `lazy_gzip_bytes`); never fold lazy into the main number.
-  (Probe: a 20 KB dynamic import correctly became a separate chunk.)
-- gzip per emitted chunk with `node:zlib` `gzipSync(code, { level: 9 })`, then sum (each chunk is a
-  separate transfer). Also report `min_bytes`. Field names should carry the units and level
-  (`gzip9_bytes`); schema docs should say the zlib of the running runtime is used.
-- Record `bundler: "rolldown@1.2.14"` and `target` in the report.
-
-**workerd note.** wrangler does not minify by default, so a Worker as deployed is larger than depfit's
-minified number unless the project sets `minify = true`. Keep one definition (minified) for both targets
-and make that explicit in the field name or schema doc rather than guessing the project's setting; or
-read `minify` from `wrangler.toml/jsonc` and report it as a project fact.
+Until 2026-10-16 depfit ran rolldown directly with Vite's settings copied by hand
+(`SETTINGS-rolldown-v1.md`). Three settings were missed, each a silent wrong number: Vite's JSON
+handling (node-pty 25% under Vite), `import.meta.env` replacement (development branches kept), and the
+`jsnext:main` main field (moment's UMD build instead of its ES build). Running Vite itself removes that
+class of error (PLAN-vite.md).
