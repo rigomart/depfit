@@ -142,8 +142,9 @@ in step 1.
 
 Paused by the user after round 4, then the user chose to switch depfit to running `vite build` itself
 (after a depfit comparison of bundlers). The plan, revised after a Codex review of it, is
-`PLAN-vite.md`. Next: the user confirms its two decisions (count Vite's preload helper; replace gate C
-with a small conformance check), then the spike (step 1 of the plan). Reproductions for rounds 3-5 are
+`PLAN-vite.md`. The user confirmed its two decisions (count Vite's preload helper; replace gate C with a
+small conformance check). The spike is done and passed: every changed number is explained (see the plan).
+Next: the implementation (step 2 of the plan). Reproductions for rounds 3-5 are
 in `results/research/review3/`, `review4/` and `review5/` (gitignored).
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and

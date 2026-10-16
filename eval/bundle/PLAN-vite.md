@@ -1,7 +1,8 @@
 # Plan: measure with `vite build` instead of imitating it
 
-Status: proposed 2026-10-16 after Codex review round 4, then revised after a Codex review of the plan
-(reproductions in `results/research/review5/`). Nothing here is built yet.
+Status: proposed 2026-10-16 after Codex review round 4, revised after a Codex review of the plan
+(reproductions in `results/research/review5/`), decisions confirmed by the user, spike done (below).
+The implementation (step 2 of Order) is not started.
 
 ## Why
 
@@ -115,6 +116,44 @@ there is no `SCHEMA_VERSION` bump.
   bytes, which are Vite's.
 - SPEC, SETTINGS, README, gate F's load detector (it must check that neither Vite nor rolldown is
   loaded without bundling) and `schema-docs` are updated together.
+
+## Spike results (2026-10-16)
+
+Script: `results/research/spike/` (gitignored; `spike.ts` drives `vite-runner.mjs`, one child process
+per build, Vite 8.3.4 with rolldown 1.2.14 from a scratch install).
+
+- **Corpus, 33 step-1 cases:** 29 identical to today's depfit to the byte (including every null code).
+  4 changed, all explained:
+  - **moment −749 B min:** Vite's default `mainFields` include `jsnext:main`, which depfit's copy
+    lacked, so Vite bundles moment's ES module build (`dist/moment.js`) and depfit bundled the UMD
+    `moment.js`. A third missed setting, and the kind of bug the switch removes.
+  - **node-pty +8 B, ajv +16 B:** Vite's own JSON handling differs slightly from depfit's
+    standalone copy of it (two extra `.default` accesses in ajv). Vite's output is now the number.
+  - **shiki +10.7 KB eager min:** Vite's preload helper and per-import wrapping, counted by decision 1.
+    Within 142 B of the stock Vite build in `reference.json` (151,743 vs 151,885).
+- **Fixtures, 15 new cases:** all as planned. The `import.meta.env.DEV` branch is dropped (29 B); a
+  `browser: false` mapping is measured; `node:fs` gives `UNRESOLVED_IMPORT`; a missing optional peer
+  of a dependency gives `UNRESOLVED_IMPORT`; a missing namespace member gives `MISSING_EXPORT`; small,
+  large and missing URL assets, worker URLs, `?worker&inline` and CSS give `NON_JS_IMPORT`; a CJS
+  `require()` of a peer leaves no runtime `require`; an import attribute on a peer and a required JSON
+  file are measured.
+- **Isolation:** identical results from another working directory and another root path. With the
+  parent shell passed through unstripped (`NODE_ENV=development`), react-dom grows from 210,684 to
+  399,473 B and the env fixture keeps its development branch, which confirms the clean child
+  environment is required.
+- **Side effects:** no file written in the install other than the generated entry, and the observing
+  plugin changes no output (compared with a build without it).
+- **Speed:** median 109 ms per build including child-process start and Vite import (max 270 ms,
+  shiki), well inside gate F's 1.5 s.
+- **Toolchain pinning is required:** the repo's own Vite 8.3.4 resolved a nested rolldown 1.2.13
+  (npm kept depfit's 1.2.14 at the top level), and zod differed by 46 B between the two. depfit must
+  force one rolldown version for Vite (`overrides`) and record both versions.
+- **Spike bugs fixed along the way** (in the spike, informing the implementation): Vite's own virtual
+  modules (`\0vite/...`) must be skipped by the source scan, and paths must be compared on the real
+  path of the temp root (`/var` vs `/private/var` on macOS). An unresolved import arrives as a warning
+  log, not an error.
+- Not covered by the spike, left to the implementation: that an ordinary CLI run loads neither Vite
+  nor rolldown, and cold timing through the Bun CLI path.
 
 ## Order
 
