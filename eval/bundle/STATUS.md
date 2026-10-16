@@ -140,9 +140,11 @@ in step 1.
 
 ## To resume
 
-Paused by the user after round 4. Next decision: run Vite itself (recommended, see round 4) or keep
-patching (fix round 4's 7 findings, revert the 1000 B slack, Codex round 5). Round 3 and 4
-reproductions are in `results/research/review3/` and `review4/` (gitignored).
+Paused by the user after round 4, then the user chose to switch depfit to running `vite build` itself
+(after a depfit comparison of bundlers). The plan, revised after a Codex review of it, is
+`PLAN-vite.md`. Next: the user confirms its two decisions (count Vite's preload helper; replace gate C
+with a small conformance check), then the spike (step 1 of the plan). Reproductions for rounds 3-5 are
+in `results/research/review3/`, `review4/` and `review5/` (gitignored).
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and
 `method.md` (bundler study).
