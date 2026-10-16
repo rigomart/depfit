@@ -30,7 +30,7 @@ import {
   snippetParts,
   type Target,
 } from "./cases.ts";
-import { auditBuild, type Hit } from "./wild-audit.ts";
+import { auditBuild, type Hit, type ParseModule } from "./wild-audit.ts";
 
 if (process.versions.bun) {
   // Whole-package namespaces (the wild corpus) can be large; give Node room.
@@ -116,7 +116,28 @@ async function installTools(): Promise<{ dir: string; versions: Record<string, s
     versions[name] =
       asString(asRecord(JSON.parse(await readFile(manifestPath, "utf8"))).version) ?? "?";
   }
+  const acornManifest = webpackRequire(dir).resolve("acorn/package.json");
+  versions.acorn =
+    asString(asRecord(JSON.parse(await readFile(acornManifest, "utf8"))).version) ?? "?";
   return { dir, versions };
+}
+
+/** Resolves modules the way webpack does: from its own install, which holds its acorn. */
+function webpackRequire(toolsDir: string) {
+  return createRequire(createRequire(join(toolsDir, "package.json")).resolve("webpack"));
+}
+
+/**
+ * The wild auditor's parser: webpack's acorn, so its `fetch` checks share no parser with depfit
+ * (oxc). Parses a chunk as a module, as both bundlers emit them.
+ */
+async function auditParser(toolsDir: string): Promise<ParseModule> {
+  const acorn = asRecord(
+    await import(pathToFileURL(webpackRequire(toolsDir).resolve("acorn")).href),
+  );
+  const parse = acorn.parse ?? asRecord(acorn.default).parse;
+  if (typeof parse !== "function") throw new Error("acorn: no parse export");
+  return (code) => parse(code, { ecmaVersion: "latest", sourceType: "module" });
 }
 
 type Fn = (...args: unknown[]) => unknown;
@@ -461,14 +482,24 @@ async function buildWebpack(input: BuildInput): Promise<Measured> {
  * `build.lib`) with Vite's defaults except: no asset inlining, peers external, no modulepreload
  * polyfill, no CSS code split. Output chunks are measured like the other builders'.
  *
- * With `preloadRuntime: false` the build also sets `build.modulePreload: false`, Vite's own switch
- * for its dynamic-import instrumentation. Vite then neither wraps each `import()` in
- * `__vitePreload(...)` nor emits the `__vite__mapDeps` dependency table, so the chunks hold only
- * the bundler's output for the package, which is what depfit measures (README "Gate C").
+ * With `preloadRuntime: false`, Vite's `native:import-analysis-build` plugin is removed from the
+ * resolved config. That plugin is what wraps each `import()` in the preload helper, adds the
+ * `__vite__mapDeps` table and emits the helper, in every client app build (`build.modulePreload:
+ * false` does not stop it). Without it the chunks hold only the bundler's output for the package,
+ * which is what depfit measures (README "Gate C normalization"). A Vite version without that
+ * plugin fails the build instead of measuring the runtime.
  */
 async function buildVite(input: BuildInput, preloadRuntime = true): Promise<Measured> {
   const { toolsDir, dir, entry, external } = input;
   const build = await loadFunction(toolsDir, "vite", "build");
+  const withoutRuntime = {
+    name: "depfit:without-preload-runtime",
+    configResolved(config: { plugins: { name: string }[] }) {
+      const at = config.plugins.findIndex((plugin) => plugin.name === VITE_RUNTIME_PLUGIN);
+      if (at < 0) throw new Error(`vite: no ${VITE_RUNTIME_PLUGIN} plugin to remove`);
+      config.plugins.splice(at, 1);
+    },
+  };
   const html = join(dir, "index.html");
   await writeFile(
     html,
@@ -480,11 +511,12 @@ async function buildVite(input: BuildInput, preloadRuntime = true): Promise<Meas
       configFile: false,
       envFile: false,
       logLevel: "error",
+      plugins: preloadRuntime ? [] : [withoutRuntime],
       build: {
         write: false,
         assetsInlineLimit: 0,
         cssCodeSplit: false,
-        modulePreload: preloadRuntime ? { polyfill: false } : false,
+        modulePreload: { polyfill: false },
         reportCompressedSize: false,
         rollupOptions: { external: external ? (id: string) => external.test(id) : undefined },
       },
@@ -521,100 +553,8 @@ async function buildVite(input: BuildInput, preloadRuntime = true): Promise<Meas
   }
 }
 
-/** Vite 8's default `build.target`, as in SETTINGS.md. */
-const VITE_TARGET = ["chrome111", "edge111", "firefox114", "safari16.4", "ios16.4"];
-
-/**
- * The same engine as Vite 8 (rolldown, same version) with none of Vite's plugins: the entry chunk
- * of a build is what depfit measures. Used only for the preload-helper control below.
- */
-async function buildBareRolldown(input: BuildInput): Promise<Measured> {
-  const { toolsDir, dir, entry } = input;
-  const file = createRequire(join(toolsDir, "package.json")).resolve("rolldown");
-  const { rolldown } = asRecord(await import(pathToFileURL(file).href));
-  if (typeof rolldown !== "function") throw new Error("rolldown: no `rolldown` export");
-  const build = asRecord(
-    await rolldown({
-      input: entry,
-      cwd: dir,
-      platform: "browser",
-      resolve: { conditionNames: CONDITIONS.browser, mainFields: ["browser", "module", "main"] },
-      transform: { define: { "process.env.NODE_ENV": NODE_ENV }, target: VITE_TARGET },
-      preserveEntrySignatures: false,
-    }),
-  );
-  try {
-    const generate = build.generate;
-    if (typeof generate !== "function") throw new Error("rolldown build has no generate()");
-    const { output } = asRecord(
-      await generate.call(build, {
-        format: "esm",
-        minify: true,
-        topLevelVar: true,
-        comments: { legal: false, annotation: false, jsdoc: false },
-        sourcemap: false,
-      }),
-    );
-    const chunks = asArray(output)
-      .map(asRecord)
-      .filter((item) => item.type === "chunk");
-    const byName = new Map(chunks.map((chunk) => [asString(chunk.fileName), chunk]));
-    const eager = new Set<string>();
-    const visit = (name: string) => {
-      if (eager.has(name)) return;
-      eager.add(name);
-      for (const next of asStringArray(byName.get(name)?.imports)) visit(next);
-    };
-    for (const chunk of chunks) if (chunk.isEntry === true) visit(String(chunk.fileName));
-    return measure(
-      chunks.map((chunk) => ({
-        code: asString(chunk.code) ?? "",
-        eager: eager.has(String(chunk.fileName)),
-      })),
-      [],
-    );
-  } finally {
-    const close = build.close;
-    if (typeof close === "function") await close.call(build);
-  }
-}
-
-/**
- * Bytes of Vite's preload helper that `build.modulePreload: false` leaves behind. That switch
- * stops Vite wrapping each `import()` in `__vitePreload(...)` and drops the `__vite__mapDeps`
- * table, which are the parts that grow with the package, but Vite 8 still emits the helper
- * function itself as dead code in the entry chunk. Its size is a constant of the Vite version, so
- * it is measured on a control that has no package in it: one `import()` of an empty module, built
- * once by Vite with `modulePreload: false` and once by bare rolldown. The difference is the
- * helper. Gate C subtracts it from a case's Vite numbers only when that case's stock Vite build
- * had the instrumentation (stock and `modulePreload: false` builds differ).
- */
-async function viteHelperControl(
-  toolsDir: string,
-): Promise<{ min_bytes: number; gzip_bytes: number }> {
-  const dir = await mkdtemp(join(tmpdir(), "depfit-ref-vite-control-"));
-  try {
-    await writeFile(join(dir, "noop.js"), "export default 1;\n");
-    const entry = join(dir, "__depfit_entry.js");
-    await writeFile(entry, 'import("./noop.js").then((m) => { globalThis.__depfit = m; });\n');
-    const base = {
-      toolsDir,
-      dir,
-      entry,
-      target: "browser" as const,
-      external: null,
-      builtins: new Set<string>(),
-    };
-    const vite = await buildVite(base, false);
-    const bare = await buildBareRolldown(base);
-    return {
-      min_bytes: vite.min_bytes - bare.min_bytes,
-      gzip_bytes: vite.gzip_bytes - bare.gzip_bytes,
-    };
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-}
+/** The Vite plugin that injects its dynamic-import runtime (preload helper and wrapping). */
+const VITE_RUNTIME_PLUGIN = "native:import-analysis-build";
 
 function sizeOf(value: unknown): number {
   return value instanceof Uint8Array ? value.byteLength : 0;
@@ -648,8 +588,7 @@ if (unknown.length) throw new Error(`unknown case id: ${unknown.join(", ")}`);
 const cases = only.length ? universe.filter((c) => only.includes(c.id)) : universe;
 const tools = await installTools();
 const results: Record<string, unknown> = {};
-// Needed only when a Vite anchor is built (the main corpus), not for the wild corpus.
-const helperControl = WILD ? null : await viteHelperControl(tools.dir);
+const parseChunk = WILD ? await auditParser(tools.dir) : undefined;
 
 const groups = new Map<string, Case[]>();
 for (const c of cases) {
@@ -657,26 +596,11 @@ for (const c of cases) {
   groups.set(spec, [...(groups.get(spec) ?? []), c]);
 }
 
-/**
- * Gate C's anchor for one case: Vite's eager numbers without its injected runtime. If the stock
- * build differs from the `modulePreload: false` one, the stock build had the instrumentation, and
- * the helper that switch leaves behind is subtracted too (see `viteHelperControl`).
- */
-function viteAnchor(
-  stock: Outcome | null,
-  noPreload: Outcome | null,
-  control: { min_bytes: number; gzip_bytes: number } | null,
-) {
-  if (!stock || !noPreload || !control || "error" in stock || "error" in noPreload) return null;
-  const instrumented =
-    stock.min_bytes !== noPreload.min_bytes || stock.gzip_bytes !== noPreload.gzip_bytes;
-  const removed = instrumented ? control : { min_bytes: 0, gzip_bytes: 0 };
-  return {
-    min_bytes: noPreload.min_bytes - removed.min_bytes,
-    gzip_bytes: noPreload.gzip_bytes - removed.gzip_bytes,
-    helper_removed_min_bytes: removed.min_bytes,
-    helper_removed_gzip_bytes: removed.gzip_bytes,
-  };
+/** Gate C's anchor for one case: the Vite build without its injected runtime, all four fields. */
+function viteAnchor(withoutRuntime: Outcome | null) {
+  if (!withoutRuntime || "error" in withoutRuntime) return null;
+  const { min_bytes, gzip_bytes, lazy_min_bytes, lazy_gzip_bytes } = withoutRuntime;
+  return { min_bytes, gzip_bytes, lazy_min_bytes, lazy_gzip_bytes };
 }
 
 function caseHeader(c: Case, peers: string[]) {
@@ -709,7 +633,8 @@ async function referenceGroup(spec: string, group: Case[]): Promise<void> {
     const peers = await peersOf(dir, first.package).catch(() => []);
     const peerOnly = WILD ? [] : await peerOnlyPackages(dir);
     for (const c of group) {
-      const entry = join(dir, "__depfit_entry.js");
+      // .mjs like depfit's entry: ESM semantics as in a `"type": "module"` app.
+      const entry = join(dir, "__depfit_entry.mjs");
       await writeFile(entry, entrySource(c.imports));
       const base = {
         toolsDir: tools.dir,
@@ -743,22 +668,23 @@ async function referenceGroup(spec: string, group: Case[]): Promise<void> {
           },
         }),
       );
-      // Gate C's anchor: only mandatory browser measure cases of step 1.
+      // Gate C's anchor (mandatory browser measure cases of step 1), and evidence for gate W's
+      // reviewed exceptions (every wild package).
       const anchored =
-        c.mandatory && c.expect === "measure" && c.target === "browser" && c.step === "1";
+        WILD || (c.mandatory && c.expect === "measure" && c.target === "browser" && c.step === "1");
       const vite = anchored
         ? await attempt(() => buildVite({ ...base, builtins: new Set() }))
         : null;
       // The same build without Vite's injected dynamic-import runtime (gate C's normalized anchor).
-      const viteNoPreload = anchored
+      const viteWithoutRuntime = anchored
         ? await attempt(() => buildVite({ ...base, builtins: new Set() }, false))
         : null;
       // Gate W: what the independent auditor finds in the outputs that built (null: no output).
       const audit: Record<string, Hit[] | null> = {
-        rollup: rollupChunks ? auditBuild(rollupChunks, peers) : null,
-        webpack: webpackChunks ? auditBuild(webpackChunks, peers) : null,
+        rollup: rollupChunks ? auditBuild(rollupChunks, peers, parseChunk) : null,
+        webpack: webpackChunks ? auditBuild(webpackChunks, peers, parseChunk) : null,
       };
-      const anchor = viteAnchor(vite, viteNoPreload, helperControl);
+      const anchor = viteAnchor(viteWithoutRuntime);
       results[c.id] = {
         ...caseHeader(c, peers),
         ...(WILD ? { package: c.package, version: c.version } : { peer_only_packages: peerOnly }),
@@ -775,12 +701,14 @@ async function referenceGroup(spec: string, group: Case[]): Promise<void> {
         rollup,
         webpack,
         ...(vite ? { vite } : {}),
-        ...(viteNoPreload ? { vite_no_preload: viteNoPreload } : {}),
+        ...(viteWithoutRuntime && "error" in viteWithoutRuntime
+          ? { vite_without_runtime_error: viteWithoutRuntime.error }
+          : {}),
         ...(anchor ? { vite_anchor: anchor } : {}),
         ...(WILD ? { audit } : {}),
       };
       const viteNote = vite
-        ? ` | vite ${show(vite)} / no-preload ${show(viteNoPreload ?? vite)}`
+        ? ` | vite ${show(vite)} / without runtime ${show(viteWithoutRuntime ?? vite)}`
         : "";
       console.log(`${c.id}: rollup ${show(rollup)} | webpack ${show(webpack)}${viteNote}`);
     }
@@ -816,7 +744,6 @@ await writeFile(
     {
       generated_at: new Date().toISOString(),
       tools: tools.versions,
-      ...(helperControl ? { vite_preload_helper_control: helperControl } : {}),
       cases: merged,
     },
     null,

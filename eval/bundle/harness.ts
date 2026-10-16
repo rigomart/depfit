@@ -154,9 +154,16 @@ export function referenceRange(refs: Record<string, unknown>, field: ByteField):
   return values.length ? { lo: Math.min(...values), hi: Math.max(...values) } : null;
 }
 
-export const inBand = (x: number, r: Range) => x >= 0.9 * r.lo - 100 && x <= 1.1 * r.hi + 100;
-// Same 100 B absolute slack as the band, so tiny bundles (an empty chunk) are not gross errors.
-export const grossError = (x: number, r: Range) => x < 0.5 * r.lo - 100 || x > 2 * r.hi + 100;
+/**
+ * Absolute slack of the band and the gross-error range. Bundlers differ by a fixed amount of wrapper
+ * code per bundle (CommonJS interop, runtime), measured at 400-900 B, which a percentage cannot
+ * absorb on small bundles (SPEC "Band").
+ */
+export const SLACK_BYTES = 1000;
+export const inBand = (x: number, r: Range) =>
+  x >= 0.9 * r.lo - SLACK_BYTES && x <= 1.1 * r.hi + SLACK_BYTES;
+export const grossError = (x: number, r: Range) =>
+  x < 0.5 * r.lo - SLACK_BYTES || x > 2 * r.hi + SLACK_BYTES;
 
 /** The band of every byte field, or null when the case has no successful reference build. */
 export function referenceRanges(refs: Record<string, unknown>): Record<ByteField, Range> | null {
@@ -178,4 +185,12 @@ export function viteReference(
   const gzip = asNumber(vite.gzip_bytes);
   const min = asNumber(vite.min_bytes);
   return gzip !== null && min !== null ? { gzip_bytes: gzip, min_bytes: min } : null;
+}
+
+/** Gate C's tolerance against Vite. */
+export const VITE_TOLERANCE = 0.03;
+
+/** Vite's number for one field, from `vite_anchor` (its build without the injected runtime). */
+export function viteValue(refs: Record<string, unknown>, field: ByteField): number | null {
+  return asNumber(asRecord(refs.vite_anchor)[field]);
 }

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T06:51:18.103Z",
+  "generated_at": "2026-10-16T14:11:04.578Z",
   "tools": {
     "node": "24.14.1",
     "rollup": "4.64.7",
@@ -12,11 +12,8 @@
     "webpack": "5.112.0",
     "vite": "8.3.4",
     "minimizer-webpack-plugin": "5.13.0",
-    "rolldown": "1.2.14"
-  },
-  "vite_preload_helper_control": {
-    "min_bytes": 1658,
-    "gzip_bytes": 807
+    "rolldown": "1.2.14",
+    "acorn": "8.19.0"
   },
   "cases": {
     "date-fns-named": {
@@ -159,20 +156,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 3412,
-        "gzip_bytes": 1685,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 3412,
         "gzip_bytes": 1685,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "lucide-namespace-all": {
@@ -213,20 +201,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 776414,
-        "gzip_bytes": 193243,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 776414,
         "gzip_bytes": 193243,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "immutable-map": {
@@ -312,20 +291,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 78569,
-        "gzip_bytes": 22414,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 78569,
         "gzip_bytes": 22414,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "zod-namespace-members": {
@@ -361,20 +331,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 78569,
-        "gzip_bytes": 22414,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 78569,
         "gzip_bytes": 22414,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "lodash-default-debounce": {
@@ -393,8 +354,8 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 71083,
-        "gzip_bytes": 25228,
+        "min_bytes": 70843,
+        "gzip_bytes": 25108,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
@@ -402,17 +363,8 @@
         "wasm_bytes": 0
       },
       "vite": {
-        "min_bytes": 71742,
-        "gzip_bytes": 25960,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
-      "vite_no_preload": {
-        "min_bytes": 71742,
-        "gzip_bytes": 25960,
+        "min_bytes": 71699,
+        "gzip_bytes": 25941,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
@@ -420,10 +372,10 @@
         "wasm_bytes": 0
       },
       "vite_anchor": {
-        "min_bytes": 71742,
-        "gzip_bytes": 25960,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "min_bytes": 71699,
+        "gzip_bytes": 25941,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "lodash-subpath-debounce": {
@@ -442,8 +394,8 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 3181,
-        "gzip_bytes": 1388,
+        "min_bytes": 2941,
+        "gzip_bytes": 1270,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
@@ -473,8 +425,8 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 306659,
-        "gzip_bytes": 79455,
+        "min_bytes": 306474,
+        "gzip_bytes": 79351,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
@@ -498,8 +450,8 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 115834,
-        "gzip_bytes": 34465,
+        "min_bytes": 115564,
+        "gzip_bytes": 34361,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
@@ -576,8 +528,8 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 554,
-        "gzip_bytes": 371,
+        "min_bytes": 274,
+        "gzip_bytes": 212,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
@@ -618,20 +570,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 20405,
-        "gzip_bytes": 6161,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 20405,
         "gzip_bytes": 6161,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "pdnd-root": {
@@ -667,20 +610,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 196,
-        "gzip_bytes": 180,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 196,
         "gzip_bytes": 180,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "react-dom-client": {
@@ -720,20 +654,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 210947,
-        "gzip_bytes": 65019,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 210947,
         "gzip_bytes": 65019,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "react-dom-server-workerd": {
@@ -806,20 +731,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 33461,
-        "gzip_bytes": 9280,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 33461,
         "gzip_bytes": 9280,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "recharts-named": {
@@ -994,8 +910,8 @@
         "wasm_bytes": 0
       },
       "webpack": {
-        "min_bytes": 2221,
-        "gzip_bytes": 1036,
+        "min_bytes": 2045,
+        "gzip_bytes": 954,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,
         "css_bytes_unminified": 0,
@@ -1011,20 +927,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 3432,
-        "gzip_bytes": 1591,
-        "lazy_min_bytes": 0,
-        "lazy_gzip_bytes": 0,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
         "min_bytes": 3432,
         "gzip_bytes": 1591,
-        "helper_removed_min_bytes": 0,
-        "helper_removed_gzip_bytes": 0
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
       }
     },
     "better-sqlite3-default": {
@@ -1104,20 +1011,11 @@
         "asset_bytes_not_inlined": 0,
         "wasm_bytes": 0
       },
-      "vite_no_preload": {
-        "min_bytes": 145816,
-        "gzip_bytes": 45032,
-        "lazy_min_bytes": 9939087,
-        "lazy_gzip_bytes": 1814130,
-        "css_bytes_unminified": 0,
-        "asset_bytes_not_inlined": 0,
-        "wasm_bytes": 0
-      },
       "vite_anchor": {
-        "min_bytes": 144158,
-        "gzip_bytes": 44225,
-        "helper_removed_min_bytes": 1658,
-        "helper_removed_gzip_bytes": 807
+        "min_bytes": 141076,
+        "gzip_bytes": 44139,
+        "lazy_min_bytes": 9939087,
+        "lazy_gzip_bytes": 1814190
       }
     },
     "md-editor-default": {

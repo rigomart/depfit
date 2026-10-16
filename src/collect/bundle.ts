@@ -22,6 +22,8 @@ const MAIN_FIELDS = ["browser", "module", "main"];
 /** Vite 8's default `build.target` (baseline widely available). */
 const TARGET = ["chrome111", "edge111", "firefox114", "safari16.4", "ios16.4"];
 const ENTRY_FILE = "__depfit_entry.mjs";
+/** Vite 8's `json` defaults in a build (`namedExports`, `stringify: "auto"`, minified). */
+const VITE_JSON = { namedExports: true, stringify: "auto", minify: true } as const;
 
 /** Module extensions that hold JS (or JSON, which bundles to JS); others are CSS, wasm, assets. */
 const JS_EXTENSIONS = new Set([
@@ -224,18 +226,21 @@ type Rolldown = typeof import("rolldown");
 let loaded: Promise<{
   rolldown: Rolldown;
   plugins: typeof import("rolldown/plugins");
+  viteJsonPlugin: typeof import("rolldown/experimental").viteJsonPlugin;
   parse: Parse;
 }> | null = null;
 
-/** rolldown and its parser, loaded once per process on first use. */
+/** rolldown, its plugins (Vite's JSON one included) and parser, loaded once on first use. */
 function loadRolldown() {
   loaded ??= Promise.all([
     import("rolldown"),
     import("rolldown/plugins"),
     import("rolldown/parseAst"),
-  ]).then(([rolldown, plugins, { parseAst }]) => ({
+    import("rolldown/experimental"),
+  ]).then(([rolldown, plugins, { parseAst }, { viteJsonPlugin }]) => ({
     rolldown,
     plugins,
+    viteJsonPlugin,
     parse: (code: string) => parseAst(code, { lang: "js", sourceType: "module" }),
   }));
   return loaded;
@@ -333,7 +338,7 @@ export async function bundleEntry(
   entry: BundleEntry,
   externals: string[],
 ): Promise<BundleOutcome> {
-  const { rolldown, plugins, parse } = await loadRolldown();
+  const { rolldown, plugins, viteJsonPlugin, parse } = await loadRolldown();
   const entryFile = join(dir, ENTRY_FILE);
   await writeFile(entryFile, entryModuleSource(entry));
   const entryFiles = [entryFile, await realpath(entryFile)];
@@ -356,6 +361,9 @@ export async function bundleEntry(
         // Peers are external; a CommonJS require() of one becomes an import of it, as it would
         // be in an app that has the peer, instead of a runtime require() helper.
         ...(external.length ? [plugins.esmExternalRequirePlugin({ external })] : []),
+        // Vite's JSON handling with its defaults for a build: named exports, JSON.parse for
+        // large files, minified. A require() of JSON then gets the same interop as in Vite.
+        viteJsonPlugin(VITE_JSON),
       ],
       onLog(level, log: RolldownLog) {
         // rolldown only warns about an unresolved import and leaves it external.

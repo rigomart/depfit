@@ -23,10 +23,10 @@ Non-JS and Workers cases (`step` other than `"1"`) are excluded unless `--step` 
 | Gate | What `score.ts` checks |
 |---|---|
 | A. Honesty | Every `null` case returns its expected `bundle: <code>` (and specifier). No number is a gross error (outside `[0.5 x min(ref), 2 x max(ref)]`) on any of the four byte fields. |
-| B. Accuracy | Every `measure` case, eager and lazy, minified and gzip 9 (four fields), is inside the rollup/webpack band `0.90 x min(ref) - 100 B .. 1.10 x max(ref) + 100 B`. Mandatory cases must be in band; the others may be null with a code (at most 2). |
+| B. Accuracy | Every `measure` case, eager and lazy, minified and gzip 9 (four fields), is inside the rollup/webpack band `0.90 x min(ref) - 1000 B .. 1.10 x max(ref) + 1000 B` (SPEC "Band" for the slack). Mandatory cases must be in band; the others may be null with a code (at most 2). |
 | C. Vite anchor | For each `mandatory` browser measure case, `eager_js_gzip9_bytes` and `eager_js_min_bytes` are within +-3% of a real `vite build` of the same snippet with Vite's own injected dynamic-import runtime removed (the `vite_anchor` entry in `reference.json`, see "Gate C normalization"). A regression check for "matches what Vite ships", not ground truth. Vite is not part of the band in B. A case without a usable anchor counts as failing; none is excluded. |
 | D. Determinism | Two runs (`--runs 2`) give identical bytes and reasons. |
-| E. Contract | Every package has a `bundle` key (null without `--bundle-entry`); the SPEC's `packages[].bundle.*` fields have `schema-docs` entries; every other field is identical with and without `--bundle-entry`; the output keys match the v4 baseline. When a non-bundle field differs, the failure line and the results file (`contract_diff`) hold its path and both values, so a flaky live source can be told from a real leak. A difference that disappears once failed network sources are ignored (an `unavailable` entry from osv, github, downloads, types or registry that responded 429/5xx or timed out, with the fields it nulls) makes `score.ts` run that case's pair once more after a pause; if it persists it is listed as a "network flake", apart from real failures, and does not fail E. Any other difference fails. `score.ts` pauses 3 s after every CLI run, like `eval/run.ts`, so a full run does not trigger the 429s itself. |
+| E. Contract | Every package has a `bundle` key (null without `--bundle-entry`); the SPEC's `packages[].bundle.*` fields have `schema-docs` entries; every other field is identical with and without `--bundle-entry`; the output keys match the v4 baseline. When a non-bundle field differs, the failure line and the results file (`contract_diff`) hold its path and both values, so a flaky live source can be told from a real leak. A difference that disappears once failed network sources are ignored (an `unavailable` entry from osv, osv dependencies, github, downloads or types that responded 429/5xx or timed out, with only the fields that source feeds, listed in `contract.ts`; any other difference, including an unrelated null or a missing key, still counts) makes `score.ts` run that case's pair once more after a pause; if it persists it is listed as a "network flake", apart from real failures, and does not fail E. Any other difference fails. `score.ts` pauses 3 s after every CLI run, like `eval/run.ts`, so a full run does not trigger the 429s itself. |
 | F. Cost | Pass: rolldown is never loaded without bundling, and the median overhead of `--bundle-entry` is at most 1500 ms. The no-bundle runtime against the v4 baseline is printed as advisory (network noise is about +-20%) and never fails the gate. |
 | H0. Comprehension | Not run by `score.ts`. `comprehension.ts` writes `results/comprehension/prompt.md` (depfit's `--json` for `sonner-named`, `shiki-codeToHtml`, `node-pty-named` and `simple-git-default`, `depfit --schema`, and six questions) and `results/comprehension/comprehension-key.md` (the answers; never show it to the reader). Give a blind small-model reader only the prompt; the gate passes when it answers all six correctly in 3 of 3 runs (question 6: node-pty has a number; does that mean it works in a browser, and which fields say whether it can). |
 
@@ -58,31 +58,25 @@ which, so they are re-baselined rather than forgotten.
 
 ### Gate C normalization
 
-Vite instruments every dynamic `import()` in a build: it wraps the call in
-`__vitePreload(() => import("./x.js"), __vite__mapDeps([...]), import.meta.url)`, adds a
-`__vite__mapDeps` table that lists chunk files, and emits the preload helper. That is Vite's
-runtime, not the package's, and depfit (plain rolldown) does not add it. Comparing against stock
-Vite therefore excluded every case with lazy chunks, which was a weaker gate. Instead `reference.ts`
-computes Vite's numbers with the runtime removed, by a method that does not look at any case:
+Vite instruments dynamic `import()` in every client app build: it wraps the call in its preload
+helper (`__vitePreload(() => import("./x.js"), __vite__mapDeps([...]), import.meta.url)`), adds the
+`__vite__mapDeps` table, and emits the helper. That is Vite's runtime, not the package's, and depfit
+(plain rolldown) does not add it. Comparing against stock Vite therefore excluded every case with
+lazy chunks, which was a weaker gate.
 
-1. Build the case with `build.modulePreload: false`, Vite's own switch (`vite_no_preload`). It
-   stops the per-import wrapping and drops the `__vite__mapDeps` table, the two parts that grow
-   with the package. Vite 8 still emits the helper function itself, unreferenced, in the entry
-   chunk.
-2. Remove that helper by its measured cost. A control with no package in it (one `import()` of an
-   empty module) is built once by Vite with `modulePreload: false` and once by bare rolldown (same
-   version and options, no Vite plugins). The difference is the helper:
-   `vite_preload_helper_control` in `reference.json` (min and gzip 9 bytes, a constant of the Vite
-   version).
-3. The helper is subtracted only for a case whose stock Vite build differs from its
-   `modulePreload: false` build (the stock build had the instrumentation). `vite_anchor` holds the
-   result and how much was removed. Cases without dynamic imports are unchanged (in the current reference their stock and
-   `vite_no_preload` numbers are identical).
+`vite_anchor` is a second Vite build of the same snippet with Vite's `native:import-analysis-build`
+plugin removed from the resolved config. That plugin is what injects the runtime; nothing is
+subtracted afterwards, and the method looks at no case. If a Vite release renames the plugin, the
+build fails instead of measuring the runtime.
 
-Gzip is not additive, so the subtracted gzip figure is an estimate of the helper's contribution,
-good to a few tens of bytes on the one case that needs it (shiki, 0.1% of its size), far inside the
-3% tolerance. If a Vite release changes how it injects the runtime, the control no longer
-describes it: rebuild and re-check that the control still equals the stock-minus-switch residue.
+**Amended after Codex review round 3 (2026-10-16).** The first method (`build.modulePreload: false`,
+then subtracting a helper measured on a control) was wrong. Vite inserts the wrapping whenever
+`insertPreload` holds (every client app build), whatever `modulePreload` is, so stock and
+"no-preload" builds could be identical and both instrumented: @storybook/addon-a11y measured 9,206 B
+against rolldown's 7,511, and is 7,470 with the plugin removed. All reference builds also use a
+`.mjs` entry like depfit's, because CommonJS interop differs between a `.js` entry in a package
+without `"type"` and an ES module entry (isarray: 711 vs 668 B). A `.mjs` entry gives the same bytes
+as a create-vite app (`"type": "module"`, `.js` or `.ts` entry).
 
 `reference.ts` re-runs itself under Node so gzip (`node:zlib`, level 9) is identical whichever
 runtime started it. Bundlers are installed into a temp dir at the exact versions pinned in
@@ -131,13 +125,14 @@ Example: `{ "from": "zod", "named": ["z"], "members": ["z.object", "z.string"] }
   `wasm_bytes`, or `{ error }`. Only the four JS fields are scored. `mandatory` browser measure
   cases also get a `vite` entry with the same fields, from a real `vite build` (pinned exactly):
   library-less app mode from an `index.html`, Vite's default client production settings except no
-  asset inlining, peers external, no modulepreload polyfill and no CSS code split. It is gate C's
-  anchor, kept apart from the rollup/webpack band because Vite 8 bundles with rolldown. Those
-  cases also get `vite_no_preload` (the same build with `modulePreload: false`) and `vite_anchor`
-  (the numbers gate C scores, see "Gate C normalization"); `vite_preload_helper_control` sits at
-  the top level. Tool versions (including Vite's rolldown) are recorded in the file. A snippet
-  that keeps nothing (side-effect-only imports) is built without the `globalThis.__depfit = [...]`
-  keep-alive line, so the reference measures exactly what the CLI measures.
+  asset inlining, peers external, no modulepreload polyfill and no CSS code split. Those cases and
+  every wild package also get `vite_anchor` (the same build without Vite's runtime, all four
+  fields; see "Gate C normalization"), the anchor gate C scores. It is kept apart from the
+  rollup/webpack band because Vite 8 bundles with rolldown, like depfit. Tool versions (including
+  Vite's rolldown and webpack's acorn) are recorded in the file. Every builder's entry is
+  `__depfit_entry.mjs`, like depfit's. A snippet that keeps nothing (side-effect-only imports) is
+  built without the `globalThis.__depfit = [...]` keep-alive line, so the reference measures exactly
+  what the CLI measures.
 - `comprehension.ts`: writes the gate H0 prompt and answer key under `results/comprehension/`.
 - `locks/<id>.json`: the resolved dependency tree of each case (installed without peers). The
   reference build runs `npm ci` from it, so references do not move when dependencies publish.
@@ -177,10 +172,24 @@ results; a change forced by an API (not by results) is recorded here with its re
 ### The auditor
 
 `wild-audit.ts` looks for hidden runtime loads in the rollup and webpack outputs of every wild
-package. It is independent of depfit's detector on purpose: it imports nothing from `src/` and does
-not parse or resolve scopes. It matches the spellings of a load as text, so a blind spot in one
-approach is unlikely to be the same blind spot in the other. Its patterns were fixed before any
-wild package was built.
+package. It is independent of depfit's detector on purpose: it imports nothing from `src/`, and
+it parses with webpack's acorn where depfit uses oxc. Its patterns were fixed before any wild
+package was built.
+
+**Amended after the first wild run (2026-10-16; user decision, pending Codex review round 3).**
+The `fetch` checks first matched text too, and flagged `"import("` inside string literals (a code
+generator's output template and parser error messages in one package) as fetches. They now walk
+an acorn AST: an `ImportExpression`, or a call whose callee is `importScripts` or
+`x.importScripts`. A chunk acorn cannot parse falls back to the text patterns, so a parse failure
+never hides a fetch. `load` and `mention` stay text patterns.
+
+**Amended after Codex review round 3 (2026-10-16).** Three gaps that both modes had: a literal
+target counted as a chunk when its base name matched one (`import("https://cdn/entry.js")` passed
+next to an `entry.js` chunk); now only a relative path that resolves, against the importing chunk's
+own path, to a chunk of the build counts, and a URL or bare specifier never does (except an external
+peer). Any `import("./" + x)` was exempt as webpack's loader; now only webpack's form is, a
+concatenation starting with a literal and ending in a call to `.u()` (its chunk-filename function).
+And `self["importScripts"](...)` is a fetch in both modes.
 
 Hits have three strengths:
 
@@ -197,7 +206,7 @@ Hits have three strengths:
   (`typeof require`, a property named `require`, `x instanceof Function`).
 
 Two things are ignored by construction: `import("./chunk.js")` to a chunk of the same build, and
-webpack's `import("./" + chunkFile)` loader; and webpack's own
+webpack's `import("./" + r.p + r.u(id))` loader; and webpack's own
 `try{return this||new Function("return this")()}` global-object helper, which the same package text
 would still show in the rollup output. Each hit keeps its count and the first snippet.
 
@@ -218,8 +227,19 @@ four null, with a `bundle: <CODE>` entry) or a CLI **error** (anything else).
 | Check | Pass |
 |---|---|
 | (i) | 0 packages where depfit gives a number and the auditor found a `fetch` hit (code fetched from outside the bundle) in the rollup or webpack output. All of them are listed with the matches. |
-| (ii) | 0 gross errors: no number outside `[0.5 x min(ref) - 100 B, 2 x max(ref) + 100 B]` on any of the four fields, over the rollup and webpack builds that succeeded (a bundler in the case's `band_excluded` is left out). |
+| (ii) | 0 gross errors: no number outside `[0.5 x min(ref) - 1000 B, 2 x max(ref) + 1000 B]` on any of the four fields, over the rollup and webpack builds that succeeded (a bundler in the case's `band_excluded` is left out), unless `wild-exceptions.json` lists that package with a written, reviewed cause and its recorded version, lock hash, depfit bytes and reference bytes all still match exactly. Covered ones are listed, not failed; a stale exception fails. |
 | (iii) | Every package is a number or a null that carries a code. A CLI failure, or a null without a `bundle:` entry, fails. |
+
+**Reviewed exceptions (amended after the first wild run and Codex review round 3, 2026-10-16).**
+Two packages were grossly off the references while matching Vite exactly: one whose 67 KB string
+constant oxc's minifier copies into each use site (Vite ships it three times too, about 2x the
+rollup and webpack output), and one that is a single `throw` (126 B in Vite; the references add
+400-500 B of CommonJS interop and runtime). A blanket "within 3% of Vite" exception was tried first
+and rejected by review: Vite shares depfit's engine, so it confirms alignment, not correctness, and
+a shared bug would pass. Instead each exception in `wild-exceptions.json` names its package, version,
+the sha256 of its frozen lock, depfit's and both references' four byte fields, and the cause, and it
+covers that package only while all of them are unchanged. Adding one needs a written cause and an
+independent review. `vite_anchor` is still built for every wild package, as evidence for that review.
 
 The report also gives the null rate by code (no threshold), numbers outside the band but not gross,
 numbers for which neither reference built (nothing to check them against), and how many numbers the

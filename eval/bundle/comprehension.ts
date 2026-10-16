@@ -36,7 +36,7 @@ const KEY = [
   "Eager is the static closure, loaded first. Lazy is the dynamic-import chunks, loaded on demand. A user downloads the eager bytes on first page load.",
   "The build failed: simple-git imports Node built-ins (e.g. node:child_process) that cannot be resolved for the browser, so `UNRESOLVED_IMPORT` names the specifier and there is no honest number.",
   "No.",
-  "No. The number is emitted bytes only, and makes no claim it runs. `cost.native_binaries` lists a platform-native binary, so it cannot run in a browser.",
+  "No. The number is emitted bytes only and does not establish browser compatibility. `cost.native_binaries` lists a native package, which browser JavaScript cannot load directly (the package might still ship a separate browser implementation). Credit an answer that says the number does not establish compatibility and cites `native_binaries`; do not require a verdict that it cannot run.",
 ];
 
 const args = process.argv.slice(2);

@@ -55,7 +55,10 @@ keep `ns` whole and say so in a field (e.g. `namespace_kept_whole: true`). Side-
     field name should say "not inlined".
   - `.wasm`: `"asset"` and report `wasm_bytes` separately (default rolldown fails with a misleading
     `PARSE_ERROR`). Workers import wasm as a module too, so the same treatment fits workerd.
-  - `.json`: default; named-key tree-shaking works (unused 5 KB key was dropped).
+  - `.json`: rolldown's `viteJsonPlugin` with Vite's build defaults (`namedExports: true`,
+    `stringify: "auto"`, `minify: true`), as Vite runs it on every `.json` import (amended after
+    Codex review round 3). A `require()` of JSON then gets Vite's ESM interop; without it, node-pty
+    measured 1,179 B gzip against Vite's 1,591. Named-key tree-shaking still works.
 - `onLog`: **escalate `UNRESOLVED_IMPORT` to an error.** Default rolldown only *warns* and turns the
   specifier into an external (`does-not-exist`, `node:fs`, `path` all "built" to 39–58 B). This is the
   single most important setting. `MISSING_EXPORT` is already an error. Record the codes of any remaining

@@ -22,6 +22,7 @@ import {
   isRecord,
 } from "../../src/collect/util.ts";
 import { type Case, CLI, COMPREHENSION_CASES, entryArgs, loadCases } from "./cases.ts";
+import { compareContract, type Diff, withoutBundle } from "./contract.ts";
 import {
   BYTE_FIELDS,
   type CliRun,
@@ -34,6 +35,7 @@ import {
   REPORT_FIELD,
   referenceRanges,
   scratchProject,
+  VITE_TOLERANCE,
   viteReference,
 } from "./harness.ts";
 import { runWild } from "./wild-score.ts";
@@ -57,8 +59,6 @@ const DOC_PATHS = [
   "packages[].bundle.external_packages",
 ];
 
-/** Gate C: depfit's eager bytes must be within this fraction of a real `vite build`. */
-const VITE_TOLERANCE = 0.03;
 const VITE_FIELDS = ["gzip_bytes", "min_bytes"] as const;
 /** Pause after each CLI run, as eval/run.ts does: npm's downloads API rate-limits bursts. */
 const PAUSE_MS = 3000;
@@ -121,48 +121,6 @@ function keyPaths(value: unknown, prefix = ""): string[] {
   );
 }
 
-/** Live registry and GitHub counts that move between two runs of the same CLI. */
-const LIVE_MAINTENANCE = [
-  "weekly_downloads",
-  "days_since_release",
-  "last_commit_at",
-  "commits_last_year",
-];
-
-/**
- * An `unavailable` entry from a network source that failed in transit (rate limit, server error,
- * timeout). Such an entry, and the fields it nulls, differ between two runs by chance.
- */
-const NETWORK_ENTRY =
-  /^(osv|osv dependencies|github|downloads|types|registry): .*(\b429\b|\b5\d\d\b|timed? ?out|timeout|aborted|fetch failed|ECONN|ENOTFOUND|EAI_AGAIN)/i;
-
-const networkEntries = (report: Record<string, unknown> | null) =>
-  asStringArray(packageOf(report)?.unavailable).filter((entry) => NETWORK_ENTRY.test(entry));
-
-/**
- * The report minus everything a `--bundle-entry` run may legitimately change, or that is live.
- * With `dropNetwork`, also minus `unavailable` entries from failed network sources.
- */
-function withoutBundle(
-  report: Record<string, unknown> | null,
-  dropNetwork = false,
-): Record<string, unknown> {
-  const { generated_at, schema_version, packages, ...rest } = asRecord(report);
-  return {
-    ...rest,
-    packages: asArray(packages).map((item) => {
-      const { bundle, unavailable, maintenance, ...pkg } = asRecord(item);
-      const others = asStringArray(unavailable).filter(
-        (entry) => !entry.startsWith("bundle:") && !(dropNetwork && NETWORK_ENTRY.test(entry)),
-      );
-      const stable = Object.entries(asRecord(maintenance)).filter(
-        ([key]) => !LIVE_MAINTENANCE.includes(key),
-      );
-      return { ...pkg, unavailable: others, maintenance: Object.fromEntries(stable) };
-    }),
-  };
-}
-
 /**
  * Key paths of the report without `--bundle-entry`. `unavailable` is left out: it is an array whose
  * paths exist only when a live source failed (the v4 baseline has none), so counting it would make
@@ -176,48 +134,6 @@ const shape = (report: Record<string, unknown> | null) => {
   });
   return [...new Set(keyPaths({ ...rest, packages: stripped }))].sort();
 };
-
-/** Where two JSON values first differ, and what each held there; null when equal. */
-type Diff = { path: string; without_bundle: unknown; with_bundle: unknown };
-
-function firstDiff(a: unknown, b: unknown, path = "", skipNulled = false): Diff | null {
-  // A field a failed source left null is not a difference when `skipNulled`.
-  if (skipNulled && (a == null) !== (b == null)) return null;
-  if (isRecord(a) && isRecord(b)) {
-    for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
-      const diff = firstDiff(a[key], b[key], path ? `${path}.${key}` : key, skipNulled);
-      if (diff) return diff;
-    }
-    return null;
-  }
-  if (Array.isArray(a) && Array.isArray(b) && a.length === b.length) {
-    for (const [i, item] of a.entries()) {
-      const diff = firstDiff(item, b[i], `${path}[${i}]`, skipNulled);
-      if (diff) return diff;
-    }
-    return null;
-  }
-  return JSON.stringify(a) === JSON.stringify(b)
-    ? null
-    : { path, without_bundle: a ?? null, with_bundle: b ?? null };
-}
-
-/**
- * Gate E's comparison of the run without `--bundle-entry` and one with it. `network` is true when
- * the difference disappears once failed network sources (their `unavailable` entries and the
- * fields they null) are ignored: a flake, not a contract leak.
- */
-function compareContract(
-  without: Record<string, unknown> | null,
-  withBundle: Record<string, unknown> | null,
-): { diff: Diff | null; network: boolean } {
-  const diff = firstDiff(withoutBundle(without), withoutBundle(withBundle));
-  if (!diff) return { diff, network: false };
-  const flaky = networkEntries(without).length + networkEntries(withBundle).length > 0;
-  const rest =
-    flaky && firstDiff(withoutBundle(without, true), withoutBundle(withBundle, true), "", true);
-  return { diff, network: flaky && !rest };
-}
 
 /** A value for a failure line: JSON, cut to a readable length. */
 const shortJson = (value: unknown) => String(JSON.stringify(value)).slice(0, 160);

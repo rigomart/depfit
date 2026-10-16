@@ -1,8 +1,9 @@
 /**
- * The gate W auditor: finds hidden runtime loads in bundler output by text patterns. It is
- * deliberately independent of depfit's detector (src/collect/bundle.ts parses and resolves scopes;
- * this does not, and imports nothing from src/). Where depfit reasons about bindings, this looks
- * for the spellings of a load, so a mistake in one is unlikely to be the same mistake in the other.
+ * The gate W auditor: finds hidden runtime loads in bundler output. It is deliberately independent
+ * of depfit's detector (src/collect/bundle.ts walks rolldown's chunk graph with oxc; this imports
+ * nothing from src/). `fetch` hits come from an acorn AST (webpack's parser, passed in), so a word
+ * inside a string or comment is not a call; without a parse they fall back to text patterns.
+ * `load` and `mention` hits are text patterns: they look for the spellings of a load.
  *
  * Three strengths, fixed here before any wild result was seen:
  * - `fetch`: code fetched from outside the bundle, which the emitted bytes understate: `import()`
@@ -13,6 +14,8 @@
  * - `mention`: any other occurrence of the same words (`typeof require`, a property named
  *   `require`, `x instanceof Function`). Information only.
  */
+
+import { posix } from "node:path";
 
 export type Hit = {
   pattern: string;
@@ -48,6 +51,7 @@ const LOAD_PATTERNS: [string, RegExp][] = [
 const FETCH_PATTERNS: [string, RegExp][] = [
   // The call only: `"importScripts" in self` is an environment check, not a fetch.
   ["importScripts", new RegExp(`${B}importScripts\\s*\\(`, "g")],
+  ["importScripts", /\[\s*["'`]importScripts["'`]\s*\]\s*\(/g],
 ];
 
 /** Words that may appear without being a load. */
@@ -64,10 +68,105 @@ const MENTION_PATTERNS: [string, RegExp][] = [
 const WEBPACK_GLOBAL_HELPER = /try\{return this\|\|new Function\("return this"\)\(\)\}/g;
 
 const IMPORT_CALL = new RegExp(`${B}import\\s*\\(`, "g");
-/** webpack's chunk loader for ESM output: `import("./"+chunkFileName)`. */
-const WEBPACK_CHUNK_LOADER = /^\s*["']\.\/["']\s*\+/;
+/**
+ * webpack's ESM chunk loader as text: `import("./" + r.p + r.u(id))` or `import("<dir>" + r.u(id))`,
+ * where `.u()` is webpack's chunk-filename function. Only that form is exempt, not any `"./" + x`.
+ */
+const WEBPACK_CHUNK_LOADER = /^\s*["'][^"']*["']\s*\+\s*(?:[\w$]+\.p\s*\+\s*)?[\w$]+\.u\(/;
 
 const CONTEXT = 40;
+
+/** Parses a chunk as an ES module (acorn's `parse` in practice); throws on a syntax error. */
+export type ParseModule = (code: string) => unknown;
+
+type Node = { type: string; start: number; end: number; [key: string]: unknown };
+
+const isNode = (value: unknown): value is Node =>
+  typeof value === "object" &&
+  value !== null &&
+  "type" in value &&
+  typeof value.type === "string" &&
+  "start" in value &&
+  typeof value.start === "number";
+
+function walk(node: Node, visit: (node: Node) => void): void {
+  visit(node);
+  for (const value of Object.values(node)) {
+    for (const child of Array.isArray(value) ? value : [value])
+      if (isNode(child)) walk(child, visit);
+  }
+}
+
+/** A string literal, or a template literal without expressions, as its value. */
+function literalValue(node: unknown): string | null {
+  if (!isNode(node)) return null;
+  if (node.type === "Literal" && typeof node.value === "string") return node.value;
+  if (node.type !== "TemplateLiteral" || !Array.isArray(node.expressions)) return null;
+  if (node.expressions.length || !Array.isArray(node.quasis)) return null;
+  const quasi: unknown = node.quasis[0];
+  if (!isNode(quasi) || typeof quasi.value !== "object" || quasi.value === null) return null;
+  return "cooked" in quasi.value && typeof quasi.value.cooked === "string"
+    ? quasi.value.cooked
+    : null;
+}
+
+/** An `import()` call site: its literal target (or null), where it starts, and its argument. */
+type ImportSite = { literal: string | null; at: number; source: number; webpackLoader: boolean };
+
+/** The name a member expression reads, `x.name` or `x["name"]`, or null when computed otherwise. */
+function memberName(node: Node): string | null {
+  if (node.type !== "MemberExpression" || !isNode(node.property)) return null;
+  if (!node.computed) return typeof node.property.name === "string" ? node.property.name : null;
+  return literalValue(node.property);
+}
+
+/**
+ * webpack's ESM chunk loader: `"<dir>" + ... + r.u(id)`, a string concatenation that starts with a
+ * literal and ends in a call to `.u()`, webpack's chunk-filename function.
+ */
+function isWebpackChunkLoader(source: Node): boolean {
+  if (source.type !== "BinaryExpression" || source.operator !== "+") return false;
+  const last = source.right;
+  if (!isNode(last) || last.type !== "CallExpression" || !isNode(last.callee)) return false;
+  if (memberName(last.callee) !== "u") return false;
+  let first: unknown = source.left;
+  while (isNode(first) && first.type === "BinaryExpression") first = first.left;
+  return literalValue(first) !== null;
+}
+
+/**
+ * `import()` calls and `importScripts(...)` calls (also `self.importScripts`, `self["importScripts"]`)
+ * in the AST, or null when the chunk does not parse.
+ */
+function fetchSites(
+  code: string,
+  parse: ParseModule,
+): { imports: ImportSite[]; scripts: number[] } | null {
+  let program: unknown;
+  try {
+    program = parse(code);
+  } catch {
+    return null;
+  }
+  if (!isNode(program)) return null;
+  const imports: ImportSite[] = [];
+  const scripts: number[] = [];
+  walk(program, (node) => {
+    if (node.type === "ImportExpression" && isNode(node.source)) {
+      imports.push({
+        literal: literalValue(node.source),
+        at: node.start,
+        source: node.source.start,
+        webpackLoader: isWebpackChunkLoader(node.source),
+      });
+    } else if (node.type === "CallExpression" && isNode(node.callee)) {
+      const callee = node.callee;
+      const name = callee.type === "Identifier" ? callee.name : memberName(callee);
+      if (name === "importScripts") scripts.push(node.start);
+    }
+  });
+  return { imports, scripts };
+}
 
 function snippetAt(code: string, index: number, length: number): string {
   const from = Math.max(0, index - CONTEXT);
@@ -107,18 +206,45 @@ function importTarget(code: string, from: number): { literal: string | null; raw
   return { literal: literal?.[2] ?? null, raw: rest.slice(0, 60) };
 }
 
-function importHits(code: string, chunkNames: string[], externals: string[]): Hit[] {
+/** `import()` sites by text: the fallback when a chunk does not parse. */
+function textImportSites(code: string): ImportSite[] {
+  return [...code.matchAll(IMPORT_CALL)].map((match) => {
+    const at = match.index ?? 0;
+    const source = at + match[0].length;
+    const { literal, raw } = importTarget(code, source);
+    return {
+      literal,
+      at,
+      source,
+      webpackLoader: literal === null && WEBPACK_CHUNK_LOADER.test(raw),
+    };
+  });
+}
+
+/**
+ * Is a literal `import()` target one of the build's own chunks? Only a relative path counts, resolved
+ * against the importing chunk's path: a URL or absolute path is never a chunk, whatever its name.
+ */
+function isOwnChunk(literal: string, importer: string, chunkNames: Set<string>): boolean {
+  if (!literal.startsWith("./") && !literal.startsWith("../")) return false;
+  return chunkNames.has(posix.normalize(posix.join(posix.dirname(importer), literal)));
+}
+
+function importHits(
+  code: string,
+  sites: ImportSite[],
+  importer: string,
+  chunkNames: Set<string>,
+  externals: string[],
+): Hit[] {
   const outside: { snippet: string }[] = [];
-  const known = new Set(chunkNames.map((name) => name.replace(/^.*\//, "")));
-  for (const match of code.matchAll(IMPORT_CALL)) {
-    const end = (match.index ?? 0) + match[0].length;
-    const { literal, raw } = importTarget(code, end);
-    if (literal !== null && known.has(literal.replace(/^.*\//, ""))) continue;
+  for (const { literal, at, source, webpackLoader } of sites) {
+    if (literal !== null && isOwnChunk(literal, importer, chunkNames)) continue;
     // A peer the build left external is the importer's own dependency, not a fetch.
     if (literal !== null && externals.some((n) => literal === n || literal.startsWith(`${n}/`)))
       continue;
-    if (literal === null && WEBPACK_CHUNK_LOADER.test(raw)) continue;
-    outside.push({ snippet: snippetAt(code, match.index ?? 0, match[0].length + 40) });
+    if (webpackLoader) continue;
+    outside.push({ snippet: snippetAt(code, at, source - at + 40) });
   }
   const first = outside[0];
   return first
@@ -134,27 +260,55 @@ function importHits(code: string, chunkNames: string[], externals: string[]): Hi
 }
 
 /**
- * Hits for one emitted chunk. `chunkNames` are the file names of every chunk of the same build,
- * so `import("./chunk-x.js")` is recognised as the bundler's own split point.
+ * Hits for one emitted chunk, named `name` (its path in the output). `chunkNames` are the paths of
+ * every chunk of the same build, so `import("./chunk-x.js")` is recognised as the bundler's own
+ * split point. Without `parse`, or when the chunk does not parse, `fetch` hits come from text.
  */
-export function auditChunk(code: string, chunkNames: string[], externals: string[] = []): Hit[] {
+export function auditChunk(
+  code: string,
+  name: string,
+  chunkNames: string[],
+  externals: string[] = [],
+  parse?: ParseModule,
+): Hit[] {
+  const chunks = new Set(chunkNames.map((chunk) => posix.normalize(chunk)));
   const masked = code.replace(WEBPACK_GLOBAL_HELPER, "");
   const taken: Array<[number, number]> = [];
-  const fetches = collect(masked, FETCH_PATTERNS, "fetch", taken);
+  const parsed = parse ? fetchSites(code, parse) : null;
+  const fetches = parsed
+    ? parsed.scripts.length
+      ? [
+          {
+            pattern: "importScripts",
+            strength: "fetch" as const,
+            snippet: snippetAt(code, parsed.scripts[0] ?? 0, "importScripts(".length),
+            count: parsed.scripts.length,
+          },
+        ]
+      : []
+    : collect(masked, FETCH_PATTERNS, "fetch", taken);
+  const imports = importHits(
+    parsed ? code : masked,
+    parsed ? parsed.imports : textImportSites(masked),
+    name,
+    chunks,
+    externals,
+  );
   const loads = collect(masked, LOAD_PATTERNS, "load", taken);
   const mentions = collect(masked, MENTION_PATTERNS, "mention", taken);
-  return [...fetches, ...importHits(masked, chunkNames, externals), ...loads, ...mentions];
+  return [...fetches, ...imports, ...loads, ...mentions];
 }
 
 /** Merge the hits of several chunks: counts add up, the first snippet stays. */
 export function auditBuild(
   chunks: { name: string; code: string }[],
   externals: string[] = [],
+  parse?: ParseModule,
 ): Hit[] {
   const names = chunks.map((chunk) => chunk.name);
   const merged = new Map<string, Hit>();
   for (const chunk of chunks) {
-    for (const hit of auditChunk(chunk.code, names, externals)) {
+    for (const hit of auditChunk(chunk.code, chunk.name, names, externals, parse)) {
       const key = `${hit.strength}:${hit.pattern}`;
       const previous = merged.get(key);
       if (previous) previous.count += hit.count;

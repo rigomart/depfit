@@ -87,7 +87,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].cost.install_scripts":
     "Names of packages in the tree with preinstall, install, or postinstall scripts; empty when none.",
   "packages[].cost.native_binaries":
-    "Names of packages that installed a native binary (.node, .dylib, .so, .dll, or binding.gyp) on measured_on_platform; empty when none.",
+    "Names of packages that installed a native binary (.node, .dylib, .so, .dll) or a binding.gyp build file on measured_on_platform, empty when none; browser JavaScript cannot directly load native addons or shared libraries, though a listed package may also provide a separate browser implementation.",
   "packages[].cost.other_platform_packages":
     "Number of optional OS/CPU-specific packages that would not install on measured_on_platform; they are excluded from every other cost field.",
   "packages[].cost.at_newest_installed":
@@ -164,7 +164,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     'Advisories affecting other packages in `version`\'s dependency tree, as "name@version:ID"; the package itself is covered by advisories; empty when none, or when the install or this lookup failed (see unavailable).',
 
   "packages[].bundle":
-    "Browser bundle size of the --bundle-entry snippet for this package, built standalone from `version`'s isolated install like a Vite production client build (minified, production conditions, process.env.NODE_ENV set to production), so it is not the marginal cost given what the repo already bundles; the bytes the bundler emits, not a claim that the code runs in a browser; null when no --bundle-entry was given for this package or error is set.",
+    "Browser bundle size of the --bundle-entry snippet for this package, built standalone from `version`'s isolated install like a Vite production client build (minified, production conditions, process.env.NODE_ENV set to production); other bundlers and minifiers can emit different sizes for the same snippet, by a factor of two or more, and on small bundles by about 1 KB of their own wrapper code; it is not the marginal cost given what the repo already bundles; the bytes the bundler emits, not a claim that the code runs in a browser; null when no --bundle-entry was given for this package or error is set.",
   "packages[].bundle.bundler": 'The bundler and its version, e.g. "rolldown@1.2.14".',
   "packages[].bundle.target": 'Runtime the bundle is built for; always "browser".',
   "packages[].bundle.entry":

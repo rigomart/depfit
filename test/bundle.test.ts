@@ -170,6 +170,16 @@ describe("bundleEntry on fixture packages", () => {
     expect(peer.problems).toEqual([]);
   });
 
+  it("measures JSON as Vite does: required whole, imported by name per field", async () => {
+    const required = await build('import { version } from "json-cjs"', ["json-cjs"]);
+    expect(required.problems).toEqual([]);
+    expect(required.bytes?.eager_js_min_bytes).toBeGreaterThan(0);
+    // data.json holds a 4000-character field the package never reads.
+    const named = await build('import { read } from "json-named"', ["json-named"]);
+    expect(named.problems).toEqual([]);
+    expect(named.bytes?.eager_js_min_bytes).toBeLessThan(1000);
+  });
+
   it("measures a binding named globalThis like any other name", async () => {
     const plain = await build('import { small } from "named"', ["named"]);
     const renamed = await build('import { small as globalThis } from "named"', ["named"]);
