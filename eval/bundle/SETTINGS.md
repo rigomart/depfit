@@ -15,7 +15,7 @@ for lazy chunks. SPEC.md wins on conflict.
 | `build.rollupOptions.input`: the generated `__depfit_entry.mjs` (a JS entry, not `index.html`) | An HTML entry adds Vite's modulepreload polyfill, an app-level constant |
 | `build.write: false` | Measured in memory (also turns off output clearing and public-file copying) |
 | Peers external through Vite's exported `esmExternalRequirePlugin` | Peers are excluded and listed. Plain `external` leaves a runtime `require` shim of a few hundred bytes for a CommonJS `require()` of a peer (the `cjs-peer` fixture: 536 B with plain `external`, under 400 B with the plugin); the plugin turns it into an import |
-| An observing plugin (`resolveId` returns null after recording, `transform` returns null after scanning) and an `onLog` that records | The honesty checks read resolutions, sources and log codes. A build without it emits the same output (spike) |
+| An observing plugin (`resolveId` returns null after recording each resolution), an `onLog` that records, and a worker-build recorder (`worker.plugins`) | The honesty checks read only what Vite resolved, logged and emitted, never package source. A build without them emits the same output (spike) |
 
 Gzip is level 9 per chunk with the parent runtime's zlib (Bun's is +0.4% against Node's).
 
@@ -32,7 +32,8 @@ Vite turns several broken inputs into a quiet success, so each is read from its 
 | Missing named export | error `MISSING_EXPORT` | `MISSING_EXPORT` |
 | Missing namespace member (`m.nope`) | warns `IMPORT_IS_UNDEFINED`, emits `undefined` | `MISSING_EXPORT` |
 | A file Vite emits besides JS chunks: CSS, an asset too large to inline, a worker, wasm | emits it | `NON_JS_IMPORT <file>` (step 1 is JS only) |
-| An asset or worker Vite inlines into the JS (small image as a data URL, `?inline`, `?worker&inline`) | inlines it | measured: the bytes are in the JS |
+| An asset Vite inlines into the JS (a small image as a data URL, `?inline`, `?raw`) | inlines it | measured: the bytes are in the JS |
+| A worker, inline or not (`?worker`, `?worker&inline`, `new Worker(new URL(..., import.meta.url))`) | builds it separately, outside this build's plugins | `NON_JS_IMPORT worker <module>`: depfit's checks and peer exclusion do not reach a worker build; workers are step 4 |
 | A file loaded by a path at runtime (`new Worker("./w.js")`, a missing asset left as a URL, `fetch`) | leaves the path | measured; the file is outside the claim, like any runtime load |
 | An `import()` or import left in the output that is no emitted chunk and no peer | builds | `IMPORT_OUTSIDE_BUNDLE <specifier>` |
 | The installed Vite or rolldown is not the evaluated version | builds | `TOOLCHAIN_MISMATCH <found>` |

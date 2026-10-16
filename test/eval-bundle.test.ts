@@ -87,6 +87,8 @@ describe("gate W auditor", () => {
       'r.u = (id) => "https://cdn.example/" + id; const l = (id) => import("" + r.u(id));',
       'r.u = "x"; const l = (id) => import("./" + r.u(id));',
       'r.u = (id) => id; const l = () => import("./" + r.u("missing.js"));',
+      `${loader}r.u = globalThis.other; const l = (id) => import("./" + r.u(id));`,
+      `${loader}const l = (id) => import("/not-emitted/" + r.u(id));`,
       `${loader}r.u = (id) => "https://cdn/" + id; const l = (id) => import("./" + r.u(id));`,
       'const a = () => import("../chunk-x.js");',
     ]) {

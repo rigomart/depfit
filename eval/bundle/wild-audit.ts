@@ -137,7 +137,8 @@ function isWebpackChunkLoader(source: Node, chunkFilenameOwners: Set<string>): b
   const [argument] = Array.isArray(last.arguments) ? last.arguments : [];
   if (literalValue(argument) !== null) return false;
   const prefix = literalValue(source.left);
-  return prefix !== null && !REMOTE.test(prefix);
+  // A relative directory, as webpack writes it for a chunk next to the importer.
+  return prefix !== null && (prefix.startsWith("./") || prefix.startsWith("../"));
 }
 
 /**
@@ -185,13 +186,15 @@ function fetchSites(
       if (name === "importScripts") scripts.push(node.start);
     } else if (node.type === "AssignmentExpression" && isNode(node.left) && isNode(node.right)) {
       const target = node.left;
-      const isFunction =
-        node.right.type === "FunctionExpression" || node.right.type === "ArrowFunctionExpression";
-      if (isFunction && memberName(target) === "u" && isNode(target.object)) {
+      // Every write to `r.u` counts, whatever its value: one that is not a filename function, or a
+      // second write, means the loader may call something else.
+      if (memberName(target) === "u" && isNode(target.object)) {
         const owner = target.object.type === "Identifier" ? target.object.name : null;
+        const isFunction =
+          node.right.type === "FunctionExpression" || node.right.type === "ArrowFunctionExpression";
         if (typeof owner === "string") {
           assignments.set(owner, (assignments.get(owner) ?? 0) + 1);
-          if (buildsChunkNames(node.right)) chunkFilenameOwners.add(owner);
+          if (isFunction && buildsChunkNames(node.right)) chunkFilenameOwners.add(owner);
         }
       }
     }

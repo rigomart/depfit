@@ -249,7 +249,7 @@ describe("bundleEntry on fixture packages", () => {
     expect(member.problems.map((p) => p.code)).toContain("MISSING_EXPORT");
   });
 
-  it.each(["asset-url-large", "worker-url", "css-import"])(
+  it.each(["asset-url-large", "worker-url", "worker-inline", "css-import"])(
     "gives no number when Vite emits a non-JS file for %s",
     async (name) => {
       const outcome = await build(`import * as m from "${name}"`, [name]);
@@ -257,6 +257,18 @@ describe("bundleEntry on fixture packages", () => {
       expect(new Set(outcome.problems.map((p) => p.code))).toEqual(new Set(["NON_JS_IMPORT"]));
     },
   );
+
+  it("gives no number for an inline worker, whose separate build depfit's checks and peer exclusion do not reach", async () => {
+    const outcome = await build(
+      'import { start } from "worker-inline-peer"',
+      ["worker-inline-peer", "peer"],
+      ["peer"],
+    );
+    expect(outcome.bytes).toBeNull();
+    expect(outcome.problems).toEqual([
+      { code: "NON_JS_IMPORT", specifier: "worker worker-inline-peer/worker.js" },
+    ]);
+  });
 
   it("counts what Vite inlines into the JS, and leaves files loaded by path at runtime out", async () => {
     // A small image becomes a data URL inside the JS: its bytes are in the number, unlike the same
@@ -267,7 +279,7 @@ describe("bundleEntry on fixture packages", () => {
     expect(inlined.bytes?.eager_js_min_bytes ?? 0).toBeGreaterThan(
       (missing.bytes?.eager_js_min_bytes ?? 0) + 100,
     );
-    for (const name of ["worker-inline", "asset-url-missing", "worker-file", "worker-remote"]) {
+    for (const name of ["asset-url-missing", "worker-file", "worker-remote"]) {
       const outcome = await build(`import * as m from "${name}"`, [name]);
       expect(outcome.problems, name).toEqual([]);
     }
@@ -296,6 +308,7 @@ describe("problemsFromBuild", () => {
     logs: [],
     chunks: [],
     assets: [],
+    workers: [],
     errors: null,
     ...rest,
   });

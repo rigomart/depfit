@@ -27,16 +27,17 @@ number.
 - **Eager vs lazy:** eager is the entry chunk plus the closure of its static imports. Lazy is every
   chunk reachable through dynamic `import()` minus the eager set. Each chunk counts once. They are
   never summed.
-- **Non-JS imports** (CSS, wasm, URL assets): null with `NON_JS_IMPORT` until step 4. Mapping them
-  to empty modules or URLs produces code that builds but is broken.
+- **Non-JS files and workers:** null with `NON_JS_IMPORT` until step 4 when Vite emits a non-JS file
+  or builds a worker (see the code below). What Vite inlines into the JS is counted.
 - **Unmeasurable inputs** get null bytes and a `bundle: <CODE> [specifier]` entry in `unavailable`.
   Codes:
   - `UNRESOLVED_IMPORT`: warnings are escalated to errors.
   - `MISSING_EXPORT`.
   - `IMPORT_OUTSIDE_BUNDLE <specifier>`: the output still contains an `import()` or static import
     whose target is not an emitted chunk and not an external peer (e.g. `import("https://…")`).
-    That code would be fetched at runtime and is not in the bytes. This is the only way emitted bytes
-    understate what loads, and it is checked structurally from the chunk graph.
+    That code would be fetched at runtime and is not in the bytes. It is the only runtime-load
+    check, made structurally from the chunk graph. Files loaded by a path at runtime are outside the
+    claim (see `NON_JS_IMPORT`).
   - `NO_ENTRY`.
 
   **History of this rule.** Step 1 first flagged "opaque runtime loads" with a pattern list, which
@@ -48,7 +49,9 @@ number.
   bytes, and only `IMPORT_OUTSIDE_BUNDLE` remains (user decision).
   - `NON_JS_IMPORT <file>`: Vite emitted a file besides JS chunks (CSS, an asset too large to
     inline, a worker, wasm), which the page needs and the JS bytes do not hold. What Vite inlines into
-    the JS (a small image as a data URL, an `?inline` worker) is counted. Files the code loads by a
+    the JS (a small image as a data URL, `?inline`) is counted. A worker, inline or not, is
+    `NON_JS_IMPORT worker <module>`: Vite builds it separately, outside the plugins depfit's checks and
+    peer exclusion run in. Files the code loads by a
     path at runtime (`new Worker("./w.js")`, a missing asset left as a URL, `fetch`) are outside the
     claim, like any other runtime load. Every check is on what Vite resolved and emitted; depfit reads
     no package source (user decision after the review of the Vite fixes: source-syntax checks were

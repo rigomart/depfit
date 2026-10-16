@@ -82,6 +82,8 @@ export type ViteBuildResult = {
   logs: ViteLog[];
   chunks: ViteChunk[];
   assets: string[];
+  /** Entry modules of worker sub-builds (a worker, inline or not, is not measured in step 1). */
+  workers: string[];
   /** The build failed: Vite's (or rolldown's) errors, with their codes. */
   errors: ViteLog[] | null;
 };
@@ -324,6 +326,11 @@ export function problemsFromBuild(
   // page needs it and the JS bytes do not hold it. What Vite inlines into JS is counted, and what
   // code loads by a path at runtime is not part of the claim (SPEC.md).
   for (const asset of result.assets) problems.push({ code: "NON_JS_IMPORT", specifier: asset });
+  // A worker is a separate bundle that Vite builds outside this build's plugins (and, inline,
+  // embeds as text): depfit's checks and peer exclusion do not reach it. Workers are step 4.
+  for (const worker of result.workers) {
+    problems.push({ code: "NON_JS_IMPORT", specifier: `worker ${moduleLabel(worker)}` });
+  }
   for (const chunk of result.chunks) {
     for (const id of chunk.moduleIds) {
       // `__vite-optional-peer-dep:<peer>:<importer>`: Vite replaced a missing optional peer.
@@ -369,6 +376,7 @@ function isBuildResult(value: unknown): value is ViteBuildResult {
     Array.isArray(value.chunks) &&
     value.chunks.every(isChunk) &&
     isStringArray(value.assets) &&
+    isStringArray(value.workers) &&
     (value.errors === null || Array.isArray(value.errors))
   );
 }

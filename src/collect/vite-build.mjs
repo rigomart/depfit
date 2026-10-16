@@ -88,6 +88,21 @@ async function main() {
 
   const resolutions = [];
   const logs = [];
+  // Entries of worker sub-builds. Vite bundles a worker separately (and for `?worker&inline`
+  // embeds it in the JS), outside this build's plugins; step 1 does not measure workers.
+  const workers = [];
+  const recordWorker = {
+    name: "depfit:worker",
+    buildStart(options) {
+      const input = options.input;
+      const entries = Array.isArray(input)
+        ? input
+        : typeof input === "object"
+          ? Object.values(input)
+          : [input];
+      for (const entry of entries) workers.push(label(String(entry)) ?? String(entry));
+    },
+  };
   const observe = {
     name: "depfit:observe",
     enforce: "pre",
@@ -136,6 +151,7 @@ async function main() {
       cacheDir: `${root}/.depfit-vite-cache`,
       logLevel: "silent",
       plugins: [observe, ...(peers.length ? [esmExternalRequirePlugin({ external })] : [])],
+      worker: { plugins: () => [recordWorker] },
       build: {
         write: false,
         reportCompressedSize: false,
@@ -157,6 +173,7 @@ async function main() {
       logs,
       chunks: [],
       assets: [],
+      workers,
       errors: errors.map((item) => toLog("error", item)),
     });
     return;
@@ -182,6 +199,7 @@ async function main() {
     logs,
     chunks,
     assets,
+    workers,
     errors: null,
   });
 }
