@@ -23,8 +23,9 @@ Last corpus scorecard (`score.ts --runs 2`, 33 step-1 cases):
 doesn't mean it runs) was added after the claim was narrowed, and has not been run yet.
 
 **Gate W (wild corpus):** 200 packages selected (`wild.json`, rule in README.md), with locks and
-references built. The depfit run (`score.ts --wild`) was in progress (62/200) when work stopped.
-Results go to `results/wild-run/` (gitignored).
+references built. The depfit run (`score.ts --wild`) was stopped at 144/200. Its per-package results are in
+`results/wild-run/` (gitignored); the eval agent was stopped before reporting. Unverified: whether
+the gate-E 429 fix and the H0 question 6 landed. Check `score.ts` and `comprehension.ts` first.
 
 ## Decisions made with the user
 
