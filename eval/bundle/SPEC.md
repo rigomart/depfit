@@ -56,6 +56,9 @@ number.
     claim, like any other runtime load. Every check is on what Vite resolved and emitted; depfit reads
     no package source (user decision after the review of the Vite fixes: source-syntax checks were
     the same pattern-list loop as the first attempt).
+  - `PEER_IN_BUNDLE <peer>`: a peer's own files are in the output, imported through an alias
+    (`#peer`, a relative path) that the name-based exclusion does not see; the bytes would
+    include the peer.
   - `TOOLCHAIN_MISMATCH <found>`: the installed Vite or its rolldown is not the version the eval
     covered (depfit's `overrides` apply only when depfit is the install root).
   - Any other bundler error passes through with the bundler's own code (e.g. `PARSE_ERROR`).

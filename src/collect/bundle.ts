@@ -26,7 +26,7 @@ const BUILD_TIMEOUT_MS = 5 * 60_000;
 
 /**
  * One reason a bundle is unmeasurable. `code` is UNRESOLVED_IMPORT, MISSING_EXPORT,
- * IMPORT_OUTSIDE_BUNDLE, NO_ENTRY, NON_JS_IMPORT or TOOLCHAIN_MISMATCH (SPEC.md), or Vite's own
+ * IMPORT_OUTSIDE_BUNDLE, NO_ENTRY, NON_JS_IMPORT, PEER_IN_BUNDLE or TOOLCHAIN_MISMATCH (SPEC.md), or Vite's own
  * code for any other build error (e.g. PARSE_ERROR).
  */
 export type BundleProblem = { code: string; specifier: string | null };
@@ -336,6 +336,10 @@ export function problemsFromBuild(
       // `__vite-optional-peer-dep:<peer>:<importer>`: Vite replaced a missing optional peer.
       const match = /__vite-optional-peer-dep:([^:]+)/.exec(id);
       if (match) problems.push({ code: "UNRESOLVED_IMPORT", specifier: match[1] ?? id });
+      // A peer's own files in the output: imported through an alias (`#peer`, a relative path),
+      // which the name-based exclusion does not see, so the bytes would include the peer.
+      const peer = peers.find((name) => id.startsWith(`node_modules/${name}/`));
+      if (peer) problems.push({ code: "PEER_IN_BUNDLE", specifier: peer });
     }
   }
   for (const error of result.errors ?? []) {

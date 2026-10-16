@@ -36,6 +36,7 @@ Vite turns several broken inputs into a quiet success, so each is read from its 
 | A worker, inline or not (`?worker`, `?worker&inline`, `new Worker(new URL(..., import.meta.url))`) | builds it separately, outside this build's plugins | `NON_JS_IMPORT worker <module>`: depfit's checks and peer exclusion do not reach a worker build; workers are step 4 |
 | A file loaded by a path at runtime (`new Worker("./w.js")`, a missing asset left as a URL, `fetch`) | leaves the path | measured; the file is outside the claim, like any runtime load |
 | An `import()` or import left in the output that is no emitted chunk and no peer | builds | `IMPORT_OUTSIDE_BUNDLE <specifier>` |
+| A peer's own files bundled through an alias (`#peer`, a relative path into `node_modules/peer/`) | bundles them | `PEER_IN_BUNDLE <peer>` |
 | The installed Vite or rolldown is not the evaluated version | builds | `TOOLCHAIN_MISMATCH <found>` |
 | Any other build error | fails | Vite's code (`PARSE_ERROR`, `PLUGIN_ERROR`, ...) |
 

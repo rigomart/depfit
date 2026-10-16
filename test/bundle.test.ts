@@ -285,6 +285,18 @@ describe("bundleEntry on fixture packages", () => {
     }
   });
 
+  it("gives no number when a peer is bundled through an alias the exclusion does not see", async () => {
+    const outcome = await build(
+      'import * as m from "peer-alias"',
+      ["peer-alias", "peer"],
+      ["peer"],
+    );
+    expect(outcome).toEqual({
+      bytes: null,
+      problems: [{ code: "PEER_IN_BUNDLE", specifier: "peer" }],
+    });
+  });
+
   it("turns a CommonJS require() of a peer into an import, with no runtime require helper", async () => {
     const outcome = await build('import { make } from "cjs-peer"', ["cjs-peer", "peer"], ["peer"]);
     expect(outcome.problems).toEqual([]);

@@ -43,6 +43,16 @@ output does not expose chunks).
 Rerun after the fixes: corpus A-F pass (2 exceptions), W passes (2 exceptions; 1 number set aside
 as drifted: @testing-library/jest-dom's aria-query moved).
 
+**Codex final checks of the Vite-only rule (2026-10-16).** First check: inline workers are built
+outside the main build's plugins, so a worker's Node stubs, outside imports and peers reached the
+number. Fixed by deferring every worker to step 4: any Vite worker build, inline or not, is
+`NON_JS_IMPORT worker <module>` (a recorder in `worker.plugins`; Codex then tried 20 worker forms,
+including SharedWorker, nested, lazy-chunk and TypeScript workers, and all were null). Second
+check: a peer imported through an alias (`#peer`, a relative path) was bundled despite the
+name-based exclusion; now `PEER_IN_BUNDLE <peer>` whenever a peer's own files are in the output. The
+auditor's webpack exemption also needs its prefix directory to hold emitted chunks, and counts every
+write to `.u`, destructuring included.
+
 **Codex re-check of the fixes (2026-10-16): still bypassable, then the rule changed.** It found more
 spellings that the source-syntax URL/Worker checks missed (`import . meta.url`, `` import.meta[`url`] ``,
 `new globalThis["URL"]`, `\u0057orker`, a TypeScript `as`), and a `#crypto` alias with a `browser`
@@ -187,7 +197,7 @@ in step 1.
 
 ## To resume
 
-1. Final Codex check against the Vite-only rule (clientRequestId `depfit-bundle-vite-only-review`).
+1. Final focused Codex check of the peer-alias and auditor fixes.
 2. Then stop and present to the user before step 2.
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and
