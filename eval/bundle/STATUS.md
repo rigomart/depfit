@@ -43,6 +43,18 @@ output does not expose chunks).
 Rerun after the fixes: corpus A-F pass (2 exceptions), W passes (2 exceptions; 1 number set aside
 as drifted: @testing-library/jest-dom's aria-query moved).
 
+**Codex re-check of the fixes (2026-10-16): still bypassable, then the rule changed.** It found more
+spellings that the source-syntax URL/Worker checks missed (`import . meta.url`, `` import.meta[`url`] ``,
+`new globalThis["URL"]`, `\u0057orker`, a TypeScript `as`), and a `#crypto` alias with a `browser`
+entry Vite ignores. That is the first attempt's pattern-list loop again, so the user chose to rely on
+Vite only: depfit reads no package source. `NON_JS_IMPORT` now means Vite emitted a non-JS file (CSS, a
+large asset, a worker, wasm). What Vite inlines into the JS is counted. Files loaded by a path at
+runtime are outside the claim, like `fetch`. A `#` import alias never gets the `browser` exemption.
+Also: the auditor exempts only webpack's exact `"<dir>" + r.u(id)` form with a single trusted `.u`
+definition, and the wild cache key includes the child Node's versions. Rerun: corpus A-F pass, W
+passes; references and audits unchanged; only vite and @vitest/browser lost a secondary
+NON_JS_IMPORT (still null for Node built-ins).
+
 **Found and fixed during the implementation, by the gates:**
 - D: a MISSING_EXPORT reason held the temp install path (different every run); log paths are
   now labeled `pkg/file.js`.
@@ -175,8 +187,7 @@ in step 1.
 
 ## To resume
 
-1. Codex re-check of the fixes for its implementation review (clientRequestId
-   `depfit-bundle-vite-fixes-review`).
+1. Final Codex check against the Vite-only rule (clientRequestId `depfit-bundle-vite-only-review`).
 2. Then stop and present to the user before step 2.
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and

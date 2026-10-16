@@ -12,6 +12,7 @@
  * The null rate by code is reported, with no threshold. Other auditor findings (require, eval,
  * Function) are information only.
  */
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -122,6 +123,9 @@ const REPO = join(HERE, "../..");
 async function depfitIdentity(): Promise<string> {
   const hash = createHash("sha256");
   hash.update(await bundlerName()).update(JSON.stringify(process.versions));
+  // Vite runs in a separate Node process (src/collect/vite-build.mjs): its version counts too.
+  const child = spawnSync("node", ["-p", "JSON.stringify(process.versions)"], { encoding: "utf8" });
+  hash.update(child.stdout ?? "");
   const sources = (await readdir(join(REPO, "src"), { recursive: true }))
     .filter((name) => /\.(ts|mjs)$/.test(name))
     .sort();

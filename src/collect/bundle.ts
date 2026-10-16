@@ -24,22 +24,6 @@ const ENTRY_FILE = "__depfit_entry.mjs";
 const RUNNER = fileURLToPath(new URL("./vite-build.mjs", import.meta.url));
 const BUILD_TIMEOUT_MS = 5 * 60_000;
 
-/** Module extensions that hold JS (or JSON, which bundles to JS); others are CSS, wasm, assets. */
-const JS_EXTENSIONS = new Set([
-  ".js",
-  ".mjs",
-  ".cjs",
-  ".jsx",
-  ".ts",
-  ".mts",
-  ".cts",
-  ".tsx",
-  ".json",
-]);
-
-/** Vite's import queries that turn a file into a URL, a string, a worker or a wasm instance. */
-const ASSET_QUERY = /[?&](url|raw|inline|worker|sharedworker|init)\b/;
-
 /**
  * One reason a bundle is unmeasurable. `code` is UNRESOLVED_IMPORT, MISSING_EXPORT,
  * IMPORT_OUTSIDE_BUNDLE, NO_ENTRY, NON_JS_IMPORT or TOOLCHAIN_MISMATCH (SPEC.md), or Vite's own
@@ -96,8 +80,6 @@ export type ViteBuildResult = {
   rolldown: string;
   resolutions: ViteResolution[];
   logs: ViteLog[];
-  /** In package sources, by module: `new URL(x, import.meta.url)`, or a Worker from a literal URL. */
-  sourceRefs: { kind: string; id: string }[];
   chunks: ViteChunk[];
   assets: string[];
   /** The build failed: Vite's (or rolldown's) errors, with their codes. */
@@ -279,18 +261,6 @@ export function moduleLabel(id: string): string {
   return path.slice(path.lastIndexOf("/") + 1);
 }
 
-function extensionOf(id: string): string {
-  const path = (id.split("?")[0] ?? id).replace(/^.*\//, "");
-  const dot = path.lastIndexOf(".");
-  return dot <= 0 ? "" : path.slice(dot).toLowerCase();
-}
-
-/** CSS, wasm, images, fonts and other files that are not JS modules (`.node` addons excluded). */
-export function isNonJsModule(id: string): boolean {
-  const extension = extensionOf(id);
-  return extension !== "" && extension !== ".node" && !JS_EXTENSIONS.has(extension);
-}
-
 // --- what the build means -------------------------------------------------------------------------
 
 /**
@@ -332,7 +302,7 @@ export function problemsFromBuild(
 ): BundleProblem[] {
   const problems: BundleProblem[] = [];
   const unresolved = new Set<string>();
-  for (const { source, importer, id, external, browserFalse } of result.resolutions) {
+  for (const { source, importer, id, browserFalse } of result.resolutions) {
     if (id === null) {
       unresolved.add(source);
       problems.push(unresolvedProblem(source, importer === ENTRY_FILE, candidate));
@@ -341,12 +311,6 @@ export function problemsFromBuild(
       // alias like `#crypto`), unless the importing package itself maps the import to false in its
       // `browser` field (`"./x.js": false`, `"crypto": false`), which is measured.
       problems.push({ code: "UNRESOLVED_IMPORT", specifier: source });
-    } else if (
-      !external &&
-      !id.startsWith("\0") &&
-      (ASSET_QUERY.test(source) || ASSET_QUERY.test(id) || isNonJsModule(id))
-    ) {
-      problems.push({ code: "NON_JS_IMPORT", specifier: moduleLabel(id) });
     }
   }
   for (const log of result.logs) {
@@ -356,9 +320,9 @@ export function problemsFromBuild(
       problems.push(logProblem(log, "MISSING_EXPORT"));
     }
   }
-  for (const ref of result.sourceRefs) {
-    problems.push({ code: "NON_JS_IMPORT", specifier: `${ref.kind} in ${moduleLabel(ref.id)}` });
-  }
+  // A file Vite emitted besides JS chunks (CSS, an asset too large to inline, a worker, wasm): the
+  // page needs it and the JS bytes do not hold it. What Vite inlines into JS is counted, and what
+  // code loads by a path at runtime is not part of the claim (SPEC.md).
   for (const asset of result.assets) problems.push({ code: "NON_JS_IMPORT", specifier: asset });
   for (const chunk of result.chunks) {
     for (const id of chunk.moduleIds) {
@@ -402,7 +366,6 @@ function isBuildResult(value: unknown): value is ViteBuildResult {
     typeof value.vite === "string" &&
     Array.isArray(value.resolutions) &&
     Array.isArray(value.logs) &&
-    Array.isArray(value.sourceRefs) &&
     Array.isArray(value.chunks) &&
     value.chunks.every(isChunk) &&
     isStringArray(value.assets) &&

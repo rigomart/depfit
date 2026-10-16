@@ -12,7 +12,6 @@ import {
   chunkBytes,
   externalPackages,
   importsOutsideBundle,
-  isNonJsModule,
   moduleLabel,
   problemsFromBuild,
   splitChunks,
@@ -211,21 +210,22 @@ describe("bundleEntry on fixture packages", () => {
     });
   });
 
-  it("gives no number for a Node built-in behind an import alias", async () => {
-    expect(await build('import { u } from "alias-builtin"', ["alias-builtin"])).toEqual({
-      bytes: null,
-      problems: [{ code: "UNRESOLVED_IMPORT", specifier: "#crypto" }],
-    });
-  });
+  it.each(["alias-builtin", "alias-builtin-browser"])(
+    "gives no number for a Node built-in behind an import alias (%s)",
+    async (name) => {
+      expect(await build(`import { u } from "${name}"`, [name])).toEqual({
+        bytes: null,
+        problems: [{ code: "UNRESOLVED_IMPORT", specifier: "#crypto" }],
+      });
+    },
+  );
 
-  it("measures a browser:false mapping named without its extension, and URL words in a string", async () => {
+  it("measures a browser:false mapping named without its extension", async () => {
     const mapped = await build('import { run } from "browser-false-relative-noext"', [
       "browser-false-relative-noext",
     ]);
     expect(mapped.problems).toEqual([]);
     expect(mapped.bytes?.eager_js_min_bytes).toBeLessThan(2000);
-    const text = await build('import { text } from "asset-url-in-string"', ["asset-url-in-string"]);
-    expect(text.problems).toEqual([]);
   });
 
   it("measures a browser:false mapping of a Node built-in name, and a Worker made from bundled code", async () => {
@@ -249,20 +249,28 @@ describe("bundleEntry on fixture packages", () => {
     expect(member.problems.map((p) => p.code)).toContain("MISSING_EXPORT");
   });
 
-  it.each([
-    "asset-url",
-    "asset-url-large",
-    "asset-url-missing",
-    "asset-url-spellings",
-    "worker-url",
-    "worker-file",
-    "worker-remote",
-    "worker-inline",
-    "css-import",
-  ])("gives no number for the non-JS import in %s", async (name) => {
-    const outcome = await build(`import * as m from "${name}"`, [name]);
-    expect(outcome.bytes).toBeNull();
-    expect(new Set(outcome.problems.map((p) => p.code))).toEqual(new Set(["NON_JS_IMPORT"]));
+  it.each(["asset-url-large", "worker-url", "css-import"])(
+    "gives no number when Vite emits a non-JS file for %s",
+    async (name) => {
+      const outcome = await build(`import * as m from "${name}"`, [name]);
+      expect(outcome.bytes).toBeNull();
+      expect(new Set(outcome.problems.map((p) => p.code))).toEqual(new Set(["NON_JS_IMPORT"]));
+    },
+  );
+
+  it("counts what Vite inlines into the JS, and leaves files loaded by path at runtime out", async () => {
+    // A small image becomes a data URL inside the JS: its bytes are in the number, unlike the same
+    // code whose image file is missing (left as a URL loaded at runtime).
+    const inlined = await build('import * as m from "asset-url"', ["asset-url"]);
+    const missing = await build('import * as m from "asset-url-missing"', ["asset-url-missing"]);
+    expect(inlined.problems).toEqual([]);
+    expect(inlined.bytes?.eager_js_min_bytes ?? 0).toBeGreaterThan(
+      (missing.bytes?.eager_js_min_bytes ?? 0) + 100,
+    );
+    for (const name of ["worker-inline", "asset-url-missing", "worker-file", "worker-remote"]) {
+      const outcome = await build(`import * as m from "${name}"`, [name]);
+      expect(outcome.problems, name).toEqual([]);
+    }
   });
 
   it("turns a CommonJS require() of a peer into an import, with no runtime require helper", async () => {
@@ -286,7 +294,6 @@ describe("problemsFromBuild", () => {
     rolldown: "1.2.14",
     resolutions: [],
     logs: [],
-    sourceRefs: [],
     chunks: [],
     assets: [],
     errors: null,
@@ -378,15 +385,6 @@ describe("bundle reasons and labels", () => {
       "@uiw/md/markdown.css",
     );
     expect(moduleLabel("/tmp/depfit-x/__depfit_entry.mjs")).toBe("__depfit_entry.mjs");
-  });
-
-  it("treats CSS, wasm, and assets as non-JS, and JS, JSON, and extensionless files as JS", () => {
-    for (const id of ["a/b.css", "a/b.wasm", "a/logo.svg?url", "a/font.woff2", "a/x.PNG"]) {
-      expect(isNonJsModule(id), id).toBe(true);
-    }
-    for (const id of ["a/b.js", "a/b.cjs", "a/b.mjs", "a/data.json", "a/bin/cli", "a/.hidden"]) {
-      expect(isNonJsModule(id), id).toBe(false);
-    }
   });
 
   it("externalizes every peer that ships code, optional ones included", () => {

@@ -86,6 +86,8 @@ describe("gate W auditor", () => {
       `${loader}const l = (id) => import("./" + app.u(id));`,
       'r.u = (id) => "https://cdn.example/" + id; const l = (id) => import("" + r.u(id));',
       'r.u = "x"; const l = (id) => import("./" + r.u(id));',
+      'r.u = (id) => id; const l = () => import("./" + r.u("missing.js"));',
+      `${loader}r.u = (id) => "https://cdn/" + id; const l = (id) => import("./" + r.u(id));`,
       'const a = () => import("../chunk-x.js");',
     ]) {
       expect(fetches(code), code).toEqual([true, true]);
@@ -95,10 +97,9 @@ describe("gate W auditor", () => {
   it("ignores the build's own chunks, webpack's loader, and words inside strings", () => {
     expect(fetches('const a = () => import("./chunk-x.js");')).toEqual([false, false]);
     // Text mode cannot tie a loader to its filename function, so it reports it.
-    expect(fetches(`${loader}const l = (e) => import("./" + r.p + r.u(e));`)).toEqual([
-      false,
-      true,
-    ]);
+    expect(fetches(`${loader}const l = (e) => import("./" + r.u(e));`)).toEqual([false, true]);
+    // Only the exact `"<dir>" + r.u(id)` form is exempt; a public path in between is reported.
+    expect(fetches(`${loader}const l = (e) => import("./" + r.p + r.u(e));`)).toEqual([true, true]);
     expect(
       fetches('const a = () => import("./axe.js");', ["assets/i.js", "assets/axe.js"]),
     ).toEqual([false, false]);

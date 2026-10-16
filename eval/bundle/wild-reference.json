@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T16:49:03.807Z",
+  "generated_at": "2026-10-16T18:51:12.239Z",
   "tools": {
     "node": "24.14.1",
     "rollup": "4.64.7",
@@ -310,7 +310,9 @@
     "opentelemetry__core": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@opentelemetry/api"],
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
       "package": "@opentelemetry/core",
       "version": "2.12.0",
       "node_builtins_external": [],
@@ -504,7 +506,9 @@
     "jsdom": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["canvas"],
+      "external_packages": [
+        "canvas"
+      ],
       "package": "jsdom",
       "version": "30.1.3",
       "node_builtins_external": [],
@@ -522,7 +526,9 @@
     "opentelemetry__instrumentation": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@opentelemetry/api"],
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
       "package": "@opentelemetry/instrumentation",
       "version": "0.223.0",
       "node_builtins_external": [],
@@ -612,7 +618,9 @@
     "eslint-plugin-react-hooks": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["eslint"],
+      "external_packages": [
+        "eslint"
+      ],
       "package": "eslint-plugin-react-hooks",
       "version": "7.1.1",
       "node_builtins_external": [],
@@ -817,7 +825,10 @@
     "floating-ui__react-dom": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@floating-ui/react-dom",
       "version": "2.1.9",
       "node_builtins_external": [],
@@ -1043,7 +1054,10 @@
     "use-callback-ref": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "use-callback-ref",
       "version": "1.3.3",
       "node_builtins_external": [],
@@ -1073,7 +1087,10 @@
     "use-sidecar": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "use-sidecar",
       "version": "1.1.3",
       "node_builtins_external": [],
@@ -1103,7 +1120,10 @@
     "react-style-singleton": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "react-style-singleton",
       "version": "2.2.3",
       "node_builtins_external": [],
@@ -1133,7 +1153,10 @@
     "flmngr__flmngr-react": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@flmngr/flmngr-react",
       "version": "2.0.13",
       "node_builtins_external": [],
@@ -1225,7 +1248,9 @@
     "inquirer__core": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/core",
       "version": "12.0.4",
       "node_builtins_external": [],
@@ -1243,7 +1268,10 @@
     "testing-library__jest-dom": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@testing-library/dom", "vitest"],
+      "external_packages": [
+        "@testing-library/dom",
+        "vitest"
+      ],
       "package": "@testing-library/jest-dom",
       "version": "7.0.1",
       "node_builtins_external": [],
@@ -1287,7 +1315,9 @@
     "inquirer__type": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/type",
       "version": "4.2.0",
       "node_builtins_external": [],
@@ -1371,7 +1401,9 @@
     "eslint-plugin-react": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["eslint"],
+      "external_packages": [
+        "eslint"
+      ],
       "package": "eslint-plugin-react",
       "version": "7.37.5",
       "node_builtins_external": [],
@@ -1540,7 +1572,12 @@
     "zustand": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "immer", "react", "use-sync-external-store"],
+      "external_packages": [
+        "@types/react",
+        "immer",
+        "react",
+        "use-sync-external-store"
+      ],
       "package": "zustand",
       "version": "5.0.15",
       "node_builtins_external": [],
@@ -1570,7 +1607,10 @@
     "react-hook-form": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "react-hook-form",
       "version": "7.90.0",
       "node_builtins_external": [],
@@ -1648,7 +1688,10 @@
     "react-router": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "react-router",
       "version": "8.4.0",
       "node_builtins_external": [],
@@ -1692,7 +1735,9 @@
     "testing-library__user-event": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@testing-library/dom"],
+      "external_packages": [
+        "@testing-library/dom"
+      ],
       "package": "@testing-library/user-event",
       "version": "14.6.8",
       "node_builtins_external": [],
@@ -1722,7 +1767,9 @@
     "inquirer__confirm": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/confirm",
       "version": "6.3.3",
       "node_builtins_external": [],
@@ -1874,7 +1921,10 @@
     "react-transition-group": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "react-transition-group",
       "version": "4.4.5",
       "node_builtins_external": [],
@@ -1964,7 +2014,9 @@
     "inquirer": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "inquirer",
       "version": "14.2.3",
       "node_builtins_external": [],
@@ -1982,7 +2034,10 @@
     "framer-motion": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "framer-motion",
       "version": "14.3.0",
       "node_builtins_external": [],
@@ -2042,7 +2097,10 @@
     "react-router-dom": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "react-router-dom",
       "version": "7.18.4",
       "node_builtins_external": [],
@@ -2086,7 +2144,9 @@
     "inquirer__external-editor": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/external-editor",
       "version": "3.0.6",
       "node_builtins_external": [],
@@ -2134,7 +2194,9 @@
     "inquirer__prompts": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/prompts",
       "version": "8.7.3",
       "node_builtins_external": [],
@@ -2242,7 +2304,11 @@
     "react-redux": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react", "redux"],
+      "external_packages": [
+        "@types/react",
+        "react",
+        "redux"
+      ],
       "package": "react-redux",
       "version": "9.3.0",
       "node_builtins_external": [],
@@ -2272,7 +2338,9 @@
     "inquirer__select": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/select",
       "version": "5.2.6",
       "node_builtins_external": [],
@@ -2320,7 +2388,10 @@
     "vaul": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "vaul",
       "version": "1.1.2",
       "node_builtins_external": [],
@@ -2350,7 +2421,9 @@
     "inquirer__input": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/input",
       "version": "5.1.7",
       "node_builtins_external": [],
@@ -2398,7 +2471,9 @@
     "inquirer__checkbox": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/checkbox",
       "version": "5.2.6",
       "node_builtins_external": [],
@@ -2416,7 +2491,9 @@
     "postcss-js": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["postcss"],
+      "external_packages": [
+        "postcss"
+      ],
       "package": "postcss-js",
       "version": "5.1.0",
       "node_builtins_external": [],
@@ -2446,7 +2523,9 @@
     "eslint-plugin-react-refresh": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["eslint"],
+      "external_packages": [
+        "eslint"
+      ],
       "package": "eslint-plugin-react-refresh",
       "version": "0.5.7",
       "node_builtins_external": [],
@@ -2476,7 +2555,9 @@
     "preact": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["preact-render-to-string"],
+      "external_packages": [
+        "preact-render-to-string"
+      ],
       "package": "preact",
       "version": "11.0.1",
       "node_builtins_external": [],
@@ -2506,7 +2587,9 @@
     "inquirer__password": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/password",
       "version": "5.2.3",
       "node_builtins_external": [],
@@ -2524,7 +2607,9 @@
     "inquirer__editor": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/editor",
       "version": "5.3.4",
       "node_builtins_external": [],
@@ -2542,7 +2627,9 @@
     "inquirer__search": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/search",
       "version": "4.3.4",
       "node_builtins_external": [],
@@ -2578,7 +2665,9 @@
     "inquirer__expand": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/expand",
       "version": "5.1.6",
       "node_builtins_external": [],
@@ -2626,7 +2715,9 @@
     "inquirer__rawlist": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/rawlist",
       "version": "5.3.6",
       "node_builtins_external": [],
@@ -2644,7 +2735,9 @@
     "inquirer__number": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/node"],
+      "external_packages": [
+        "@types/node"
+      ],
       "package": "@inquirer/number",
       "version": "4.2.4",
       "node_builtins_external": [],
@@ -2692,7 +2785,9 @@
     "embla-carousel-reactive-utils": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["embla-carousel"],
+      "external_packages": [
+        "embla-carousel"
+      ],
       "package": "embla-carousel-reactive-utils",
       "version": "8.6.0",
       "node_builtins_external": [],
@@ -2722,7 +2817,9 @@
     "opentelemetry__exporter-trace-otlp-http": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@opentelemetry/api"],
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
       "package": "@opentelemetry/exporter-trace-otlp-http",
       "version": "0.223.0",
       "node_builtins_external": [],
@@ -2770,7 +2867,9 @@
     "embla-carousel-react": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react"],
+      "external_packages": [
+        "react"
+      ],
       "package": "embla-carousel-react",
       "version": "8.6.0",
       "node_builtins_external": [],
@@ -2830,7 +2929,9 @@
     "d3-transition": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["d3-selection"],
+      "external_packages": [
+        "d3-selection"
+      ],
       "package": "d3-transition",
       "version": "3.0.1",
       "node_builtins_external": [],
@@ -2860,7 +2961,10 @@
     "react-smooth": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "react-smooth",
       "version": "4.0.4",
       "node_builtins_external": [],
@@ -2890,7 +2994,10 @@
     "input-otp": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "input-otp",
       "version": "1.5.0",
       "node_builtins_external": [],
@@ -3010,7 +3117,10 @@
     "reduxjs__toolkit": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-redux"],
+      "external_packages": [
+        "react",
+        "react-redux"
+      ],
       "package": "@reduxjs/toolkit",
       "version": "2.13.0",
       "node_builtins_external": [],
@@ -3200,7 +3310,10 @@
     "tanstack__react-store": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@tanstack/react-store",
       "version": "0.11.2",
       "node_builtins_external": [],
@@ -3260,7 +3373,9 @@
     "opentelemetry__exporter-logs-otlp-http": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@opentelemetry/api"],
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
       "package": "@opentelemetry/exporter-logs-otlp-http",
       "version": "0.223.0",
       "node_builtins_external": [],
@@ -3320,7 +3435,9 @@
     "opentelemetry__exporter-metrics-otlp-http": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@opentelemetry/api"],
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
       "package": "@opentelemetry/exporter-metrics-otlp-http",
       "version": "0.223.0",
       "node_builtins_external": [],
@@ -3473,7 +3590,10 @@
     "tanstack__react-virtual": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@tanstack/react-virtual",
       "version": "3.14.20",
       "node_builtins_external": [],
@@ -3563,7 +3683,10 @@
     "floating-ui__react": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@floating-ui/react",
       "version": "0.27.20",
       "node_builtins_external": [],
@@ -3681,7 +3804,11 @@
     "storybook": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "prettier", "vite-plus"],
+      "external_packages": [
+        "@types/react",
+        "prettier",
+        "vite-plus"
+      ],
       "package": "storybook",
       "version": "10.6.2",
       "node_builtins_external": [],
@@ -3699,7 +3826,10 @@
     "motion": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "motion",
       "version": "14.3.0",
       "node_builtins_external": [],
@@ -3729,7 +3859,9 @@
     "opentelemetry__exporter-zipkin": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@opentelemetry/api"],
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
       "package": "@opentelemetry/exporter-zipkin",
       "version": "2.12.0",
       "node_builtins_external": [],
@@ -3807,7 +3939,9 @@
     "tanstack__react-table": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react"],
+      "external_packages": [
+        "react"
+      ],
       "package": "@tanstack/react-table",
       "version": "9.3.1",
       "node_builtins_external": [],
@@ -3851,7 +3985,10 @@
     "tanstack__react-router": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@tanstack/react-router",
       "version": "1.170.44",
       "node_builtins_external": [],
@@ -3925,7 +4062,10 @@
     "mdx-js__react": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "@mdx-js/react",
       "version": "3.1.1",
       "node_builtins_external": [],
@@ -3991,7 +4131,9 @@
     "isomorphic-ws": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["ws"],
+      "external_packages": [
+        "ws"
+      ],
       "package": "isomorphic-ws",
       "version": "5.0.0",
       "node_builtins_external": [],
@@ -4375,7 +4517,10 @@
     "storybook__addon-docs": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "storybook"],
+      "external_packages": [
+        "@types/react",
+        "storybook"
+      ],
       "package": "@storybook/addon-docs",
       "version": "10.6.2",
       "node_builtins_external": [],
@@ -4533,7 +4678,9 @@
     "swr": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react"],
+      "external_packages": [
+        "react"
+      ],
       "package": "swr",
       "version": "2.5.1",
       "node_builtins_external": [],
@@ -4631,7 +4778,13 @@
     "react-i18next": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["i18next", "react", "react-dom", "react-native", "typescript"],
+      "external_packages": [
+        "i18next",
+        "react",
+        "react-dom",
+        "react-native",
+        "typescript"
+      ],
       "package": "react-i18next",
       "version": "17.0.19",
       "node_builtins_external": [],
@@ -4661,7 +4814,13 @@
     "base-ui__react": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@date-fns/tz", "@types/react", "date-fns", "react", "react-dom"],
+      "external_packages": [
+        "@date-fns/tz",
+        "@types/react",
+        "date-fns",
+        "react",
+        "react-dom"
+      ],
       "package": "@base-ui/react",
       "version": "1.9.0",
       "node_builtins_external": [],
@@ -4735,7 +4894,10 @@
     "react-error-boundary": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "react-error-boundary",
       "version": "6.1.6",
       "node_builtins_external": [],
@@ -4765,7 +4927,13 @@
     "storybook__react-vite": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom", "storybook", "typescript", "vite"],
+      "external_packages": [
+        "react",
+        "react-dom",
+        "storybook",
+        "typescript",
+        "vite"
+      ],
       "package": "@storybook/react-vite",
       "version": "10.6.2",
       "node_builtins_external": [],
@@ -4917,7 +5085,10 @@
     "tanstack__start-plugin-core": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@rsbuild/core", "vite"],
+      "external_packages": [
+        "@rsbuild/core",
+        "vite"
+      ],
       "package": "@tanstack/start-plugin-core",
       "version": "1.171.53",
       "node_builtins_external": [],
@@ -4965,7 +5136,13 @@
     "tanstack__react-start": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@rsbuild/core", "@vitejs/plugin-rsc", "react", "react-dom", "vite"],
+      "external_packages": [
+        "@rsbuild/core",
+        "@vitejs/plugin-rsc",
+        "react",
+        "react-dom",
+        "vite"
+      ],
       "package": "@tanstack/react-start",
       "version": "1.169.2",
       "node_builtins_external": [],
@@ -4983,7 +5160,10 @@
     "tanstack__react-start-server": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@tanstack/react-start-server",
       "version": "1.167.50",
       "node_builtins_external": [],
@@ -5001,7 +5181,10 @@
     "tanstack__react-start-client": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@tanstack/react-start-client",
       "version": "1.168.42",
       "node_builtins_external": [],
@@ -5049,7 +5232,10 @@
     "mui__utils": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "@mui/utils",
       "version": "9.5.0",
       "node_builtins_external": [],
@@ -5093,7 +5279,9 @@
     "react-reconciler": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react"],
+      "external_packages": [
+        "react"
+      ],
       "package": "react-reconciler",
       "version": "0.34.0",
       "node_builtins_external": [],
@@ -5251,7 +5439,10 @@
     "react-email__render": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["react", "react-dom"],
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
       "package": "@react-email/render",
       "version": "2.1.0",
       "node_builtins_external": [],
@@ -5475,7 +5666,10 @@
     "react-native": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "react-native",
       "version": "0.88.0",
       "node_builtins_external": [],
@@ -5493,7 +5687,9 @@
     "mui__types": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react"],
+      "external_packages": [
+        "@types/react"
+      ],
       "package": "@mui/types",
       "version": "9.5.0",
       "node_builtins_external": [],
@@ -5571,7 +5767,10 @@
     "react-dropzone": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "react"],
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
       "package": "react-dropzone",
       "version": "20.1.3",
       "node_builtins_external": [],
@@ -5699,7 +5898,12 @@
     "xyflow__react": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["@types/react", "@types/react-dom", "react", "react-dom"],
+      "external_packages": [
+        "@types/react",
+        "@types/react-dom",
+        "react",
+        "react-dom"
+      ],
       "package": "@xyflow/react",
       "version": "12.12.0",
       "node_builtins_external": [],
@@ -5743,7 +5947,9 @@
     "storybook__addon-a11y": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["storybook"],
+      "external_packages": [
+        "storybook"
+      ],
       "package": "@storybook/addon-a11y",
       "version": "10.6.2",
       "node_builtins_external": [],
@@ -5865,7 +6071,9 @@
     "vitest__browser": {
       "expect": "measure",
       "target": "browser",
-      "external_packages": ["vitest"],
+      "external_packages": [
+        "vitest"
+      ],
       "package": "@vitest/browser",
       "version": "5.0.5",
       "node_builtins_external": [],

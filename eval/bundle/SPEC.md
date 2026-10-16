@@ -46,9 +46,13 @@ number.
   statically. Most such loads are dead code in a browser, or belong to a package that doesn't work
   there, and in both cases the emitted bytes are still correct. So the claim was narrowed to emitted
   bytes, and only `IMPORT_OUTSIDE_BUNDLE` remains (user decision).
-  - `NON_JS_IMPORT`: a CSS, wasm or asset module, an asset or worker query, `new URL(x,
-    import.meta.url)` in any spelling, or a Worker started from a literal URL (read from the syntax
-    tree). A Worker made from in-bundle code (a Blob URL) is measured.
+  - `NON_JS_IMPORT <file>`: Vite emitted a file besides JS chunks (CSS, an asset too large to
+    inline, a worker, wasm), which the page needs and the JS bytes do not hold. What Vite inlines into
+    the JS (a small image as a data URL, an `?inline` worker) is counted. Files the code loads by a
+    path at runtime (`new Worker("./w.js")`, a missing asset left as a URL, `fetch`) are outside the
+    claim, like any other runtime load. Every check is on what Vite resolved and emitted; depfit reads
+    no package source (user decision after the review of the Vite fixes: source-syntax checks were
+    the same pattern-list loop as the first attempt).
   - `TOOLCHAIN_MISMATCH <found>`: the installed Vite or its rolldown is not the version the eval
     covered (depfit's `overrides` apply only when depfit is the install root).
   - Any other bundler error passes through with the bundler's own code (e.g. `PARSE_ERROR`).

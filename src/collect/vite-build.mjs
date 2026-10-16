@@ -9,8 +9,9 @@
  * environment (`NODE_ENV=production`, no `VITE_*`), because Vite reads the process environment.
  *
  * Reads a request as JSON on stdin and prints the raw facts as JSON on stdout: output chunks and
- * assets, every import resolution, captured logs, and references to URLs and workers in package
- * sources. `bundle.ts` turns them into bytes or reasons.
+ * assets, every import resolution and captured logs. It reads no package source itself: every
+ * check depfit makes is on what Vite resolved and emitted. `bundle.ts` turns them into bytes or
+ * reasons.
  *
  * Vite's defaults apply except for the settings below, the complete list of depfit's choices
  * (eval/bundle/SETTINGS.md): isolation from any config, `.env` file, shell or public dir; a JS entry
@@ -20,7 +21,7 @@
  */
 import { readFileSync, realpathSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
-import { build, esmExternalRequirePlugin, parseAst, rolldownVersion, version } from "vite";
+import { build, esmExternalRequirePlugin, rolldownVersion, version } from "vite";
 
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
 
@@ -35,6 +36,9 @@ const TRIED = ["", ".mjs", ".js", ".mts", ".ts", ".jsx", ".tsx", ".json", "/inde
  * A relative specifier matches a `./` key that names the same file, with Vite's extensions.
  */
 function mappedAwayByBrowserField(file, specifier, root) {
+  // A `#` specifier goes through the package's `imports` map, which Vite applies before (and
+  // instead of) `browser`: a `browser` entry for it does not establish the stub's origin.
+  if (specifier.startsWith("#")) return false;
   for (let dir = dirname(file); dir.startsWith(root); dir = dirname(dir)) {
     let manifest;
     try {
@@ -53,68 +57,6 @@ function mappedAwayByBrowserField(file, specifier, root) {
     );
   }
   return false;
-}
-
-const LANGS = { ".ts": "ts", ".mts": "ts", ".cts": "ts", ".tsx": "tsx", ".jsx": "jsx" };
-
-/** `import.meta.url`, also as `import.meta["url"]`. */
-const isImportMetaUrl = (node) =>
-  node?.type === "MemberExpression" &&
-  node.object?.type === "MetaProperty" &&
-  node.object.meta?.name === "import" &&
-  node.object.property?.name === "meta" &&
-  (node.computed ? node.property?.value === "url" : node.property?.name === "url");
-
-/** The constructor's name in `new X(...)` or `new globalThis.X(...)`. */
-const constructed = (node) =>
-  node.callee?.type === "Identifier"
-    ? node.callee.name
-    : node.callee?.type === "MemberExpression" && !node.callee.computed
-      ? node.callee.property?.name
-      : null;
-
-const isStringLike = (node) =>
-  (node?.type === "Literal" && typeof node.value === "string") || node?.type === "TemplateLiteral";
-
-/**
- * References in a module's source to a file the bundle does not contain (SETTINGS.md): an asset or
- * worker URL, `new URL(x, import.meta.url)` in any spelling, and a Worker or SharedWorker started
- * from a literal URL or path. A Worker made from in-bundle code (a Blob URL, as fflate does) loads
- * nothing more and is measured. Read from the syntax tree, so words inside strings never count; a
- * module the parser rejects falls back to text patterns, so a parse failure never hides one.
- */
-function fileReferences(code, id) {
-  if (!code.includes("import.meta") && !code.includes("Worker")) return [];
-  const extension = /\.[a-z]+$/i.exec(id.split("?")[0] ?? "")?.[0] ?? "";
-  let program;
-  try {
-    program = parseAst(code, { lang: LANGS[extension] ?? "js", sourceType: "module" });
-  } catch {
-    const kinds = [];
-    if (/new\s+URL\s*\(/.test(code) && /import\s*\.\s*meta/.test(code)) {
-      kinds.push("new URL(import.meta.url)");
-    }
-    if (/new\s+(?:Shared)?Worker\s*\(/.test(code)) kinds.push("new Worker");
-    return kinds;
-  }
-  const kinds = new Set();
-  const visit = (node) => {
-    if (Array.isArray(node)) return node.forEach(visit);
-    if (typeof node !== "object" || node === null) return;
-    if (node.type === "NewExpression") {
-      const name = constructed(node);
-      const [first, second] = node.arguments ?? [];
-      if (name === "URL" && isImportMetaUrl(second)) kinds.add("new URL(import.meta.url)");
-      if ((name === "Worker" || name === "SharedWorker") && isStringLike(first)) {
-        kinds.add("new Worker");
-      }
-    }
-    for (const [key, child] of Object.entries(node)) {
-      if (key !== "parent" && typeof child === "object" && child !== null) visit(child);
-    }
-  };
-  visit(program);
-  return [...kinds];
 }
 
 /** A string property of an unknown value, or null. */
@@ -146,7 +88,6 @@ async function main() {
 
   const resolutions = [];
   const logs = [];
-  const sourceRefs = [];
   const observe = {
     name: "depfit:observe",
     enforce: "pre",
@@ -169,13 +110,6 @@ async function main() {
             ? mappedAwayByBrowserField(importer, source, realRoot)
             : false,
       });
-      return null;
-    },
-    transform(code, id) {
-      // Vite's own virtual modules (`\0vite/preload-helper.js`) are not package sources.
-      if (id.startsWith("\0")) return null;
-      const at = label(id) ?? id;
-      for (const kind of fileReferences(code, id)) sourceRefs.push({ kind, id: at });
       return null;
     },
   };
@@ -221,7 +155,6 @@ async function main() {
       rolldown: rolldownVersion,
       resolutions,
       logs,
-      sourceRefs,
       chunks: [],
       assets: [],
       errors: errors.map((item) => toLog("error", item)),
@@ -247,7 +180,6 @@ async function main() {
     rolldown: rolldownVersion,
     resolutions,
     logs,
-    sourceRefs,
     chunks,
     assets,
     errors: null,

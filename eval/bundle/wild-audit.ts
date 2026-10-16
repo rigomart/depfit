@@ -125,6 +125,7 @@ function memberName(node: Node): string | null {
  * not scope: a function parameter shadowing `r` is not told apart (a known limit).
  */
 function isWebpackChunkLoader(source: Node, chunkFilenameOwners: Set<string>): boolean {
+  // Exactly `"<relative dir>" + r.u(id)`, the form webpack emits for these builds.
   if (source.type !== "BinaryExpression" || source.operator !== "+") return false;
   const last = source.right;
   if (!isNode(last) || last.type !== "CallExpression" || !isNode(last.callee)) return false;
@@ -132,9 +133,10 @@ function isWebpackChunkLoader(source: Node, chunkFilenameOwners: Set<string>): b
   if (memberName(callee) !== "u" || !isNode(callee.object)) return false;
   const owner = callee.object.type === "Identifier" ? callee.object.name : null;
   if (typeof owner !== "string" || !chunkFilenameOwners.has(owner)) return false;
-  let first: unknown = source.left;
-  while (isNode(first) && first.type === "BinaryExpression") first = first.left;
-  const prefix = literalValue(first);
+  // The chunk id, not a file name passed in.
+  const [argument] = Array.isArray(last.arguments) ? last.arguments : [];
+  if (literalValue(argument) !== null) return false;
+  const prefix = literalValue(source.left);
   return prefix !== null && !REMOTE.test(prefix);
 }
 
@@ -165,10 +167,15 @@ function fetchSites(
       const value = literalValue(inner);
       if (value) literals.push(value);
     });
-    return literals.every(
-      (value) => !REMOTE.test(value) && fileNames.some((file) => file.includes(value)),
+    return (
+      literals.length > 0 &&
+      literals.every(
+        (value) => !REMOTE.test(value) && fileNames.some((file) => file.includes(value)),
+      )
     );
   };
+  // An owner assigned `.u` more than once is not trusted: the loader may call either.
+  const assignments = new Map<string, number>();
   walk(program, (node) => {
     if (node.type === "ImportExpression" && isNode(node.source)) {
       importNodes.push(node);
@@ -182,12 +189,14 @@ function fetchSites(
         node.right.type === "FunctionExpression" || node.right.type === "ArrowFunctionExpression";
       if (isFunction && memberName(target) === "u" && isNode(target.object)) {
         const owner = target.object.type === "Identifier" ? target.object.name : null;
-        if (typeof owner === "string" && buildsChunkNames(node.right)) {
-          chunkFilenameOwners.add(owner);
+        if (typeof owner === "string") {
+          assignments.set(owner, (assignments.get(owner) ?? 0) + 1);
+          if (buildsChunkNames(node.right)) chunkFilenameOwners.add(owner);
         }
       }
     }
   });
+  for (const [owner, count] of assignments) if (count > 1) chunkFilenameOwners.delete(owner);
   const imports = importNodes.flatMap((node): ImportSite[] =>
     isNode(node.source)
       ? [
