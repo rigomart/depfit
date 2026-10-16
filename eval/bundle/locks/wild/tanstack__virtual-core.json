@@ -1,0 +1,23 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "@tanstack/virtual-core": "3.19.5"
+      }
+    },
+    "node_modules/@tanstack/virtual-core": {
+      "version": "3.19.5",
+      "resolved": "https://registry.npmjs.org/@tanstack/virtual-core/-/virtual-core-3.19.5.tgz",
+      "integrity": "sha512-X/wq6DtSK/XClznMM+I4JE63yyIwmyPk4Ts83bD0VKaIbwHNdRsO5QipCPX+3OovqYyr0puQNpbmp8+SPhspNg==",
+      "license": "MIT",
+      "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/tannerlinsley"
+      }
+    }
+  }
+}

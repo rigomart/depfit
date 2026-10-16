@@ -1,0 +1,22 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "eslint-plugin-react-refresh": "0.5.7"
+      }
+    },
+    "node_modules/eslint-plugin-react-refresh": {
+      "version": "0.5.7",
+      "resolved": "https://registry.npmjs.org/eslint-plugin-react-refresh/-/eslint-plugin-react-refresh-0.5.7.tgz",
+      "integrity": "sha512-XhJSzLljuYD4UjNuFGJu2v7aD3sqNVK12w5/DCUfrNfHWegZo2+TsavNx8MuxMwEquuFAzNbNfXKU0WoZ+YUIg==",
+      "license": "MIT",
+      "peerDependencies": {
+        "eslint": "^9 || ^10"
+      }
+    }
+  }
+}

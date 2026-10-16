@@ -1,5 +1,6 @@
 import { relative, sep } from "node:path";
 import type {
+  Bundle,
   Compatibility,
   Cost,
   InRepo,
@@ -35,12 +36,14 @@ type Group = { title: string | null; rows: Row[] };
 
 /**
  * `showLatest`: some package resolved to a version other than npm latest.
+ * `showBundle`: some package has a bundle (`--bundle-entry` was given for it).
  * `workspaces`: see knownWorkspaces.
  */
 type Context = {
   project: ProjectInfo | null;
   now: string;
   showLatest: boolean;
+  showBundle: boolean;
   workspaces: string[];
 };
 
@@ -52,6 +55,7 @@ const MAX_COLUMN = 40;
 const WRAP_COLUMN = 24;
 const MIN_COLUMN = 8;
 const DESCRIPTION_LINES = 3;
+const ENTRY_LINES = 4;
 /** Directories that conventionally hold workspaces, e.g. "apps/web". */
 const WORKSPACE_PARENTS = new Set(["apps", "packages", "libs", "services", "examples", "tools"]);
 
@@ -265,6 +269,25 @@ function securityRows(): Row[] {
   ];
 }
 
+/** "78.6 KB / 22.5 KB": minified, then gzip -9; "-" when unmeasurable. */
+function minAndGzip(min: number | null, gzip: number | null): string {
+  return min === null || gzip === null ? NONE : `${formatBytes(min)} / ${formatBytes(gzip)}`;
+}
+
+function bundleRows(): Row[] {
+  const row = (label: string, render: (b: Bundle) => Cell): Row => ({
+    label,
+    value: (p) => section(p.bundle, render),
+  });
+  return [
+    row("Entry", (b) => ({ wrap: b.entry, maxLines: ENTRY_LINES })),
+    row("Eager JS min / gzip", (b) => minAndGzip(b.eager_js_min_bytes, b.eager_js_gzip9_bytes)),
+    row("Lazy JS min / gzip", (b) => minAndGzip(b.lazy_js_min_bytes, b.lazy_js_gzip9_bytes)),
+    row("External (peers)", (b) => listOrNone(b.external_packages)),
+    row("Bundler", (b) => `${b.bundler}, ${b.target}`),
+  ];
+}
+
 function groups(ctx: Context): Group[] {
   const description: Row = {
     label: "Description",
@@ -278,6 +301,7 @@ function groups(ctx: Context): Group[] {
     { title: "Compatibility", rows: compatibilityRows(ctx) },
     { title: "Maintenance", rows: maintenanceRows(ctx) },
     { title: "Security", rows: securityRows() },
+    ...(ctx.showBundle ? [{ title: "Bundle", rows: bundleRows() }] : []),
   ];
 }
 
@@ -464,6 +488,7 @@ export function renderTable(report: Report, options: TableOptions): string {
     showLatest: report.packages.some(
       (p) => p.error === null && p.latest_version !== null && p.latest_version !== p.version,
     ),
+    showBundle: report.packages.some((p) => p.bundle !== null),
     workspaces: knownWorkspaces(report),
   };
   const table = groups(ctx);

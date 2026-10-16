@@ -1,0 +1,22 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "@inquirer/ansi": "2.0.9"
+      }
+    },
+    "node_modules/@inquirer/ansi": {
+      "version": "2.0.9",
+      "resolved": "https://registry.npmjs.org/@inquirer/ansi/-/ansi-2.0.9.tgz",
+      "integrity": "sha512-0Ywt3S8tqM6TWUcsRlBFQ1x+X3/o8kktX0ZiKAnByYb9GFDknnOhse1PVtfiD2BXPI8ar+BWx9PV9R0lQIcygw==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=23.5.0 || ^22.13.0 || ^20.17.0"
+      }
+    }
+  }
+}

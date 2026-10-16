@@ -39,6 +39,20 @@ depfit --schema                           # what every JSON field means
 
 Output is a table in a terminal and JSON when piped, which is what agents get. Use `--table` or `--json` to force either.
 
+### Bundle size
+
+Bundle size depends on how you import a library, so depfit measures only an import you write:
+
+```sh
+depfit zod valibot \
+  --bundle-entry 'import { z } from "zod"; z.object; z.string' \
+  --bundle-entry 'import { object, string } from "valibot"'
+```
+
+A snippet holds imports from one candidate (or its subpaths) and member statements like `z.object` on the imported names. A name with no member statements is kept whole, so `import * as Icons from "lucide-react"` measures every icon. Give one snippet per candidate.
+
+depfit builds the snippet with Vite's production build (`vite build`, Vite's defaults, no project config) and reports minified and gzip bytes for what loads up front and for chunks behind dynamic `import()`. Peer dependencies are left out of the bundle. When a build can't give an honest number (a Node built-in, code loaded at runtime that the bundle doesn't contain, CSS or wasm), the bytes are `null` and `unavailable` gives the reason.
+
 ## Example
 
 In a project where `@modelcontextprotocol/sdk` already installs zod (trimmed):
@@ -99,7 +113,7 @@ Before adding, replacing, or choosing between npm dependencies, run `depfit <can
 - **Costs are estimates.** depfit matches semver ranges against your lockfile; your package manager may dedupe differently.
 - **Sizes are platform-specific.** Install sizes and native binaries are measured on the current OS and CPU.
 - **npm only.** It reads npm, pnpm, yarn v1, and bun lockfiles.
-- **No bundle sizes.** They depend on how you import a library, and estimating them was unreliable.
+- **Bundle sizes only on request, and only for the browser.** Each one is the snippet bundled on its own, not what it adds to your existing bundle. CSS, wasm, and asset imports aren't measured yet.
 - **Network calls on every run.** It queries the npm registry, the npm downloads API, OSV, and GitHub, and installs each candidate into a temp directory. Nothing in your repo is modified.
 
 ## Development

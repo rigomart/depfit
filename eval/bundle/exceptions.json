@@ -1,0 +1,117 @@
+{
+  "rule": "A size discrepancy against the rollup/webpack references that was explained in writing and independently reviewed (SPEC \"Reviewed exceptions\"). It waives that case's gross error (gates A, W) and out-of-band result (gate B) only while version, snippet, frozen lock (sha256), toolchain and all byte fields of depfit and both references equal what was reviewed. It never waives an expected null code or an honesty check. Agreement with Vite alone is not a reason: depfit is Vite.",
+  "exceptions": [
+    {
+      "set": "corpus",
+      "id": "ws-default",
+      "version": "8.22.0",
+      "entry": "import def0 from \"ws\";",
+      "lock_sha256": "74696b5b867684da9ff4c29b31cfe51b26f6e85816f31da5c5ffa1f72c1caa28",
+      "bundler": "vite@8.3.4 (rolldown@1.2.14)",
+      "bytes": {
+        "min_bytes": 708,
+        "gzip_bytes": 442,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "rollup": {
+        "min_bytes": 271,
+        "gzip_bytes": 227,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 274,
+        "gzip_bytes": 212,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "cause": "ws's browser build is a 150-byte function that throws. A default import of a CommonJS module gets rolldown's interop helpers (`__commonJS`, `__toESM`, about 430 B min), which Vite emits exactly so (708 B); rollup's commonjs plugin and webpack's strict-ESM interop add far less (271-274 B). The number is what Vite ships; the difference is fixed wrapper code, not the package.",
+      "reviewed": "Codex review of the vite build implementation, 2026-10-16 (accepted; numbers reproduced)"
+    },
+    {
+      "set": "corpus",
+      "id": "node-pty-named",
+      "version": "1.2.0-beta.15",
+      "entry": "import { spawn } from \"@lydell/node-pty\";",
+      "lock_sha256": "ac78276ff3e068127a58a7539f62ee6f320ea30305b93e19a76957546270f1c4",
+      "bundler": "vite@8.3.4 (rolldown@1.2.14)",
+      "bytes": {
+        "min_bytes": 3432,
+        "gzip_bytes": 1603,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "rollup": {
+        "min_bytes": 1926,
+        "gzip_bytes": 894,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2045,
+        "gzip_bytes": 954,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "cause": "node-pty requires its own package.json for one field. rollup's json plugin keeps only that property (1,926 B min); Vite materializes the whole JSON module as an ES namespace with interop helpers (3,432 B, equal to a stock vite build, gate C). webpack is not a reference for this case (it builds a context module for a computed require), so the band is rollup alone.",
+      "reviewed": "Codex review of the vite build implementation, 2026-10-16 (accepted; numbers reproduced)"
+    },
+    {
+      "set": "wild",
+      "id": "tldts",
+      "version": "7.4.18",
+      "entry": "import * as ns0 from \"tldts\";",
+      "lock_sha256": "a353e332c3661704499beb507d6ed0d5d7aa970d15770c413f1314f1e394a2b9",
+      "bundler": "vite@8.3.4 (rolldown@1.2.14)",
+      "bytes": {
+        "min_bytes": 264321,
+        "gzip_bytes": 112766,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "rollup": {
+        "min_bytes": 128311,
+        "gzip_bytes": 46398,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 128780,
+        "gzip_bytes": 46632,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "cause": "oxc's minifier (Vite 8) copies the 67,094-character `labelText` string constant into each of its three use sites; terser and webpack's minifier keep one binding. A stock vite build emits the same 264,321 B. The references are right for their minifiers; depfit is right for Vite.",
+      "reviewed": "Codex review round 3 (cause), 2026-10-16"
+    },
+    {
+      "set": "wild",
+      "id": "server-only",
+      "version": "0.0.1",
+      "entry": "import * as ns0 from \"server-only\";",
+      "lock_sha256": "ba154a9a8e1f84b814ab8e2c15fd63eee818611258f11f1552949dec705aeb3f",
+      "bundler": "vite@8.3.4 (rolldown@1.2.14)",
+      "bytes": {
+        "min_bytes": 126,
+        "gzip_bytes": 117,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "rollup": {
+        "min_bytes": 638,
+        "gzip_bytes": 400,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1053,
+        "gzip_bytes": 591,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "cause": "The package is a single `throw` statement. Vite drops everything after it (126 B); rollup's CommonJS wrapper and webpack's runtime add a fixed 500-900 B. The difference is reference wrapper code, not the package.",
+      "reviewed": "Codex review round 3 (cause), 2026-10-16"
+    }
+  ]
+}

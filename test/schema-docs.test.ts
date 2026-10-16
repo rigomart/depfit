@@ -7,16 +7,19 @@ import {
   missing,
   nodeProject,
   nodePty,
+  nodePtyUnmeasurable,
   nodeSqlite,
   noProjectReport,
   report,
   sharp,
   sonner,
+  sonnerBundled,
   valibot,
   workersProject,
   yup,
   yupWithoutGithub,
   zod,
+  zodBundled,
 } from "./reports.ts";
 
 /** Objects whose keys are data (runtime names), not schema fields. */
@@ -49,6 +52,7 @@ const fixtures = [
   report([sharp, sonner, yupWithoutGithub], bunProject),
   report([nodeSqlite, betterSqlite3, nodePty], nodeProject),
   report([zod], workersProject),
+  report([zodBundled, sonnerBundled, nodePtyUnmeasurable]),
   noProjectReport,
 ];
 
@@ -67,7 +71,14 @@ describe("field descriptions", () => {
   });
 
   it("describe every section that can be null", () => {
-    for (const section of ["in_repo", "cost", "compatibility", "maintenance", "security"]) {
+    for (const section of [
+      "in_repo",
+      "cost",
+      "compatibility",
+      "maintenance",
+      "security",
+      "bundle",
+    ]) {
       expect(FIELD_DESCRIPTIONS[`packages[].${section}`]).toMatch(/null/);
     }
     expect(FIELD_DESCRIPTIONS.project).toMatch(/null/);
@@ -77,6 +88,21 @@ describe("field descriptions", () => {
     for (const [path, text] of Object.entries(FIELD_DESCRIPTIONS)) {
       expect(text, path).toMatch(/^\S.*\.$/);
       expect(text, path).not.toMatch(/\.\s+[A-Z]/);
+    }
+  });
+
+  it("name every bundle null code a reader can meet in unavailable", () => {
+    for (const field of ["eager_js_min_bytes", "lazy_js_gzip9_bytes"]) {
+      const text = FIELD_DESCRIPTIONS[`packages[].bundle.${field}`] ?? "";
+      for (const code of [
+        "UNRESOLVED_IMPORT",
+        "MISSING_EXPORT",
+        "IMPORT_OUTSIDE_BUNDLE",
+        "NO_ENTRY",
+        "NON_JS_IMPORT",
+      ]) {
+        expect(text, field).toContain(code);
+      }
     }
   });
 

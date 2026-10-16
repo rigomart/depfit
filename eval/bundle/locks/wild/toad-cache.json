@@ -1,0 +1,22 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "toad-cache": "3.7.4"
+      }
+    },
+    "node_modules/toad-cache": {
+      "version": "3.7.4",
+      "resolved": "https://registry.npmjs.org/toad-cache/-/toad-cache-3.7.4.tgz",
+      "integrity": "sha512-m1TdR/rvT7kgGJZhspNtXdsdYk0fddFpJJFlG5s+UkPFo6lkLoZ3YLOaovPYjq1R75NP5JfeTlSHaOsE09peCg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=20"
+      }
+    }
+  }
+}

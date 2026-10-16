@@ -1,0 +1,19 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "js-cookie": "3.0.8"
+      }
+    },
+    "node_modules/js-cookie": {
+      "version": "3.0.8",
+      "resolved": "https://registry.npmjs.org/js-cookie/-/js-cookie-3.0.8.tgz",
+      "integrity": "sha512-yeJd4aNAdYZQjaon2bpD/Gb0B/omw7HQOsynXXcOiWVCacbBcPlgn8S/d1X6blFSaHao7ozqtW7NZW19xpCtIw==",
+      "license": "MIT"
+    }
+  }
+}

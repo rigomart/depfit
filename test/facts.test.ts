@@ -301,6 +301,7 @@ describe("builtins", () => {
       compatibility: null,
       maintenance: null,
       security: null,
+      bundle: null,
     });
     expect(builtinReport("node:sqlite", null, []).in_repo).toBeNull();
   });

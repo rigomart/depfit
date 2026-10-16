@@ -1,0 +1,1229 @@
+{
+  "generated_at": "2026-10-16T16:46:23.914Z",
+  "tools": {
+    "node": "24.14.1",
+    "rollup": "4.64.7",
+    "@rollup/plugin-commonjs": "29.0.3",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "16.0.3",
+    "@rollup/plugin-replace": "6.0.3",
+    "@rollup/plugin-terser": "1.0.0",
+    "terser": "5.51.2",
+    "webpack": "5.112.0",
+    "vite": "8.3.4",
+    "minimizer-webpack-plugin": "5.13.0",
+    "rolldown": "1.2.14",
+    "acorn": "8.19.0"
+  },
+  "cases": {
+    "date-fns-named": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 21777,
+        "gzip_bytes": 6519,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 21676,
+        "gzip_bytes": 6437,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "date-fns-side-effect-only": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1,
+        "gzip_bytes": 21,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 0,
+        "gzip_bytes": 20,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "lodash-es-debounce": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2178,
+        "gzip_bytes": 1020,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2379,
+        "gzip_bytes": 1068,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "valibot-named": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "typescript"
+      ],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2722,
+        "gzip_bytes": 1073,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2727,
+        "gzip_bytes": 1075,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "lucide-named-2-icons": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "peer_only_packages": [
+        "react@19.3.1"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3405,
+        "gzip_bytes": 1661,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3455,
+        "gzip_bytes": 1701,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 3412,
+        "gzip_bytes": 1685,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "lucide-namespace-all": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "peer_only_packages": [
+        "react@19.3.1"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 720619,
+        "gzip_bytes": 183341,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 741886,
+        "gzip_bytes": 174002,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 776414,
+        "gzip_bytes": 193243,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "immutable-map": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 64130,
+        "gzip_bytes": 17542,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 64126,
+        "gzip_bytes": 17582,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "core-js-stable": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 225738,
+        "gzip_bytes": 81462,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 209641,
+        "gzip_bytes": 72564,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "zod-named-z-members": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 79340,
+        "gzip_bytes": 22242,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 79458,
+        "gzip_bytes": 22289,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 78569,
+        "gzip_bytes": 22414,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "zod-namespace-members": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 79340,
+        "gzip_bytes": 22242,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 79458,
+        "gzip_bytes": 22289,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 78569,
+        "gzip_bytes": 22414,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "lodash-default-debounce": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 71088,
+        "gzip_bytes": 25096,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 70843,
+        "gzip_bytes": 25108,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 71699,
+        "gzip_bytes": 25941,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "lodash-subpath-debounce": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3107,
+        "gzip_bytes": 1334,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2941,
+        "gzip_bytes": 1270,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "moment-default": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "webpack_context_modules": [
+        "<install>/node_modules/moment/locale|sync|/^\\.\\/.*$/"
+      ],
+      "band_excluded": {
+        "webpack": "webpack built context modules (a computed require bundled with every file it could match); the other bundlers leave the call, so webpack is not a reference for this case (SPEC settled questions)"
+      },
+      "rollup": {
+        "min_bytes": 63292,
+        "gzip_bytes": 20322,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 306474,
+        "gzip_bytes": 79351,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "ajv-default": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 122285,
+        "gzip_bytes": 37040,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 115564,
+        "gzip_bytes": 34361,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "uuid-v4": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 763,
+        "gzip_bytes": 455,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 756,
+        "gzip_bytes": 445,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "axios-default": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 50995,
+        "gzip_bytes": 18647,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 51430,
+        "gzip_bytes": 18730,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "ws-default": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "bufferutil",
+        "utf-8-validate"
+      ],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 271,
+        "gzip_bytes": 227,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 274,
+        "gzip_bytes": 212,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "pdnd-subpath": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 20753,
+        "gzip_bytes": 6288,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 20644,
+        "gzip_bytes": 6242,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 20405,
+        "gzip_bytes": 6161,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "pdnd-root": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 74,
+        "gzip_bytes": 94,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 351,
+        "gzip_bytes": 247,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 196,
+        "gzip_bytes": 180,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "react-dom-client": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react"
+      ],
+      "peer_only_packages": [
+        "react@19.3.1"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 211284,
+        "gzip_bytes": 65624,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 210681,
+        "gzip_bytes": 65711,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 210684,
+        "gzip_bytes": 64906,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "react-dom-server-workerd": {
+      "expect": "measure",
+      "target": "workerd",
+      "external_packages": [
+        "react"
+      ],
+      "peer_only_packages": [
+        "react@19.3.1"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 212635,
+        "gzip_bytes": 63899,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 212469,
+        "gzip_bytes": 64339,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "sonner-named": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react",
+        "react-dom"
+      ],
+      "peer_only_packages": [
+        "react-dom@19.3.1",
+        "react@19.3.1",
+        "scheduler@0.28.0"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 34766,
+        "gzip_bytes": 9499,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 34768,
+        "gzip_bytes": 9488,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 33461,
+        "gzip_bytes": 9280,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "recharts-named": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom",
+        "react-is"
+      ],
+      "peer_only_packages": [
+        "react-dom@19.3.1",
+        "react-is@19.3.1",
+        "react@19.3.1",
+        "scheduler@0.28.0"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 295989,
+        "gzip_bytes": 86455,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 299228,
+        "gzip_bytes": 86119,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "react-markdown-default": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "peer_only_packages": [
+        "@types/react@19.3.0",
+        "csstype@3.2.3",
+        "react@19.3.1"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 118128,
+        "gzip_bytes": 35029,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 117722,
+        "gzip_bytes": 34909,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "react-markdown-workerd": {
+      "expect": "measure",
+      "target": "workerd",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "peer_only_packages": [
+        "@types/react@19.3.0",
+        "csstype@3.2.3",
+        "react@19.3.1"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 146757,
+        "gzip_bytes": 47131,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 146353,
+        "gzip_bytes": 47917,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "simple-git-default": {
+      "expect": "null",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT fs, node:child_process, node:events, node:path"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
+      }
+    },
+    "execa-named": {
+      "expect": "null",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "<install>/node_modules/npm-run-path/index.js (4:8): \"toPath\" is not exported by \"<install>/node_modules/unicorn-magic/default.js\", imported by \"<install>/node_modules/npm-run-path/index.js\"."
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:buffer\" is not handled by plugins (Unhandled scheme)."
+      }
+    },
+    "blessed-default": {
+      "expect": "null",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "<install>/node_modules/blessed/lib/tput.js (369:24): Legacy octal escape is not permitted in strict mode"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/blessed/lib'"
+      }
+    },
+    "biome-default": {
+      "expect": "null",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT @biomejs/biome"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve '@biomejs/biome' in '<install>'"
+      }
+    },
+    "node-pty-named": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "webpack_context_modules": [
+        "<install>/node_modules/@lydell/node-pty|sync"
+      ],
+      "band_excluded": {
+        "webpack": "webpack built context modules (a computed require bundled with every file it could match); the other bundlers leave the call, so webpack is not a reference for this case (SPEC settled questions)"
+      },
+      "rollup": {
+        "min_bytes": 1926,
+        "gzip_bytes": 894,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2045,
+        "gzip_bytes": 954,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 3432,
+        "gzip_bytes": 1591,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "better-sqlite3-default": {
+      "expect": "null",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT fs, path, util"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'fs' in '<install>/node_modules/better-sqlite3/lib'"
+      }
+    },
+    "sharp-default": {
+      "expect": "null",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT child_process, fs, node:child_process, node:crypto, node:events, node:module, node:os, node:path, node:stream, node:util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
+      }
+    },
+    "prisma-client-named": {
+      "expect": "null",
+      "target": "browser",
+      "external_packages": [
+        "prisma",
+        "typescript"
+      ],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT .prisma/client/index-browser"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve '.prisma/client/index-browser' in '<install>/node_modules/@prisma/client'"
+      }
+    },
+    "shiki-codeToHtml": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 141238,
+        "gzip_bytes": 43989,
+        "lazy_min_bytes": 9944075,
+        "lazy_gzip_bytes": 1815947,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 153795,
+        "gzip_bytes": 45796,
+        "lazy_min_bytes": 10612357,
+        "lazy_gzip_bytes": 1953577,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 151743,
+        "gzip_bytes": 46500,
+        "lazy_min_bytes": 9939294,
+        "lazy_gzip_bytes": 1814332,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "md-editor-default": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "peer_only_packages": [
+        "@types/react@19.3.0",
+        "csstype@3.2.3",
+        "react-dom@19.3.1",
+        "react@19.3.1",
+        "scheduler@0.28.0"
+      ],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1059594,
+        "gzip_bytes": 356951,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 39505,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1059475,
+        "gzip_bytes": 356888,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 39505,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "monaco-editor-api": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2721213,
+        "gzip_bytes": 684777,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 132600,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2729633,
+        "gzip_bytes": 688700,
+        "lazy_min_bytes": 176,
+        "lazy_gzip_bytes": 123,
+        "css_bytes_unminified": 132600,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "tiktoken-default": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 5716,
+        "gzip_bytes": 1563,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 5593287
+      },
+      "webpack": {
+        "min_bytes": 6925,
+        "gzip_bytes": 2129,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 5593287
+      }
+    },
+    "hono-workerd": {
+      "expect": "measure",
+      "target": "workerd",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 18305,
+        "gzip_bytes": 7424,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 18371,
+        "gzip_bytes": 7423,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "postgres-workerd": {
+      "expect": "measure",
+      "target": "workerd",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [
+        "cloudflare:sockets",
+        "node:buffer",
+        "node:events",
+        "node:stream"
+      ],
+      "rollup": {
+        "min_bytes": 40691,
+        "gzip_bytes": 15177,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 41277,
+        "gzip_bytes": 15476,
+        "lazy_min_bytes": 198,
+        "lazy_gzip_bytes": 157,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "postgres-browser": {
+      "expect": "null",
+      "target": "browser",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT crypto, fs, net, os, perf_hooks, stream, tls"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'crypto' in '<install>/node_modules/postgres/src'"
+      }
+    },
+    "libsql-workerd": {
+      "expect": "measure",
+      "target": "workerd",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 66358,
+        "gzip_bytes": 18002,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 66366,
+        "gzip_bytes": 17889,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "vercel-og-workerd": {
+      "expect": "measure",
+      "target": "workerd",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [
+        "module"
+      ],
+      "rollup": {
+        "min_bytes": 459780,
+        "gzip_bytes": 145985,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 1450093
+      },
+      "webpack": {
+        "min_bytes": 459445,
+        "gzip_bytes": 145252,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 125956,
+        "wasm_bytes": 1450093
+      }
+    },
+    "jsonwebtoken-workerd": {
+      "expect": "measure",
+      "target": "workerd",
+      "external_packages": [],
+      "peer_only_packages": [],
+      "node_builtins_external": [
+        "buffer",
+        "crypto",
+        "stream",
+        "util"
+      ],
+      "rollup": {
+        "min_bytes": 55861,
+        "gzip_bytes": 17393,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 54364,
+        "gzip_bytes": 16172,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    "zustand-devtools": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "immer",
+        "react",
+        "use-sync-external-store"
+      ],
+      "peer_only_packages": [],
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3473,
+        "gzip_bytes": 1537,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3468,
+        "gzip_bytes": 1533,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "vite": {
+        "min_bytes": 3200,
+        "gzip_bytes": 1476,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    }
+  }
+}

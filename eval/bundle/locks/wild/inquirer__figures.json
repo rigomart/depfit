@@ -1,0 +1,22 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "@inquirer/figures": "2.0.9"
+      }
+    },
+    "node_modules/@inquirer/figures": {
+      "version": "2.0.9",
+      "resolved": "https://registry.npmjs.org/@inquirer/figures/-/figures-2.0.9.tgz",
+      "integrity": "sha512-EAWgUTGQ/Umgga51dE3B2PUHbufuXarDfg86uVgoSgNHNNQnyFKcOrQLWVqYMghuSyHh8+2HUH0Js9cTC1WAdg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=23.5.0 || ^22.13.0 || ^20.17.0"
+      }
+    }
+  }
+}

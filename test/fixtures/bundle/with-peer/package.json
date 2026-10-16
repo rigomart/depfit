@@ -1,0 +1,7 @@
+{
+  "name": "with-peer",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "peerDependencies": { "peer": "1", "@types/peer": "1" }
+}

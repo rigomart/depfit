@@ -1,0 +1,1010 @@
+{
+  "selected_at": "2026-10-16T07:11:57.656Z",
+  "candidates": 2387,
+  "skipped_while_ranking": {
+    "no JS entry": 2,
+    "in cases.json": 5
+  },
+  "packages": [
+    {
+      "name": "react-is",
+      "version": "19.3.1",
+      "downloads_last_month": 1676017708
+    },
+    {
+      "name": "string_decoder",
+      "version": "1.3.0",
+      "downloads_last_month": 1195774653
+    },
+    {
+      "name": "isarray",
+      "version": "2.0.5",
+      "downloads_last_month": 1169611351
+    },
+    {
+      "name": "convert-source-map",
+      "version": "2.0.0",
+      "downloads_last_month": 1017886992
+    },
+    {
+      "name": "inherits",
+      "version": "2.0.4",
+      "downloads_last_month": 949922680
+    },
+    {
+      "name": "vite",
+      "version": "8.3.4",
+      "downloads_last_month": 855229675
+    },
+    {
+      "name": "react",
+      "version": "19.3.1",
+      "downloads_last_month": 833052763
+    },
+    {
+      "name": "buffer",
+      "version": "6.0.3",
+      "downloads_last_month": 780605741
+    },
+    {
+      "name": "open",
+      "version": "11.0.4",
+      "downloads_last_month": 700909448
+    },
+    {
+      "name": "util-deprecate",
+      "version": "1.0.2",
+      "downloads_last_month": 695975922
+    },
+    {
+      "name": "@opentelemetry/core",
+      "version": "2.12.0",
+      "downloads_last_month": 677140193
+    },
+    {
+      "name": "jose",
+      "version": "6.2.12",
+      "downloads_last_month": 645345942
+    },
+    {
+      "name": "@opentelemetry/api-logs",
+      "version": "0.223.0",
+      "downloads_last_month": 621980010
+    },
+    {
+      "name": "domutils",
+      "version": "4.0.2",
+      "downloads_last_month": 521778687
+    },
+    {
+      "name": "domhandler",
+      "version": "6.0.1",
+      "downloads_last_month": 511377402
+    },
+    {
+      "name": "prop-types",
+      "version": "15.8.1",
+      "downloads_last_month": 499733036
+    },
+    {
+      "name": "jsdom",
+      "version": "30.1.3",
+      "downloads_last_month": 486858523
+    },
+    {
+      "name": "@opentelemetry/instrumentation",
+      "version": "0.223.0",
+      "downloads_last_month": 471950709
+    },
+    {
+      "name": "domelementtype",
+      "version": "3.0.0",
+      "downloads_last_month": 457441163
+    },
+    {
+      "name": "htmlparser2",
+      "version": "12.0.0",
+      "downloads_last_month": 448625240
+    },
+    {
+      "name": "eslint-plugin-react-hooks",
+      "version": "7.1.1",
+      "downloads_last_month": 448215378
+    },
+    {
+      "name": "@vitejs/plugin-react",
+      "version": "6.1.2",
+      "downloads_last_month": 431333652
+    },
+    {
+      "name": "ip-address",
+      "version": "10.7.4",
+      "downloads_last_month": 431073136
+    },
+    {
+      "name": "w3c-xmlserializer",
+      "version": "6.0.0",
+      "downloads_last_month": 423211692
+    },
+    {
+      "name": "tldts",
+      "version": "7.4.18",
+      "downloads_last_month": 409724489
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "downloads_last_month": 404716424
+    },
+    {
+      "name": "react-refresh",
+      "version": "0.19.0",
+      "downloads_last_month": 402827628
+    },
+    {
+      "name": "@floating-ui/react-dom",
+      "version": "2.1.9",
+      "downloads_last_month": 399472460
+    },
+    {
+      "name": "@opentelemetry/api",
+      "version": "1.9.1",
+      "downloads_last_month": 397020581
+    },
+    {
+      "name": "symbol-tree",
+      "version": "3.2.4",
+      "downloads_last_month": 363532536
+    },
+    {
+      "name": "reflect.getprototypeof",
+      "version": "1.0.10",
+      "downloads_last_month": 363389515
+    },
+    {
+      "name": "@testing-library/dom",
+      "version": "10.4.2",
+      "downloads_last_month": 357206743
+    },
+    {
+      "name": "use-callback-ref",
+      "version": "1.3.3",
+      "downloads_last_month": 332723296
+    },
+    {
+      "name": "use-sidecar",
+      "version": "1.1.3",
+      "downloads_last_month": 332546763
+    },
+    {
+      "name": "react-style-singleton",
+      "version": "2.2.3",
+      "downloads_last_month": 328295961
+    },
+    {
+      "name": "@flmngr/flmngr-react",
+      "version": "2.0.13",
+      "downloads_last_month": 312973096
+    },
+    {
+      "name": "@next/env",
+      "version": "16.4.2",
+      "downloads_last_month": 308473359
+    },
+    {
+      "name": "dompurify",
+      "version": "3.4.17",
+      "downloads_last_month": 305809021
+    },
+    {
+      "name": "@inquirer/core",
+      "version": "12.0.4",
+      "downloads_last_month": 305638661
+    },
+    {
+      "name": "@testing-library/jest-dom",
+      "version": "7.0.1",
+      "downloads_last_month": 297834633
+    },
+    {
+      "name": "@inquirer/type",
+      "version": "4.2.0",
+      "downloads_last_month": 294088202
+    },
+    {
+      "name": "@testing-library/react",
+      "version": "16.3.3",
+      "downloads_last_month": 292603046
+    },
+    {
+      "name": "prompts",
+      "version": "2.4.2",
+      "downloads_last_month": 288494516
+    },
+    {
+      "name": "eslint-plugin-react",
+      "version": "7.37.5",
+      "downloads_last_month": 284698147
+    },
+    {
+      "name": "default-browser",
+      "version": "5.5.1",
+      "downloads_last_month": 283852204
+    },
+    {
+      "name": "next",
+      "version": "16.4.2",
+      "downloads_last_month": 283605175
+    },
+    {
+      "name": "bowser",
+      "version": "2.14.1",
+      "downloads_last_month": 280687953
+    },
+    {
+      "name": "formdata-polyfill",
+      "version": "4.0.10",
+      "downloads_last_month": 278476568
+    },
+    {
+      "name": "default-browser-id",
+      "version": "5.0.1",
+      "downloads_last_month": 276610360
+    },
+    {
+      "name": "client-only",
+      "version": "0.0.1",
+      "downloads_last_month": 274723006
+    },
+    {
+      "name": "zustand",
+      "version": "5.0.15",
+      "downloads_last_month": 264810418
+    },
+    {
+      "name": "react-hook-form",
+      "version": "7.90.0",
+      "downloads_last_month": 260508457
+    },
+    {
+      "name": "space-separated-tokens",
+      "version": "2.0.2",
+      "downloads_last_month": 256293558
+    },
+    {
+      "name": "@inquirer/figures",
+      "version": "2.0.9",
+      "downloads_last_month": 256224324
+    },
+    {
+      "name": "react-router",
+      "version": "8.4.0",
+      "downloads_last_month": 255059073
+    },
+    {
+      "name": "@testing-library/user-event",
+      "version": "14.6.8",
+      "downloads_last_month": 252879050
+    },
+    {
+      "name": "@inquirer/confirm",
+      "version": "6.3.3",
+      "downloads_last_month": 250959715
+    },
+    {
+      "name": "dom-helpers",
+      "version": "6.0.1",
+      "downloads_last_month": 248399199
+    },
+    {
+      "name": "@xmldom/xmldom",
+      "version": "0.9.12",
+      "downloads_last_month": 247044245
+    },
+    {
+      "name": "reselect",
+      "version": "5.3.0",
+      "downloads_last_month": 244976102
+    },
+    {
+      "name": "is-buffer",
+      "version": "2.0.5",
+      "downloads_last_month": 243357017
+    },
+    {
+      "name": "react-transition-group",
+      "version": "4.4.5",
+      "downloads_last_month": 242942182
+    },
+    {
+      "name": "comma-separated-tokens",
+      "version": "2.0.3",
+      "downloads_last_month": 242825905
+    },
+    {
+      "name": "@inquirer/ansi",
+      "version": "2.0.9",
+      "downloads_last_month": 225841602
+    },
+    {
+      "name": "inquirer",
+      "version": "14.2.3",
+      "downloads_last_month": 220204312
+    },
+    {
+      "name": "framer-motion",
+      "version": "14.3.0",
+      "downloads_last_month": 218897254
+    },
+    {
+      "name": "path-browserify",
+      "version": "1.0.1",
+      "downloads_last_month": 216640012
+    },
+    {
+      "name": "react-router-dom",
+      "version": "7.18.4",
+      "downloads_last_month": 205260807
+    },
+    {
+      "name": "@inquirer/external-editor",
+      "version": "3.0.6",
+      "downloads_last_month": 195580568
+    },
+    {
+      "name": "parse-ms",
+      "version": "4.0.0",
+      "downloads_last_month": 192447715
+    },
+    {
+      "name": "@inquirer/prompts",
+      "version": "8.7.3",
+      "downloads_last_month": 188030665
+    },
+    {
+      "name": "hoist-non-react-statics",
+      "version": "3.3.2",
+      "downloads_last_month": 182760568
+    },
+    {
+      "name": "hast-util-to-jsx-runtime",
+      "version": "2.3.6",
+      "downloads_last_month": 182190892
+    },
+    {
+      "name": "environment",
+      "version": "1.1.0",
+      "downloads_last_month": 176789376
+    },
+    {
+      "name": "react-redux",
+      "version": "9.3.0",
+      "downloads_last_month": 175201266
+    },
+    {
+      "name": "@inquirer/select",
+      "version": "5.2.6",
+      "downloads_last_month": 174665212
+    },
+    {
+      "name": "cross-fetch",
+      "version": "4.1.0",
+      "downloads_last_month": 173833342
+    },
+    {
+      "name": "vaul",
+      "version": "1.1.2",
+      "downloads_last_month": 170819550
+    },
+    {
+      "name": "@inquirer/input",
+      "version": "5.1.7",
+      "downloads_last_month": 168966345
+    },
+    {
+      "name": "camelcase-css",
+      "version": "2.0.1",
+      "downloads_last_month": 168654972
+    },
+    {
+      "name": "@inquirer/checkbox",
+      "version": "5.2.6",
+      "downloads_last_month": 168640345
+    },
+    {
+      "name": "postcss-js",
+      "version": "5.1.0",
+      "downloads_last_month": 168384932
+    },
+    {
+      "name": "eslint-plugin-react-refresh",
+      "version": "0.5.7",
+      "downloads_last_month": 167886733
+    },
+    {
+      "name": "preact",
+      "version": "11.0.1",
+      "downloads_last_month": 163335359
+    },
+    {
+      "name": "@inquirer/password",
+      "version": "5.2.3",
+      "downloads_last_month": 163250244
+    },
+    {
+      "name": "@inquirer/editor",
+      "version": "5.3.4",
+      "downloads_last_month": 163099336
+    },
+    {
+      "name": "@inquirer/search",
+      "version": "4.3.4",
+      "downloads_last_month": 162725332
+    },
+    {
+      "name": "enquirer",
+      "version": "2.4.1",
+      "downloads_last_month": 161106922
+    },
+    {
+      "name": "@inquirer/expand",
+      "version": "5.1.6",
+      "downloads_last_month": 160853210
+    },
+    {
+      "name": "embla-carousel",
+      "version": "8.6.0",
+      "downloads_last_month": 160738521
+    },
+    {
+      "name": "@inquirer/rawlist",
+      "version": "5.3.6",
+      "downloads_last_month": 160464589
+    },
+    {
+      "name": "@inquirer/number",
+      "version": "4.2.4",
+      "downloads_last_month": 158624932
+    },
+    {
+      "name": "d3-selection",
+      "version": "3.0.0",
+      "downloads_last_month": 155937528
+    },
+    {
+      "name": "embla-carousel-reactive-utils",
+      "version": "8.6.0",
+      "downloads_last_month": 155897349
+    },
+    {
+      "name": "@opentelemetry/exporter-trace-otlp-http",
+      "version": "0.223.0",
+      "downloads_last_month": 155818590
+    },
+    {
+      "name": "interpret",
+      "version": "3.1.1",
+      "downloads_last_month": 155668397
+    },
+    {
+      "name": "embla-carousel-react",
+      "version": "8.6.0",
+      "downloads_last_month": 152320196
+    },
+    {
+      "name": "classnames",
+      "version": "2.5.1",
+      "downloads_last_month": 151760308
+    },
+    {
+      "name": "d3-transition",
+      "version": "3.0.1",
+      "downloads_last_month": 151017789
+    },
+    {
+      "name": "react-smooth",
+      "version": "4.0.4",
+      "downloads_last_month": 149128650
+    },
+    {
+      "name": "input-otp",
+      "version": "1.5.0",
+      "downloads_last_month": 148578296
+    },
+    {
+      "name": "ua-parser-js",
+      "version": "2.0.10",
+      "downloads_last_month": 147994621
+    },
+    {
+      "name": "hastscript",
+      "version": "9.0.1",
+      "downloads_last_month": 146960745
+    },
+    {
+      "name": "@edsdk/n1ed-react",
+      "version": "1.0.19",
+      "downloads_last_month": 144264096
+    },
+    {
+      "name": "@reduxjs/toolkit",
+      "version": "2.13.0",
+      "downloads_last_month": 142842785
+    },
+    {
+      "name": "js-cookie",
+      "version": "3.0.8",
+      "downloads_last_month": 138874936
+    },
+    {
+      "name": "@tanstack/virtual-core",
+      "version": "3.19.5",
+      "downloads_last_month": 138132561
+    },
+    {
+      "name": "underscore",
+      "version": "1.13.8",
+      "downloads_last_month": 135817967
+    },
+    {
+      "name": "w3c-keyname",
+      "version": "2.2.8",
+      "downloads_last_month": 135368003
+    },
+    {
+      "name": "@tanstack/react-store",
+      "version": "0.11.2",
+      "downloads_last_month": 130828228
+    },
+    {
+      "name": "@azure/abort-controller",
+      "version": "2.2.0",
+      "downloads_last_month": 125693770
+    },
+    {
+      "name": "@opentelemetry/exporter-logs-otlp-http",
+      "version": "0.223.0",
+      "downloads_last_month": 124958582
+    },
+    {
+      "name": "cheerio",
+      "version": "1.2.0",
+      "downloads_last_month": 124374500
+    },
+    {
+      "name": "@opentelemetry/exporter-metrics-otlp-http",
+      "version": "0.223.0",
+      "downloads_last_month": 123180612
+    },
+    {
+      "name": "@clack/prompts",
+      "version": "1.8.1",
+      "downloads_last_month": 122780979
+    },
+    {
+      "name": "@clack/core",
+      "version": "1.5.1",
+      "downloads_last_month": 122723185
+    },
+    {
+      "name": "ts-jest",
+      "version": "29.4.15",
+      "downloads_last_month": 121885955
+    },
+    {
+      "name": "@borewit/text-codec",
+      "version": "0.2.2",
+      "downloads_last_month": 119112434
+    },
+    {
+      "name": "react-fast-compare",
+      "version": "3.2.2",
+      "downloads_last_month": 118495987
+    },
+    {
+      "name": "@tanstack/react-virtual",
+      "version": "3.14.20",
+      "downloads_last_month": 116337102
+    },
+    {
+      "name": "query-string",
+      "version": "9.5.1",
+      "downloads_last_month": 115677893
+    },
+    {
+      "name": "typedarray-to-buffer",
+      "version": "4.0.0",
+      "downloads_last_month": 113137680
+    },
+    {
+      "name": "@floating-ui/react",
+      "version": "0.27.20",
+      "downloads_last_month": 112037851
+    },
+    {
+      "name": "loglevel",
+      "version": "1.9.2",
+      "downloads_last_month": 109733731
+    },
+    {
+      "name": "@tanstack/table-core",
+      "version": "9.3.1",
+      "downloads_last_month": 107149511
+    },
+    {
+      "name": "storybook",
+      "version": "10.6.2",
+      "downloads_last_month": 106889006
+    },
+    {
+      "name": "motion",
+      "version": "14.3.0",
+      "downloads_last_month": 104728505
+    },
+    {
+      "name": "@opentelemetry/exporter-zipkin",
+      "version": "2.12.0",
+      "downloads_last_month": 103725916
+    },
+    {
+      "name": "plist",
+      "version": "5.0.0",
+      "downloads_last_month": 100652152
+    },
+    {
+      "name": "stream-browserify",
+      "version": "3.0.0",
+      "downloads_last_month": 100539352
+    },
+    {
+      "name": "@tanstack/react-table",
+      "version": "9.3.1",
+      "downloads_last_month": 100407791
+    },
+    {
+      "name": "@tanstack/react-router",
+      "version": "1.170.44",
+      "downloads_last_month": 99500143
+    },
+    {
+      "name": "d3",
+      "version": "7.9.0",
+      "downloads_last_month": 98405577
+    },
+    {
+      "name": "@mdx-js/react",
+      "version": "3.1.1",
+      "downloads_last_month": 97772949
+    },
+    {
+      "name": "react-docgen",
+      "version": "8.0.4",
+      "downloads_last_month": 96846423
+    },
+    {
+      "name": "@emotion/babel-plugin",
+      "version": "11.13.5",
+      "downloads_last_month": 95357391
+    },
+    {
+      "name": "isomorphic-ws",
+      "version": "5.0.0",
+      "downloads_last_month": 95125670
+    },
+    {
+      "name": "@tanstack/router-generator",
+      "version": "1.167.44",
+      "downloads_last_month": 94479045
+    },
+    {
+      "name": "@tanstack/router-utils",
+      "version": "1.162.4",
+      "downloads_last_month": 94031378
+    },
+    {
+      "name": "@oozcitak/dom",
+      "version": "3.0.0",
+      "downloads_last_month": 93997741
+    },
+    {
+      "name": "@tanstack/virtual-file-routes",
+      "version": "1.162.0",
+      "downloads_last_month": 92282471
+    },
+    {
+      "name": "csv-parse",
+      "version": "7.0.3",
+      "downloads_last_month": 91311443
+    },
+    {
+      "name": "@azure/logger",
+      "version": "1.4.0",
+      "downloads_last_month": 88781115
+    },
+    {
+      "name": "@lukeed/csprng",
+      "version": "1.1.0",
+      "downloads_last_month": 87676650
+    },
+    {
+      "name": "@tanstack/router-plugin",
+      "version": "1.168.46",
+      "downloads_last_month": 87046320
+    },
+    {
+      "name": "happy-dom",
+      "version": "21.0.3",
+      "downloads_last_month": 86791741
+    },
+    {
+      "name": "server-only",
+      "version": "0.0.1",
+      "downloads_last_month": 86297844
+    },
+    {
+      "name": "warning",
+      "version": "4.0.3",
+      "downloads_last_month": 85759365
+    },
+    {
+      "name": "toad-cache",
+      "version": "3.7.4",
+      "downloads_last_month": 85160389
+    },
+    {
+      "name": "linkifyjs",
+      "version": "4.3.3",
+      "downloads_last_month": 84346954
+    },
+    {
+      "name": "jwt-decode",
+      "version": "4.0.0",
+      "downloads_last_month": 83764274
+    },
+    {
+      "name": "@storybook/addon-docs",
+      "version": "10.6.2",
+      "downloads_last_month": 83476117
+    },
+    {
+      "name": "compare-versions",
+      "version": "6.1.1",
+      "downloads_last_month": 82777123
+    },
+    {
+      "name": "@svgr/core",
+      "version": "8.1.0",
+      "downloads_last_month": 82740905
+    },
+    {
+      "name": "crelt",
+      "version": "1.0.7",
+      "downloads_last_month": 81833238
+    },
+    {
+      "name": "swr",
+      "version": "2.5.1",
+      "downloads_last_month": 81781202
+    },
+    {
+      "name": "assert",
+      "version": "2.1.0",
+      "downloads_last_month": 81258656
+    },
+    {
+      "name": "react-i18next",
+      "version": "17.0.19",
+      "downloads_last_month": 76887900
+    },
+    {
+      "name": "@base-ui/react",
+      "version": "1.9.0",
+      "downloads_last_month": 70158465
+    },
+    {
+      "name": "jquery",
+      "version": "4.0.0",
+      "downloads_last_month": 69920120
+    },
+    {
+      "name": "react-error-boundary",
+      "version": "6.1.6",
+      "downloads_last_month": 68821127
+    },
+    {
+      "name": "@storybook/react-vite",
+      "version": "10.6.2",
+      "downloads_last_month": 68598067
+    },
+    {
+      "name": "@expo/config-plugins",
+      "version": "58.0.9",
+      "downloads_last_month": 68503920
+    },
+    {
+      "name": "@tanstack/start-client-core",
+      "version": "1.170.37",
+      "downloads_last_month": 68329251
+    },
+    {
+      "name": "oauth4webapi",
+      "version": "3.8.8",
+      "downloads_last_month": 68103644
+    },
+    {
+      "name": "@tanstack/start-storage-context",
+      "version": "1.167.39",
+      "downloads_last_month": 68037199
+    },
+    {
+      "name": "@tanstack/start-plugin-core",
+      "version": "1.171.53",
+      "downloads_last_month": 67904019
+    },
+    {
+      "name": "@tanstack/start-server-core",
+      "version": "1.169.43",
+      "downloads_last_month": 67847310
+    },
+    {
+      "name": "@tanstack/react-start",
+      "version": "1.169.2",
+      "downloads_last_month": 67789056
+    },
+    {
+      "name": "@tanstack/react-start-server",
+      "version": "1.167.50",
+      "downloads_last_month": 67687562
+    },
+    {
+      "name": "@tanstack/react-start-client",
+      "version": "1.168.42",
+      "downloads_last_month": 67680727
+    },
+    {
+      "name": "arch",
+      "version": "3.0.0",
+      "downloads_last_month": 67512202
+    },
+    {
+      "name": "@mui/utils",
+      "version": "9.5.0",
+      "downloads_last_month": 67508024
+    },
+    {
+      "name": "react-reconciler",
+      "version": "0.34.0",
+      "downloads_last_month": 67204422
+    },
+    {
+      "name": "auto-bind",
+      "version": "5.0.1",
+      "downloads_last_month": 67038341
+    },
+    {
+      "name": "resize-observer-polyfill",
+      "version": "1.5.1",
+      "downloads_last_month": 66311017
+    },
+    {
+      "name": "openid-client",
+      "version": "6.8.8",
+      "downloads_last_month": 66100145
+    },
+    {
+      "name": "@tanstack/react-start-rsc",
+      "version": "0.1.63",
+      "downloads_last_month": 66053273
+    },
+    {
+      "name": "@react-email/render",
+      "version": "2.1.0",
+      "downloads_last_month": 65668346
+    },
+    {
+      "name": "@azure/core-lro",
+      "version": "3.4.1",
+      "downloads_last_month": 65488918
+    },
+    {
+      "name": "atob",
+      "version": "2.1.2",
+      "downloads_last_month": 65099595
+    },
+    {
+      "name": "lru.min",
+      "version": "1.1.5",
+      "downloads_last_month": 64802147
+    },
+    {
+      "name": "canvg",
+      "version": "4.0.3",
+      "downloads_last_month": 64720955
+    },
+    {
+      "name": "jsonify",
+      "version": "0.0.1",
+      "downloads_last_month": 63658660
+    },
+    {
+      "name": "@expo/config-types",
+      "version": "58.0.3",
+      "downloads_last_month": 62978884
+    },
+    {
+      "name": "react-native",
+      "version": "0.88.0",
+      "downloads_last_month": 62789165
+    },
+    {
+      "name": "@mui/types",
+      "version": "9.5.0",
+      "downloads_last_month": 62781330
+    },
+    {
+      "name": "brorand",
+      "version": "1.1.0",
+      "downloads_last_month": 62650824
+    },
+    {
+      "name": "@expo/config",
+      "version": "58.0.6",
+      "downloads_last_month": 62582505
+    },
+    {
+      "name": "react-dropzone",
+      "version": "20.1.3",
+      "downloads_last_month": 61226653
+    },
+    {
+      "name": "p-event",
+      "version": "8.0.1",
+      "downloads_last_month": 60370639
+    },
+    {
+      "name": "lowlight",
+      "version": "3.3.0",
+      "downloads_last_month": 59568936
+    },
+    {
+      "name": "@xyflow/react",
+      "version": "12.12.0",
+      "downloads_last_month": 57360892
+    },
+    {
+      "name": "@storybook/addon-a11y",
+      "version": "10.6.2",
+      "downloads_last_month": 53606891
+    },
+    {
+      "name": "constants-browserify",
+      "version": "1.0.0",
+      "downloads_last_month": 53519472
+    },
+    {
+      "name": "@vitest/browser",
+      "version": "5.0.5",
+      "downloads_last_month": 53417647
+    },
+    {
+      "name": "better-opn",
+      "version": "3.0.2",
+      "downloads_last_month": 52783944
+    },
+    {
+      "name": "copy-to-clipboard",
+      "version": "4.0.2",
+      "downloads_last_month": 51998595
+    },
+    {
+      "name": "@expo/prebuild-config",
+      "version": "58.0.14",
+      "downloads_last_month": 51372276
+    },
+    {
+      "name": "https-browserify",
+      "version": "1.0.0",
+      "downloads_last_month": 51104406
+    }
+  ]
+}

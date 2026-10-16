@@ -1,0 +1,31 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "preact": "11.0.1"
+      }
+    },
+    "node_modules/preact": {
+      "version": "11.0.1",
+      "resolved": "https://registry.npmjs.org/preact/-/preact-11.0.1.tgz",
+      "integrity": "sha512-TNNwEq++jYNHy747LziCjPRVgEwnLSOIOAw/oYcjI3Tdnubx2EXtt76I0an8PATvUWtx/DX1kFIg1eFN+O/fkw==",
+      "license": "MIT",
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/preact"
+      },
+      "peerDependencies": {
+        "preact-render-to-string": ">=6.7.0"
+      },
+      "peerDependenciesMeta": {
+        "preact-render-to-string": {
+          "optional": true
+        }
+      }
+    }
+  }
+}
