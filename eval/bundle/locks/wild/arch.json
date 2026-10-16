@@ -1,0 +1,33 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "arch": "3.0.0"
+      }
+    },
+    "node_modules/arch": {
+      "version": "3.0.0",
+      "resolved": "https://registry.npmjs.org/arch/-/arch-3.0.0.tgz",
+      "integrity": "sha512-AmIAC+Wtm2AU8lGfTtHsw0Y9Qtftx2YXEEtiBP10xFUtMOA+sHHx6OAddyL52mUKh1vsXQ6/w1mVDptZCyUt4Q==",
+      "funding": [
+        {
+          "type": "github",
+          "url": "https://github.com/sponsors/feross"
+        },
+        {
+          "type": "patreon",
+          "url": "https://www.patreon.com/feross"
+        },
+        {
+          "type": "consulting",
+          "url": "https://feross.org/support"
+        }
+      ],
+      "license": "MIT"
+    }
+  }
+}

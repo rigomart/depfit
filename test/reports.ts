@@ -1,5 +1,5 @@
 /**
- * Hand-written schema v4 Report fixtures. Numbers come from real probe runs: zod/valibot/yup
+ * Hand-written schema v5 Report fixtures. Numbers come from real probe runs: zod/valibot/yup
  * compared in an npm project, sharp and sonner in a bun monorepo workspace, node-pty in a node
  * project with a pnpm lockfile, and node:sqlite, better-sqlite3, and @libsql/client from the
  * root of a bun monorepo (desktop app plus server).
@@ -136,6 +136,7 @@ export const zod: PackageReport = {
     ],
     dependency_vulnerabilities: [],
   },
+  bundle: null,
 };
 
 export const valibot: PackageReport = {
@@ -221,6 +222,7 @@ export const valibot: PackageReport = {
     ],
     dependency_vulnerabilities: [],
   },
+  bundle: null,
 };
 
 export const yup: PackageReport = {
@@ -283,6 +285,7 @@ export const yup: PackageReport = {
     commits_last_year: 0,
   },
   security: { advisories: [], dependency_vulnerabilities: [] },
+  bundle: null,
 };
 
 /**
@@ -361,6 +364,7 @@ export const sharp: PackageReport = {
     ],
     dependency_vulnerabilities: [],
   },
+  bundle: null,
 };
 
 const noGithub: Pick<
@@ -392,6 +396,7 @@ export const missing: PackageReport = {
   compatibility: null,
   maintenance: null,
   security: null,
+  bundle: null,
 };
 
 /** The node:sqlite builtin, imported by the desktop app and the server of the bun monorepo. */
@@ -439,6 +444,7 @@ export const nodeSqlite: PackageReport = {
   compatibility: null,
   maintenance: null,
   security: null,
+  bundle: null,
 };
 
 /**
@@ -499,6 +505,7 @@ export const betterSqlite3: PackageReport = {
     commits_last_year: 71,
   },
   security: { advisories: [], dependency_vulnerabilities: [] },
+  bundle: null,
 };
 
 /**
@@ -572,6 +579,7 @@ export const libsqlClient: PackageReport = {
     commits_last_year: 87,
   },
   security: { advisories: [], dependency_vulnerabilities: [] },
+  bundle: null,
 };
 
 /**
@@ -645,6 +653,7 @@ export const nodePty: PackageReport = {
     ],
     dependency_vulnerabilities: [],
   },
+  bundle: null,
 };
 
 /**
@@ -725,6 +734,56 @@ export const sonner: PackageReport = {
     commits_last_year: 17,
   },
   security: { advisories: [], dependency_vulnerabilities: [] },
+  bundle: null,
+};
+
+/** zod measured with `--bundle-entry 'import { z } from "zod"; z.object; z.string'`. */
+export const zodBundled: PackageReport = {
+  ...zod,
+  bundle: {
+    bundler: "rolldown@1.2.14",
+    target: "browser",
+    entry: 'import { z } from "zod"; z.object; z.string;',
+    entry_source: "requested",
+    eager_js_min_bytes: 78569,
+    eager_js_gzip9_bytes: 22496,
+    lazy_js_min_bytes: 0,
+    lazy_js_gzip9_bytes: 0,
+    external_packages: [],
+  },
+};
+
+/** sonner measured with its react peers left out of the bundle. */
+export const sonnerBundled: PackageReport = {
+  ...sonner,
+  bundle: {
+    bundler: "rolldown@1.2.14",
+    target: "browser",
+    entry: 'import { Toaster, toast } from "sonner";',
+    entry_source: "requested",
+    eager_js_min_bytes: 33461,
+    eager_js_gzip9_bytes: 9280,
+    lazy_js_min_bytes: 0,
+    lazy_js_gzip9_bytes: 0,
+    external_packages: ["react", "react-dom"],
+  },
+};
+
+/** A null bundle: the output still imports a module outside the bundle. */
+export const nodePtyUnmeasurable: PackageReport = {
+  ...nodePty,
+  unavailable: [...nodePty.unavailable, "bundle: IMPORT_OUTSIDE_BUNDLE import(…)"],
+  bundle: {
+    bundler: "rolldown@1.2.14",
+    target: "browser",
+    entry: 'import { spawn } from "@lydell/node-pty";',
+    entry_source: "requested",
+    eager_js_min_bytes: null,
+    eager_js_gzip9_bytes: null,
+    lazy_js_min_bytes: null,
+    lazy_js_gzip9_bytes: null,
+    external_packages: [],
+  },
 };
 
 export function report(

@@ -1,0 +1,30 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "@inquirer/type": "4.2.0"
+      }
+    },
+    "node_modules/@inquirer/type": {
+      "version": "4.2.0",
+      "resolved": "https://registry.npmjs.org/@inquirer/type/-/type-4.2.0.tgz",
+      "integrity": "sha512-2rnHX8RPo4glJYqnFc/v3nQeIhDcjyRRyaT7MGcfL/8xv/8K03SXYoA2tX06WVSKywWOE/ncbG3dtuzLjR5TCQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=23.5.0 || ^22.13.0 || ^20.17.0"
+      },
+      "peerDependencies": {
+        "@types/node": ">=18"
+      },
+      "peerDependenciesMeta": {
+        "@types/node": {
+          "optional": true
+        }
+      }
+    }
+  }
+}

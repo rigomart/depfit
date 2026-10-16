@@ -1,0 +1,6187 @@
+{
+  "generated_at": "2026-10-16T07:18:55.496Z",
+  "tools": {
+    "node": "24.14.1",
+    "rollup": "4.64.7",
+    "@rollup/plugin-commonjs": "29.0.3",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "16.0.3",
+    "@rollup/plugin-replace": "6.0.3",
+    "@rollup/plugin-terser": "1.0.0",
+    "terser": "5.51.2",
+    "webpack": "5.112.0",
+    "vite": "8.3.4",
+    "minimizer-webpack-plugin": "5.13.0",
+    "rolldown": "1.2.14"
+  },
+  "cases": {
+    "react-is": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "react-is",
+      "version": "19.3.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2319,
+        "gzip_bytes": 892,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2874,
+        "gzip_bytes": 1128,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "string_decoder": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "string_decoder",
+      "version": "1.3.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT buffer"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'buffer' in '<install>/node_modules/safe-buffer'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "isarray": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "isarray",
+      "version": "2.0.5",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 594,
+        "gzip_bytes": 361,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 504,
+        "gzip_bytes": 332,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "convert-source-map": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "convert-source-map",
+      "version": "2.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 4359,
+        "gzip_bytes": 1548,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 4914,
+        "gzip_bytes": 1771,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inherits": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "inherits",
+      "version": "2.0.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 816,
+        "gzip_bytes": 440,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 723,
+        "gzip_bytes": 402,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "vite": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node",
+        "@vitejs/devtools",
+        "esbuild",
+        "jiti",
+        "less",
+        "sass",
+        "sass-embedded",
+        "stylus",
+        "sugarss",
+        "terser",
+        "tsx",
+        "yaml"
+      ],
+      "package": "vite",
+      "version": "8.3.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "Unexpected token `ident`. Expected identifier in <install>/node_modules/vite/dist/node/chunks/node.js"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "react",
+      "version": "19.3.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 8288,
+        "gzip_bytes": 3191,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 8865,
+        "gzip_bytes": 3433,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "buffer": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "buffer",
+      "version": "6.0.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 27791,
+        "gzip_bytes": 8326,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 28335,
+        "gzip_bytes": 8551,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…`buffer` v5.x. Use `buffer` v4.x if you require old browser support.\"),Object.definePro…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…`buffer` v5.x. Use `buffer` v4.x if you require old browser support.\"),Object.definePro…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "open": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "open",
+      "version": "11.0.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:buffer, node:child_process, node:fs, node:fs/promises, node:os, node:path, node:process, node:url, node:util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:buffer\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "util-deprecate": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "util-deprecate",
+      "version": "1.0.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1012,
+        "gzip_bytes": 526,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 950,
+        "gzip_bytes": 521,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "opentelemetry__core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
+      "package": "@opentelemetry/core",
+      "version": "2.12.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 12010,
+        "gzip_bytes": 4809,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 12611,
+        "gzip_bytes": 5062,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…[object Null]\",Z=\"[object Undefined]\",J=Function.prototype.toString,q=J.call(Object),Q=O…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…bject Null]\",wt=\"[object Undefined]\",vt=Function.prototype.toString,jt=vt.call(Object),C…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "jose": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "jose",
+      "version": "6.2.12",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 59171,
+        "gzip_bytes": 18545,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 59807,
+        "gzip_bytes": 18890,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "opentelemetry__api-logs": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@opentelemetry/api-logs",
+      "version": "0.223.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2139,
+        "gzip_bytes": 850,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2386,
+        "gzip_bytes": 964,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "domutils": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "domutils",
+      "version": "4.0.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 11357,
+        "gzip_bytes": 4573,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 11897,
+        "gzip_bytes": 4716,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "domhandler": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "domhandler",
+      "version": "6.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 5288,
+        "gzip_bytes": 1806,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 5635,
+        "gzip_bytes": 1953,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "prop-types": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "prop-types",
+      "version": "15.8.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1298,
+        "gzip_bytes": 740,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1145,
+        "gzip_bytes": 685,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "jsdom": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "canvas"
+      ],
+      "package": "jsdom",
+      "version": "30.1.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:assert, node:async_hooks, node:buffer, node:console, node:crypto, node:diagnostics_channel, node:dns, node:events, node:fs, node:fs/promises, node:http, node:net, node:os, node:path, node:perf_hooks, node:querystring, node:sqlite, node:stream, node:stream/web, node:timers, nod"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "opentelemetry__instrumentation": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
+      "package": "@opentelemetry/instrumentation",
+      "version": "0.223.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 5877,
+        "gzip_bytes": 2137,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 6344,
+        "gzip_bytes": 2320,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "domelementtype": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "domelementtype",
+      "version": "3.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 532,
+        "gzip_bytes": 319,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 823,
+        "gzip_bytes": 463,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "htmlparser2": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "htmlparser2",
+      "version": "12.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 68544,
+        "gzip_bytes": 27677,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 69097,
+        "gzip_bytes": 28196,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "eslint-plugin-react-hooks": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "eslint"
+      ],
+      "package": "eslint-plugin-react-hooks",
+      "version": "7.1.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, crypto, fs, path, util"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/@babel/helper-module-imports/lib'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "vitejs__plugin-react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@rolldown/plugin-babel",
+        "babel-plugin-react-compiler",
+        "oxc-transform-react",
+        "vite"
+      ],
+      "package": "@vitejs/plugin-react",
+      "version": "6.1.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:fs, node:path, node:url"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:fs\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "ip-address": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "ip-address",
+      "version": "10.7.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 33438,
+        "gzip_bytes": 9445,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 33058,
+        "gzip_bytes": 9133,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…hrow new e.AddressError(`${s} addresses require exactly ${r} bytes`);for(let r=0;r<t.le…",
+            "count": 2
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…hrow new r.AddressError(`${s} addresses require exactly ${t} bytes`);for(let t=0;t<e.le…",
+            "count": 2
+          }
+        ]
+      }
+    },
+    "w3c-xmlserializer": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "w3c-xmlserializer",
+      "version": "6.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 8640,
+        "gzip_bytes": 2919,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 7071,
+        "gzip_bytes": 2678,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tldts": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "tldts",
+      "version": "7.4.18",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 128311,
+        "gzip_bytes": 46398,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 128780,
+        "gzip_bytes": 46632,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "fflate": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "fflate",
+      "version": "0.8.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 31695,
+        "gzip_bytes": 12136,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 32193,
+        "gzip_bytes": 12197,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-refresh": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "react-refresh",
+      "version": "0.19.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 642,
+        "gzip_bytes": 408,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 465,
+        "gzip_bytes": 316,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "floating-ui__react-dom": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@floating-ui/react-dom",
+      "version": "2.1.9",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 25125,
+        "gzip_bytes": 9306,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 25367,
+        "gzip_bytes": 9440,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "opentelemetry__api": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@opentelemetry/api",
+      "version": "1.9.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 13166,
+        "gzip_bytes": 4502,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 13629,
+        "gzip_bytes": 4670,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "symbol-tree": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "symbol-tree",
+      "version": "3.2.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 6623,
+        "gzip_bytes": 2011,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 6397,
+        "gzip_bytes": 1902,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "reflect.getprototypeof": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "reflect.getprototypeof",
+      "version": "1.0.10",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 33659,
+        "gzip_bytes": 10212,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 31846,
+        "gzip_bytes": 9175,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ength),a=[],c=0;c<f;c++)a[c]=\"$\"+c;if(i=Function(\"binder\",\"return function (\"+function(t,…",
+            "count": 1
+          },
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…nent%\":encodeURIComponent,\"%Error%\":e,\"%eval%\":eval,\"%EvalError%\":n,\"%Float16Array%\"…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…=this;if(\"function\"!=typeof o||\"[object Function]\"!==t.apply(o))throw new TypeError(\"Fun…",
+            "count": 26
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ength),c=[],u=0;u<p;u++)c[u]=\"$\"+u;if(i=Function(\"binder\",\"return function (\"+function(t)…",
+            "count": 1
+          },
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…nent%\":encodeURIComponent,\"%Error%\":i,\"%eval%\":eval,\"%EvalError%\":a,\"%Float16Array%\"…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…urn i(o,n,arguments)}},243(t){t.exports=Function.prototype.apply},39(t){t.exports=Functi…",
+            "count": 26
+          }
+        ]
+      }
+    },
+    "testing-library__dom": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@testing-library/dom",
+      "version": "10.4.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 187396,
+        "gzip_bytes": 37252,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 181681,
+        "gzip_bytes": 33832,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…?self:\"undefined\"!=typeof window?window:Function(\"return this\")(),r=t[\"jest-symbol-do-not…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…ructor.name}}function R(e,t){return t?\"[Function \"+(e.name||\"anonymous\")+\"]\":\"[Function]…",
+            "count": 6
+          },
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…null,Oi=null;try{const e=module&&module.require;Ri=e.call(module,\"fs\").readFileSync,Oi=…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…?self:\"undefined\"!=typeof window?window:Function(\"return this\")(),o=n[\"jest-symbol-do-not…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…ructor.name}}function q(e,t){return t?\"[Function \"+(e.name||\"anonymous\")+\"]\":\"[Function]…",
+            "count": 6
+          },
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…r=null,Yr=null,Qr=null;try{const t=e&&e.require;Yr=t.call(e,\"fs\").readFileSync,Qr=t.cal…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "use-callback-ref": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "use-callback-ref",
+      "version": "1.3.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1396,
+        "gzip_bytes": 584,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1700,
+        "gzip_bytes": 729,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "use-sidecar": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "use-sidecar",
+      "version": "1.1.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3486,
+        "gzip_bytes": 1413,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3790,
+        "gzip_bytes": 1568,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-style-singleton": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "react-style-singleton",
+      "version": "2.2.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 906,
+        "gzip_bytes": 488,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1121,
+        "gzip_bytes": 597,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "flmngr__flmngr-react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@flmngr/flmngr-react",
+      "version": "2.0.13",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 50642,
+        "gzip_bytes": 15179,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 50613,
+        "gzip_bytes": 15069,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "next__env": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@next/env",
+      "version": "16.4.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT crypto, fs, os, path"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'crypto' in '<install>/node_modules/@next/env/dist'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "dompurify": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "dompurify",
+      "version": "3.4.17",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 30112,
+        "gzip_bytes": 11203,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 31247,
+        "gzip_bytes": 11634,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…eturn t instanceof RegExp||t instanceof Function},mn=function(){let t=arguments.length>0…",
+            "count": 4
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…eturn t instanceof RegExp||t instanceof Function},an=function(){let t=arguments.length>0…",
+            "count": 4
+          }
+        ]
+      }
+    },
+    "inquirer__core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/core",
+      "version": "12.0.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "testing-library__jest-dom": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@testing-library/dom",
+        "vitest"
+      ],
+      "package": "@testing-library/jest-dom",
+      "version": "7.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 153707,
+        "gzip_bytes": 27268,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 152180,
+        "gzip_bytes": 24338,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…th),s=\"function\"==typeof(a=r)||\"[object Function]\"===O.call(a)?Object(new r(i)):new Arra…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…e){return\"function\"==typeof e||\"[object Function]\"===sr.call(e)}var ur=Math.pow(2,53)-1;…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "inquirer__type": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/type",
+      "version": "4.2.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 161,
+        "gzip_bytes": 154,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 431,
+        "gzip_bytes": 292,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "testing-library__react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@testing-library/dom",
+        "@types/react",
+        "@types/react-dom",
+        "react",
+        "react-dom"
+      ],
+      "package": "@testing-library/react",
+      "version": "16.3.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 5952,
+        "gzip_bytes": 2295,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 6105,
+        "gzip_bytes": 2353,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "prompts": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "prompts",
+      "version": "2.4.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT events, readline"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'events' in '<install>/node_modules/prompts/dist/elements'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "eslint-plugin-react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "eslint"
+      ],
+      "package": "eslint-plugin-react",
+      "version": "7.37.5",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, fs, os, path"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/doctrine/lib'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "default-browser": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "default-browser",
+      "version": "5.5.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:child_process, node:process, node:util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "next": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@opentelemetry/api",
+        "@playwright/test",
+        "babel-plugin-react-compiler",
+        "react",
+        "react-dom",
+        "sass"
+      ],
+      "package": "next",
+      "version": "16.4.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "Unexpected token `ident`. Expected identifier in <install>/node_modules/next/dist/compiled/webpack/bundle5.js"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "bowser": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "bowser",
+      "version": "2.14.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 36878,
+        "gzip_bytes": 7685,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 36795,
+        "gzip_bytes": 7701,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "formdata-polyfill": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "formdata-polyfill",
+      "version": "4.0.10",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 9278,
+        "gzip_bytes": 3316,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 8973,
+        "gzip_bytes": 3201,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "default-browser-id": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "default-browser-id",
+      "version": "5.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:child_process, node:process, node:util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "client-only": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "client-only",
+      "version": "0.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 63,
+        "gzip_bytes": 83,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 414,
+        "gzip_bytes": 288,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "zustand": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "immer",
+        "react",
+        "use-sync-external-store"
+      ],
+      "package": "zustand",
+      "version": "5.0.15",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 713,
+        "gzip_bytes": 424,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1003,
+        "gzip_bytes": 563,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-hook-form": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "react-hook-form",
+      "version": "7.90.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 44733,
+        "gzip_bytes": 15022,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 45481,
+        "gzip_bytes": 15257,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "space-separated-tokens": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "space-separated-tokens",
+      "version": "2.0.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 197,
+        "gzip_bytes": 172,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 474,
+        "gzip_bytes": 317,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__figures": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@inquirer/figures",
+      "version": "2.0.9",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:process"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:process\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "react-router": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "react-router",
+      "version": "8.4.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 191354,
+        "gzip_bytes": 60750,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 189234,
+        "gzip_bytes": 60735,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "import() to a non-chunk target",
+            "strength": "fetch",
+            "snippet": "….id in t)return t[e.id];try{let r=await(import(e.module));return t[e.id]=r,r}catch(t){if(console.error(`Error loading route mod…",
+            "count": 5
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "import() to a non-chunk target",
+            "strength": "fetch",
+            "snippet": "…action\",o.id);return u(e)}function h(e){import(e)}function f(e){e.clientActionModule&&h(e.clientActionModule),e.clientLoaderMod…",
+            "count": 5
+          }
+        ]
+      }
+    },
+    "testing-library__user-event": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@testing-library/dom"
+      ],
+      "package": "@testing-library/user-event",
+      "version": "14.6.8",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 61634,
+        "gzip_bytes": 18517,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 61944,
+        "gzip_bytes": 18588,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__confirm": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/confirm",
+      "version": "6.3.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "dom-helpers": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "dom-helpers",
+      "version": "6.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 9683,
+        "gzip_bytes": 3784,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 10171,
+        "gzip_bytes": 4011,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…pareDocumentPosition(e)):void 0}const k=Function.prototype.bind.call(Function.prototype.…",
+            "count": 4
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…pareDocumentPosition(e)):void 0}const j=Function.prototype.bind.call(Function.prototype.…",
+            "count": 4
+          }
+        ]
+      }
+    },
+    "xmldom__xmldom": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@xmldom/xmldom",
+      "version": "0.9.12",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 85540,
+        "gzip_bytes": 30590,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 85811,
+        "gzip_bytes": 30453,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "reselect": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "reselect",
+      "version": "5.3.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 4778,
+        "gzip_bytes": 1946,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 4998,
+        "gzip_bytes": 2076,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "is-buffer": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "is-buffer",
+      "version": "2.0.5",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 604,
+        "gzip_bytes": 360,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 605,
+        "gzip_bytes": 386,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-transition-group": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "react-transition-group",
+      "version": "4.4.5",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 13450,
+        "gzip_bytes": 4009,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 13796,
+        "gzip_bytes": 4139,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "comma-separated-tokens": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "comma-separated-tokens",
+      "version": "2.0.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 393,
+        "gzip_bytes": 293,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 670,
+        "gzip_bytes": 434,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__ansi": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@inquirer/ansi",
+      "version": "2.0.9",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 355,
+        "gzip_bytes": 269,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 666,
+        "gzip_bytes": 421,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "inquirer",
+      "version": "14.2.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT buffer, node:async_hooks, node:child_process, node:crypto, node:fs, node:os, node:path, node:process, node:readline, node:util, stream, string_decoder, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "framer-motion": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "framer-motion",
+      "version": "14.3.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 202486,
+        "gzip_bytes": 67552,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 205922,
+        "gzip_bytes": 70072,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "path-browserify": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "path-browserify",
+      "version": "1.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 4618,
+        "gzip_bytes": 1934,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 4261,
+        "gzip_bytes": 1750,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-router-dom": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "react-router-dom",
+      "version": "7.18.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 198295,
+        "gzip_bytes": 62830,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 201156,
+        "gzip_bytes": 63770,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "import() to a non-chunk target",
+            "strength": "fetch",
+            "snippet": "….id in t)return t[e.id];try{let r=await(import(e.module));return t[e.id]=r,r}catch(t){if(console.error(`Error loading route mod…",
+            "count": 5
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "import() to a non-chunk target",
+            "strength": "fetch",
+            "snippet": "….id in t)return t[e.id];try{let r=await(import(e.module));return t[e.id]=r,r}catch(t){if(console.error(`Error loading route mod…",
+            "count": 5
+          }
+        ]
+      }
+    },
+    "inquirer__external-editor": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/external-editor",
+      "version": "3.0.6",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT buffer, node:child_process, node:crypto, node:fs, node:os, node:path, string_decoder"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "parse-ms": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "parse-ms",
+      "version": "4.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 657,
+        "gzip_bytes": 358,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 927,
+        "gzip_bytes": 496,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__prompts": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/prompts",
+      "version": "8.7.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT buffer, node:async_hooks, node:child_process, node:crypto, node:fs, node:os, node:path, node:process, node:readline, node:util, stream, string_decoder, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "hoist-non-react-statics": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "hoist-non-react-statics",
+      "version": "3.3.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3666,
+        "gzip_bytes": 1340,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3457,
+        "gzip_bytes": 1284,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "hast-util-to-jsx-runtime": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "hast-util-to-jsx-runtime",
+      "version": "2.3.6",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 29313,
+        "gzip_bytes": 10125,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 29651,
+        "gzip_bytes": 10229,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "environment": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "environment",
+      "version": "1.1.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1690,
+        "gzip_bytes": 564,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2013,
+        "gzip_bytes": 711,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-redux": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react",
+        "redux"
+      ],
+      "package": "react-redux",
+      "version": "9.3.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 10024,
+        "gzip_bytes": 3825,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 10408,
+        "gzip_bytes": 4001,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__select": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/select",
+      "version": "5.2.6",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "cross-fetch": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "cross-fetch",
+      "version": "4.1.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 10873,
+        "gzip_bytes": 3739,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 10769,
+        "gzip_bytes": 3731,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "vaul": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "vaul",
+      "version": "1.1.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 68971,
+        "gzip_bytes": 20961,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 69591,
+        "gzip_bytes": 21033,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__input": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/input",
+      "version": "5.1.7",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "camelcase-css": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "camelcase-css",
+      "version": "2.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 760,
+        "gzip_bytes": 444,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 403,
+        "gzip_bytes": 258,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__checkbox": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/checkbox",
+      "version": "5.2.6",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "postcss-js": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "postcss"
+      ],
+      "package": "postcss-js",
+      "version": "5.1.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3573,
+        "gzip_bytes": 1618,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3826,
+        "gzip_bytes": 1715,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "eslint-plugin-react-refresh": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "eslint"
+      ],
+      "package": "eslint-plugin-react-refresh",
+      "version": "0.5.7",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 7097,
+        "gzip_bytes": 2429,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 7345,
+        "gzip_bytes": 2535,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "preact": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "preact-render-to-string"
+      ],
+      "package": "preact",
+      "version": "11.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 11890,
+        "gzip_bytes": 4948,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 12186,
+        "gzip_bytes": 5079,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__password": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/password",
+      "version": "5.2.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "inquirer__editor": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/editor",
+      "version": "5.3.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT buffer, node:async_hooks, node:child_process, node:crypto, node:fs, node:os, node:path, node:process, node:readline, node:util, stream, string_decoder, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "inquirer__search": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/search",
+      "version": "4.3.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "enquirer": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "enquirer",
+      "version": "2.4.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, events, readline"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/enquirer'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "inquirer__expand": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/expand",
+      "version": "5.1.6",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "embla-carousel": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "embla-carousel",
+      "version": "8.6.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 17644,
+        "gzip_bytes": 7045,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 17844,
+        "gzip_bytes": 7101,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "inquirer__rawlist": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/rawlist",
+      "version": "5.3.6",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "inquirer__number": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/node"
+      ],
+      "package": "@inquirer/number",
+      "version": "4.2.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "d3-selection": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "d3-selection",
+      "version": "3.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 13149,
+        "gzip_bytes": 4111,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 14246,
+        "gzip_bytes": 4575,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "embla-carousel-reactive-utils": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "embla-carousel"
+      ],
+      "package": "embla-carousel-reactive-utils",
+      "version": "8.6.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 822,
+        "gzip_bytes": 464,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1098,
+        "gzip_bytes": 581,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "opentelemetry__exporter-trace-otlp-http": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
+      "package": "@opentelemetry/exporter-trace-otlp-http",
+      "version": "0.223.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 13641,
+        "gzip_bytes": 5120,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 13830,
+        "gzip_bytes": 5172,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "interpret": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "interpret",
+      "version": "3.1.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT path"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'path' in '<install>/node_modules/interpret'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "embla-carousel-react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react"
+      ],
+      "package": "embla-carousel-react",
+      "version": "8.6.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 18754,
+        "gzip_bytes": 7400,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 18945,
+        "gzip_bytes": 7472,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "classnames": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "classnames",
+      "version": "2.5.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1061,
+        "gzip_bytes": 565,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1074,
+        "gzip_bytes": 597,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "d3-transition": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "d3-selection"
+      ],
+      "package": "d3-transition",
+      "version": "3.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 23970,
+        "gzip_bytes": 8800,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 25578,
+        "gzip_bytes": 9521,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-smooth": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "react-smooth",
+      "version": "4.0.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 39132,
+        "gzip_bytes": 10327,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 39586,
+        "gzip_bytes": 10522,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "input-otp": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "input-otp",
+      "version": "1.5.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 10021,
+        "gzip_bytes": 4004,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 10080,
+        "gzip_bytes": 4123,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "ua-parser-js": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "ua-parser-js",
+      "version": "2.0.10",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 27062,
+        "gzip_bytes": 11947,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 27543,
+        "gzip_bytes": 12103,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "hastscript": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "hastscript",
+      "version": "9.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 20984,
+        "gzip_bytes": 7198,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 21256,
+        "gzip_bytes": 7332,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "edsdk__n1ed-react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@edsdk/n1ed-react",
+      "version": "1.0.19",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 23122,
+        "gzip_bytes": 7517,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 18931,
+        "gzip_bytes": 6072,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "reduxjs__toolkit": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-redux"
+      ],
+      "package": "@reduxjs/toolkit",
+      "version": "2.13.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 38938,
+        "gzip_bytes": 13971,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 39561,
+        "gzip_bytes": 14198,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…!1;let r=P.get(n);return void 0===r&&(r=Function.toString.call(n),P.set(n,r)),r===j}func…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…!1;let r=k.get(n);return void 0===r&&(r=Function.toString.call(n),k.set(n,r)),r===C}func…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "js-cookie": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "js-cookie",
+      "version": "3.0.8",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1474,
+        "gzip_bytes": 750,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1807,
+        "gzip_bytes": 922,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tanstack__virtual-core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@tanstack/virtual-core",
+      "version": "3.19.5",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 33386,
+        "gzip_bytes": 9630,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 33715,
+        "gzip_bytes": 9751,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "underscore": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "underscore",
+      "version": "1.13.8",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 20865,
+        "gzip_bytes": 7459,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 22519,
+        "gzip_bytes": 7665,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…global&&global.global===global&&global||Function(\"return this\")()||{},r=Array.prototype,e…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…),N=S(\"Symbol\"),D=S(\"ArrayBuffer\"),T=S(\"Function\"),R=t.document&&t.document.childNodes;\"…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ct\"==typeof n.g&&n.g.global===n.g&&n.g||Function(\"return this\")()||{},i=Array.prototype,o…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…B(\"Symbol\"),F=B(\"ArrayBuffer\");var P=B(\"Function\"),V=u.document&&u.document.childNodes;\"…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "w3c-keyname": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "w3c-keyname",
+      "version": "2.2.8",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1552,
+        "gzip_bytes": 870,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1830,
+        "gzip_bytes": 993,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tanstack__react-store": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@tanstack/react-store",
+      "version": "0.11.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 8045,
+        "gzip_bytes": 3003,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 8482,
+        "gzip_bytes": 3195,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "azure__abort-controller": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@azure/abort-controller",
+      "version": "2.2.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 146,
+        "gzip_bytes": 144,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 413,
+        "gzip_bytes": 283,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "opentelemetry__exporter-logs-otlp-http": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
+      "package": "@opentelemetry/exporter-logs-otlp-http",
+      "version": "0.223.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 12596,
+        "gzip_bytes": 4833,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 12791,
+        "gzip_bytes": 4912,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "cheerio": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "cheerio",
+      "version": "1.2.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 283693,
+        "gzip_bytes": 96844,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 284857,
+        "gzip_bytes": 95019,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "opentelemetry__exporter-metrics-otlp-http": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
+      "package": "@opentelemetry/exporter-metrics-otlp-http",
+      "version": "0.223.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 16262,
+        "gzip_bytes": 5951,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 16432,
+        "gzip_bytes": 6013,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "clack__prompts": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@clack/prompts",
+      "version": "1.8.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:fs, node:path, node:process, node:readline, node:tty, node:util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:fs\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "clack__core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@clack/core",
+      "version": "1.5.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:process, node:readline, node:tty, node:util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:process\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "ts-jest": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@babel/core",
+        "@jest/transform",
+        "@jest/types",
+        "babel-jest",
+        "esbuild",
+        "jest",
+        "jest-util",
+        "typescript"
+      ],
+      "package": "ts-jest",
+      "version": "29.4.15",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT crypto, fs, module, node:path, path, util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:path\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "borewit__text-codec": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@borewit/text-codec",
+      "version": "0.2.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 4321,
+        "gzip_bytes": 1608,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 4580,
+        "gzip_bytes": 1705,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-fast-compare": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "react-fast-compare",
+      "version": "3.2.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2240,
+        "gzip_bytes": 864,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2150,
+        "gzip_bytes": 851,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tanstack__react-virtual": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@tanstack/react-virtual",
+      "version": "3.14.20",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 35605,
+        "gzip_bytes": 10363,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 35936,
+        "gzip_bytes": 10517,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "query-string": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "query-string",
+      "version": "9.5.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 8397,
+        "gzip_bytes": 2954,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 8699,
+        "gzip_bytes": 3072,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "typedarray-to-buffer": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "typedarray-to-buffer",
+      "version": "4.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 590,
+        "gzip_bytes": 368,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 591,
+        "gzip_bytes": 392,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "floating-ui__react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@floating-ui/react",
+      "version": "0.27.20",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 91328,
+        "gzip_bytes": 30913,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 91920,
+        "gzip_bytes": 31181,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "loglevel": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "loglevel",
+      "version": "1.9.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3649,
+        "gzip_bytes": 1566,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3569,
+        "gzip_bytes": 1527,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…peof t.bind)return t.bind(e);try{return Function.prototype.bind.call(t,e)}catch(o){retur…",
+            "count": 3
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…peof t.bind)return t.bind(e);try{return Function.prototype.bind.call(t,e)}catch(o){retur…",
+            "count": 3
+          }
+        ]
+      }
+    },
+    "tanstack__table-core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@tanstack/table-core",
+      "version": "9.3.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 109845,
+        "gzip_bytes": 27223,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 110590,
+        "gzip_bytes": 27403,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…t:n})}function g(e){return e instanceof Function}function d(e,t){const n=[],o=e=>{e.forE…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…e:t})}function m(e){return e instanceof Function}function p(e,t){const n=[],o=e=>{e.forE…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "storybook": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "prettier",
+        "vite-plus"
+      ],
+      "package": "storybook",
+      "version": "10.6.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT storybook"
+      },
+      "webpack": {
+        "error": "Module not found: Error: \".\" is not exported under the conditions [\"typescript\",\"import\",\"module-sync\",\"module\",\"webpack\",\"production\",\"browser\"] from package <install>/node_modules/storybook (see exports field in <install>/node_modules/storybook/package.json)"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "motion": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "motion",
+      "version": "14.3.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 153555,
+        "gzip_bytes": 51553,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 155680,
+        "gzip_bytes": 52651,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "opentelemetry__exporter-zipkin": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@opentelemetry/api"
+      ],
+      "package": "@opentelemetry/exporter-zipkin",
+      "version": "2.12.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 4300,
+        "gzip_bytes": 1822,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 4510,
+        "gzip_bytes": 1953,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "plist": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "plist",
+      "version": "5.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 12908,
+        "gzip_bytes": 4132,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 13241,
+        "gzip_bytes": 4303,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "stream-browserify": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "stream-browserify",
+      "version": "3.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT buffer, events"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'buffer' in '<install>/node_modules/readable-stream/lib'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "tanstack__react-table": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react"
+      ],
+      "package": "@tanstack/react-table",
+      "version": "9.3.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 121244,
+        "gzip_bytes": 30808,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 122180,
+        "gzip_bytes": 31010,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…:t})}function oe(e){return e instanceof Function}function le(e,t){const n=[],o=e=>{e.for…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…e:t})}function q(e){return e instanceof Function}function $(e,t){const n=[],o=e=>{e.forE…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "tanstack__react-router": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@tanstack/react-router",
+      "version": "1.170.44",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 91306,
+        "gzip_bytes": 31118,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 92154,
+        "gzip_bytes": 31252,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "d3": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "d3",
+      "version": "7.9.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 277830,
+        "gzip_bytes": 92852,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 285265,
+        "gzip_bytes": 93800,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…r Au={},Su={};function Eu(t){return new Function(\"d\",\"return {\"+t.map(function(t,n){retur…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…4,sf=10,lf=13;function hf(t){return new Function(\"d\",\"return {\"+t.map(function(t,n){retur…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "mdx-js__react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "@mdx-js/react",
+      "version": "3.1.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 445,
+        "gzip_bytes": 291,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 730,
+        "gzip_bytes": 429,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-docgen": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "react-docgen",
+      "version": "8.0.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, path"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/@babel/helper-module-imports/lib'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "emotion__babel-plugin": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@emotion/babel-plugin",
+      "version": "11.13.5",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, fs, module, os, path, util"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'assert' in '<install>/node_modules/@babel/helper-module-imports/lib'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "isomorphic-ws": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "ws"
+      ],
+      "package": "isomorphic-ws",
+      "version": "5.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 376,
+        "gzip_bytes": 194,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 798,
+        "gzip_bytes": 409,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tanstack__router-generator": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@tanstack/router-generator",
+      "version": "1.167.44",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, fs, module, node:assert, node:crypto, node:fs, node:fs/promises, node:module, node:os, node:path, node:perf_hooks, node:process, node:tty, node:url, node:util, node:v8, node:vm, os, path, url"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "tanstack__router-utils": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@tanstack/router-utils",
+      "version": "1.162.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, fs, module, node:fs/promises, path, url"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:fs/promises\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "oozcitak__dom": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@oozcitak/dom",
+      "version": "3.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT url"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'url' in '<install>/node_modules/@oozcitak/url/lib'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "tanstack__virtual-file-routes": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@tanstack/virtual-file-routes",
+      "version": "1.162.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 593,
+        "gzip_bytes": 296,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 898,
+        "gzip_bytes": 449,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "csv-parse": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "csv-parse",
+      "version": "7.0.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT stream"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'stream' in '<install>/node_modules/csv-parse/lib'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "azure__logger": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@azure/logger",
+      "version": "1.4.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3032,
+        "gzip_bytes": 1324,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3580,
+        "gzip_bytes": 1576,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "lukeed__csprng": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@lukeed/csprng",
+      "version": "1.1.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 132,
+        "gzip_bytes": 141,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 402,
+        "gzip_bytes": 283,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tanstack__router-plugin": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@rsbuild/core",
+        "@tanstack/react-router",
+        "vite",
+        "vite-plugin-solid",
+        "webpack"
+      ],
+      "package": "@tanstack/router-plugin",
+      "version": "1.168.46",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, fs, module, node:assert, node:crypto, node:events, node:fs, node:fs/promises, node:module, node:os, node:path, node:perf_hooks, node:process, node:stream, node:tty, node:url, node:util, node:v8, node:vm, os, path, url"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:assert\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "happy-dom": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "happy-dom",
+      "version": "21.0.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT buffer, child_process, crypto, fs, http, https, net, node:net, node:perf_hooks, node:url, path, stream, stream/web, url, util, vm, zlib"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:net\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "server-only": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "server-only",
+      "version": "0.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 638,
+        "gzip_bytes": 400,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 543,
+        "gzip_bytes": 360,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "warning": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "warning",
+      "version": "4.0.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 498,
+        "gzip_bytes": 322,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 170,
+        "gzip_bytes": 142,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "toad-cache": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "toad-cache",
+      "version": "3.7.4",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 9230,
+        "gzip_bytes": 1660,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 9597,
+        "gzip_bytes": 1847,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "linkifyjs": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "linkifyjs",
+      "version": "4.3.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 19403,
+        "gzip_bytes": 10430,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 19740,
+        "gzip_bytes": 10586,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "jwt-decode": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "jwt-decode",
+      "version": "4.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1014,
+        "gzip_bytes": 549,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1285,
+        "gzip_bytes": 670,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "storybook__addon-docs": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "storybook"
+      ],
+      "package": "@storybook/addon-docs",
+      "version": "10.6.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 415594,
+        "gzip_bytes": 126743,
+        "lazy_min_bytes": 31109,
+        "lazy_gzip_bytes": 11627,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 420282,
+        "gzip_bytes": 127775,
+        "lazy_min_bytes": 30175,
+        "lazy_gzip_bytes": 11382,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "eval()",
+            "strength": "load",
+            "snippet": "…e;if(0===t.indexOf(\"function\"))return(0,eval)(`(${t})`);try{t=JSON.parse(e)}catch{}ret…",
+            "count": 1
+          },
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ength),u=[],s=0;s<i;s++)u[s]=\"$\"+s;if(l=Function(\"binder\",\"return function (\"+function(e,…",
+            "count": 2
+          },
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…/es-errors@1.3.0/node_modules/es-errors/eval.js\"(e,t){t.exports=EvalError}}),Nu=xu({…",
+            "count": 3
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…f(null===e||!function(e){try{return-1!==Function.toString.call(e).indexOf(\"[native code]…",
+            "count": 21
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "eval()",
+            "strength": "load",
+            "snippet": "…e;if(0===t.indexOf(\"function\"))return(0,eval)(`(${t})`);try{t=JSON.parse(e)}catch{}ret…",
+            "count": 1
+          },
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ength),u=[],s=0;s<i;s++)u[s]=\"$\"+s;if(a=Function(\"binder\",\"return function (\"+function(e)…",
+            "count": 2
+          },
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…/es-errors@1.3.0/node_modules/es-errors/eval.js\"(e,t){t.exports=EvalError}}),Wo=Lo({…",
+            "count": 3
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…f(null===e||!function(e){try{return-1!==Function.toString.call(e).indexOf(\"[native code]…",
+            "count": 21
+          }
+        ]
+      }
+    },
+    "compare-versions": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "compare-versions",
+      "version": "6.1.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2171,
+        "gzip_bytes": 1081,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2462,
+        "gzip_bytes": 1202,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "svgr__core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@svgr/core",
+      "version": "8.1.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT fs, fs/promises, module, os, path, typescript, url, util"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'fs' in '<install>/node_modules/cosmiconfig/dist'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "crelt": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "crelt",
+      "version": "1.0.7",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 680,
+        "gzip_bytes": 408,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 950,
+        "gzip_bytes": 524,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "swr": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react"
+      ],
+      "package": "swr",
+      "version": "2.5.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 12875,
+        "gzip_bytes": 5704,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 13481,
+        "gzip_bytes": 5864,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "assert": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "assert",
+      "version": "2.1.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 67317,
+        "gzip_bytes": 20227,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 66236,
+        "gzip_bytes": 19372,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ength),u=[],f=0;f<a;f++)u[f]=\"$\"+f;if(i=Function(\"binder\",\"return function (\"+function(t,…",
+            "count": 1
+          },
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…nent%\":encodeURIComponent,\"%Error%\":r,\"%eval%\":eval,\"%EvalError%\":n,\"%Float16Array%\"…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…=this;if(\"function\"!=typeof o||\"[object Function]\"!==t.apply(o))throw new TypeError(\"Fun…",
+            "count": 31
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ength),u=[],f=0;f<c;f++)u[f]=\"$\"+f;if(i=Function(\"binder\",\"return function (\"+function(t)…",
+            "count": 1
+          },
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…nent%\":encodeURIComponent,\"%Error%\":i,\"%eval%\":eval,\"%EvalError%\":a,\"%Float16Array%\"…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…rn i(n,o,arguments)}},3892(t){t.exports=Function.prototype.apply},8022(t){t.exports=Func…",
+            "count": 31
+          }
+        ]
+      }
+    },
+    "react-i18next": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "i18next",
+        "react",
+        "react-dom",
+        "react-native",
+        "typescript"
+      ],
+      "package": "react-i18next",
+      "version": "17.0.19",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 25648,
+        "gzip_bytes": 10269,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 26114,
+        "gzip_bytes": 10256,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "base-ui__react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@date-fns/tz",
+        "@types/react",
+        "date-fns",
+        "react",
+        "react-dom"
+      ],
+      "package": "@base-ui/react",
+      "version": "1.9.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 519726,
+        "gzip_bytes": 163574,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 526823,
+        "gzip_bytes": 167014,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "jquery": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "jquery",
+      "version": "4.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 78548,
+        "gzip_bytes": 27520,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 78863,
+        "gzip_bytes": 27660,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…terator]),w.each(\"Boolean Number String Function Array Date RegExp Object Error Symbol\".…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…terator]),w.each(\"Boolean Number String Function Array Date RegExp Object Error Symbol\".…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "react-error-boundary": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "react-error-boundary",
+      "version": "6.1.6",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2287,
+        "gzip_bytes": 966,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2579,
+        "gzip_bytes": 1092,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "storybook__react-vite": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom",
+        "storybook",
+        "typescript",
+        "vite"
+      ],
+      "package": "@storybook/react-vite",
+      "version": "10.6.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 248923,
+        "gzip_bytes": 73221,
+        "lazy_min_bytes": 728,
+        "lazy_gzip_bytes": 431,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 250382,
+        "gzip_bytes": 73619,
+        "lazy_min_bytes": 799,
+        "lazy_gzip_bytes": 473,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "import() to a non-chunk target",
+            "strength": "fetch",
+            "snippet": "…rtExpression:function(e,t,r){return z([\"import(\",this.generateExpression(e.source,n.Assignment,7),\")\"],n.Call,t)}},T(X.prototyp…",
+            "count": 3
+          },
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…6:s,isRestrictedWord:function(e){return\"eval\"===e||\"arguments\"===e},isIdentifierName…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…claration=function(e,t,n){return n(e,t,\"Function\")},St.VariableDeclaration=function(e,t,…",
+            "count": 6
+          },
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…hrow new Error(\"React Server Components require React >= 18.3\");return e.createElement(…",
+            "count": 2
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "import() to a non-chunk target",
+            "strength": "fetch",
+            "snippet": "…rtExpression:function(e,t,r){return H([\"import(\",this.generateExpression(e.source,n.Assignment,7),\")\"],n.Call,t)}},I(J.prototyp…",
+            "count": 3
+          },
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…6:s,isRestrictedWord:function(e){return\"eval\"===e||\"arguments\"===e},isIdentifierName…",
+            "count": 2
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…claration=function(e,t,n){return n(e,t,\"Function\")},xt.VariableDeclaration=function(e,t,…",
+            "count": 6
+          },
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…hrow new Error(\"React Server Components require React >= 18.3\");return _.createElement(…",
+            "count": 2
+          }
+        ]
+      }
+    },
+    "expo__config-plugins": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@expo/config-plugins",
+      "version": "58.0.9",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, child_process, crypto, events, fs, node:child_process, node:crypto, node:events, node:fs, node:fs/promises, node:module, node:os, node:path, node:stream, node:string_decoder, node:url, node:vm, os, path, timers, typescript/unstable/proto, url, util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "tanstack__start-client-core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@tanstack/start-client-core",
+      "version": "1.170.37",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "oauth4webapi": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "oauth4webapi",
+      "version": "3.8.8",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 48932,
+        "gzip_bytes": 14205,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 49813,
+        "gzip_bytes": 14619,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tanstack__start-storage-context": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@tanstack/start-storage-context",
+      "version": "1.167.39",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "tanstack__start-plugin-core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@rsbuild/core",
+        "vite"
+      ],
+      "package": "@tanstack/start-plugin-core",
+      "version": "1.171.53",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 118,
+        "gzip_bytes": 133,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 393,
+        "gzip_bytes": 283,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tanstack__start-server-core": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@tanstack/start-server-core",
+      "version": "1.169.43",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT #tanstack-router-entry, #tanstack-start-entry, node:async_hooks, node:stream, tanstack-start-manifest:v"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "tanstack__react-start": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@rsbuild/core",
+        "@vitejs/plugin-rsc",
+        "react",
+        "react-dom",
+        "vite"
+      ],
+      "package": "@tanstack/react-start",
+      "version": "1.169.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "tanstack__react-start-server": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@tanstack/react-start-server",
+      "version": "1.167.50",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT #tanstack-router-entry, #tanstack-start-entry, node:async_hooks, node:stream, tanstack-start-manifest:v"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "tanstack__react-start-client": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@tanstack/react-start-client",
+      "version": "1.168.42",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT node:async_hooks"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "arch": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "arch",
+      "version": "3.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 754,
+        "gzip_bytes": 459,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 755,
+        "gzip_bytes": 481,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "mui__utils": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "@mui/utils",
+      "version": "9.5.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 14532,
+        "gzip_bytes": 5454,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 14241,
+        "gzip_bytes": 5483,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ned\"!=typeof self&&self.Math==Math?self:Function(\"return this\")();const j=E.oneOfType([E.…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ned\"!=typeof self&&self.Math==Math?self:Function(\"return this\")(),R=f.oneOfType([f.func,f…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "react-reconciler": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react"
+      ],
+      "package": "react-reconciler",
+      "version": "0.34.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 132475,
+        "gzip_bytes": 40471,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 132377,
+        "gzip_bytes": 40430,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "auto-bind": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "auto-bind",
+      "version": "5.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 528,
+        "gzip_bytes": 344,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 807,
+        "gzip_bytes": 469,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "resize-observer-polyfill": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "resize-observer-polyfill",
+      "version": "1.5.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 7657,
+        "gzip_bytes": 2452,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 8068,
+        "gzip_bytes": 2608,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ypeof window&&window.Math===Math?window:Function(\"return this\")(),r=\"function\"==typeof re…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…ypeof window&&window.Math===Math?window:Function(\"return this\")(),o=\"function\"==typeof re…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "openid-client": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "openid-client",
+      "version": "6.8.8",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 82206,
+        "gzip_bytes": 25115,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 83001,
+        "gzip_bytes": 25336,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "tanstack__react-start-rsc": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@rspack/core",
+        "@vitejs/plugin-rsc",
+        "react",
+        "react-dom",
+        "react-server-dom-rspack"
+      ],
+      "package": "@tanstack/react-start-rsc",
+      "version": "0.1.63",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT virtual:tanstack-rsc-browser-decode, virtual:tanstack-rsc-ssr-decode"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"virtual:tanstack-rsc-browser-decode\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "react-email__render": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "react",
+        "react-dom"
+      ],
+      "package": "@react-email/render",
+      "version": "2.1.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 359633,
+        "gzip_bytes": 122795,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 361224,
+        "gzip_bytes": 123264,
+        "lazy_min_bytes": 133,
+        "lazy_gzip_bytes": 118,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…tmlAttribute:!1},ae)},ue=Object.hasOwn??Function.prototype.call.bind(Object.prototype.ha…",
+            "count": 2
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…tmlAttribute:!1},he)},fe=Object.hasOwn??Function.prototype.call.bind(Object.prototype.ha…",
+            "count": 2
+          }
+        ]
+      }
+    },
+    "azure__core-lro": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@azure/core-lro",
+      "version": "3.4.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 13364,
+        "gzip_bytes": 4639,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 13873,
+        "gzip_bytes": 4869,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "atob": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "atob",
+      "version": "2.1.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 984,
+        "gzip_bytes": 571,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1045,
+        "gzip_bytes": 634,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "lru.min": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "lru.min",
+      "version": "1.1.5",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 2220,
+        "gzip_bytes": 969,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 2497,
+        "gzip_bytes": 1103,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "canvg": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "canvg",
+      "version": "4.0.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 109722,
+        "gzip_bytes": 33057,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 110261,
+        "gzip_bytes": 33218,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "jsonify": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "jsonify",
+      "version": "0.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3869,
+        "gzip_bytes": 1749,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 4394,
+        "gzip_bytes": 1942,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "expo__config-types": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@expo/config-types",
+      "version": "58.0.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 538,
+        "gzip_bytes": 339,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 200,
+        "gzip_bytes": 170,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "react-native": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "react-native",
+      "version": "0.88.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "Expected 'from', got 'typeOf' in <install>/node_modules/react-native/index.js"
+      },
+      "webpack": {
+        "error": "Module parse failed: Unexpected token (27:7)"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "mui__types": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react"
+      ],
+      "package": "@mui/types",
+      "version": "9.5.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 63,
+        "gzip_bytes": 83,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 153,
+        "gzip_bytes": 136,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "brorand": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "brorand",
+      "version": "1.1.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 1986,
+        "gzip_bytes": 774,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 1310,
+        "gzip_bytes": 590,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "expo__config": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@expo/config",
+      "version": "58.0.6",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, child_process, crypto, events, fs, node:child_process, node:crypto, node:events, node:fs, node:fs/promises, node:module, node:os, node:path, node:stream, node:string_decoder, node:url, node:vm, os, path, timers, typescript/unstable/proto, url, util"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "react-dropzone": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "react"
+      ],
+      "package": "react-dropzone",
+      "version": "20.1.3",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 16825,
+        "gzip_bytes": 6178,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 17059,
+        "gzip_bytes": 6298,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "p-event": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "p-event",
+      "version": "8.0.1",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 4493,
+        "gzip_bytes": 1953,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 4748,
+        "gzip_bytes": 2062,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "lowlight": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "lowlight",
+      "version": "3.3.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 952558,
+        "gzip_bytes": 291223,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 952644,
+        "gzip_bytes": 291304,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…al\",\"clearTimeout\",\"require\",\"exports\",\"eval\",\"isFinite\",\"isNaN\",\"parseFloat\",\"parse…",
+            "count": 22
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…ponent\",\"escape\",\"unescape\"],[\"Object\",\"Function\",\"Boolean\",\"Symbol\",\"Math\",\"Date\",\"Numb…",
+            "count": 12
+          },
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…imeout\",\"clearInterval\",\"clearTimeout\",\"require\",\"exports\",\"eval\",\"isFinite\",\"isNaN\",\"p…",
+            "count": 21
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "eval",
+            "strength": "mention",
+            "snippet": "…al\",\"clearTimeout\",\"require\",\"exports\",\"eval\",\"isFinite\",\"isNaN\",\"parseFloat\",\"parse…",
+            "count": 22
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…ponent\",\"escape\",\"unescape\"],[\"Object\",\"Function\",\"Boolean\",\"Symbol\",\"Math\",\"Date\",\"Numb…",
+            "count": 12
+          },
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…imeout\",\"clearInterval\",\"clearTimeout\",\"require\",\"exports\",\"eval\",\"isFinite\",\"isNaN\",\"p…",
+            "count": 21
+          }
+        ]
+      }
+    },
+    "xyflow__react": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "@types/react",
+        "@types/react-dom",
+        "react",
+        "react-dom"
+      ],
+      "package": "@xyflow/react",
+      "version": "12.12.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 185103,
+        "gzip_bytes": 59199,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 188978,
+        "gzip_bytes": 60170,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…e.nodes.map(e=>e.id),nc=e=>e instanceof Function?e:()=>e;const oc=r(function({id:e,nodeC…",
+            "count": 1
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…e.nodes.map(e=>e.id),sd=e=>e instanceof Function?e:()=>e,cd=(0,u.memo)(function({id:e,no…",
+            "count": 1
+          }
+        ]
+      }
+    },
+    "storybook__addon-a11y": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "storybook"
+      ],
+      "package": "@storybook/addon-a11y",
+      "version": "10.6.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 6851,
+        "gzip_bytes": 2643,
+        "lazy_min_bytes": 694279,
+        "lazy_gzip_bytes": 194046,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 8471,
+        "gzip_bytes": 3325,
+        "lazy_min_bytes": 693294,
+        "lazy_gzip_bytes": 192958,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…(0)}):F=void 0===c?function(){try{var e=Function(\"return this\")().require(\"vertx\");return…",
+            "count": 9
+          },
+          {
+            "pattern": "member.require()",
+            "strength": "load",
+            "snippet": "…on(){try{var e=Function(\"return this\")().require(\"vertx\");return void 0!==(u=e.runOnLoop|…",
+            "count": 1
+          },
+          {
+            "pattern": "require()",
+            "strength": "load",
+            "snippet": "…n(){try{var e=Function(\"return this\")().require(\"vertx\");return void 0!==(u=e.runOnLoop|…",
+            "count": 1
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…f(null===e||!function(e){try{return-1!==Function.toString.call(e).indexOf(\"[native code]…",
+            "count": 25
+          },
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…of e)throw new TypeError(\"Queue methods require functions as arguments\")}var Tp,Mp,Sp=f…",
+            "count": 3
+          }
+        ],
+        "webpack": [
+          {
+            "pattern": "Function()",
+            "strength": "load",
+            "snippet": "…(0)}):F=void 0===c?function(){try{var e=Function(\"return this\")().require(\"vertx\");return…",
+            "count": 9
+          },
+          {
+            "pattern": "member.require()",
+            "strength": "load",
+            "snippet": "…on(){try{var e=Function(\"return this\")().require(\"vertx\");return void 0!==(n=e.runOnLoop|…",
+            "count": 1
+          },
+          {
+            "pattern": "require()",
+            "strength": "load",
+            "snippet": "…n(){try{var e=Function(\"return this\")().require(\"vertx\");return void 0!==(n=e.runOnLoop|…",
+            "count": 1
+          },
+          {
+            "pattern": "Function",
+            "strength": "mention",
+            "snippet": "…})(e)}Object.setPrototypeOf(v.prototype,Function.prototype);for(let[e,t]of Object.entrie…",
+            "count": 25
+          },
+          {
+            "pattern": "require",
+            "strength": "mention",
+            "snippet": "…of e)throw new TypeError(\"Queue methods require functions as arguments\")}var Cp,Rp,kp=f…",
+            "count": 3
+          }
+        ]
+      }
+    },
+    "constants-browserify": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "constants-browserify",
+      "version": "1.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 6779,
+        "gzip_bytes": 2024,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 4713,
+        "gzip_bytes": 2237,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "vitest__browser": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [
+        "vitest"
+      ],
+      "package": "@vitest/browser",
+      "version": "5.0.5",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, buffer, fs, node:crypto, node:fs, node:fs/promises, node:module, node:os, node:path, node:path/posix, node:querystring, node:url, path, stream, util, vite, zlib"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:crypto\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "better-opn": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "better-opn",
+      "version": "3.0.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT child_process, fs, os, path"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'child_process' in '<install>/node_modules/better-opn/dist'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "copy-to-clipboard": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "copy-to-clipboard",
+      "version": "4.0.2",
+      "node_builtins_external": [],
+      "rollup": {
+        "min_bytes": 3260,
+        "gzip_bytes": 1496,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 3530,
+        "gzip_bytes": 1589,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      },
+      "audit": {
+        "rollup": [],
+        "webpack": []
+      }
+    },
+    "expo__prebuild-config": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "@expo/prebuild-config",
+      "version": "58.0.14",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT assert, buffer, child_process, console, crypto, events, fs, fs/promises, http, https, module, node:child_process, node:crypto, node:events, node:fs, node:fs/promises, node:module, node:os, node:path, node:stream, node:string_decoder, node:url, node:vm, os, path, querystring, stream"
+      },
+      "webpack": {
+        "error": "Module build failed: UnhandledSchemeError: Reading from \"node:child_process\" is not handled by plugins (Unhandled scheme)."
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    },
+    "https-browserify": {
+      "expect": "measure",
+      "target": "browser",
+      "external_packages": [],
+      "package": "https-browserify",
+      "version": "1.0.0",
+      "node_builtins_external": [],
+      "rollup": {
+        "error": "UNRESOLVED_IMPORT http, url"
+      },
+      "webpack": {
+        "error": "Module not found: Error: Can't resolve 'http' in '<install>/node_modules/https-browserify'"
+      },
+      "audit": {
+        "rollup": null,
+        "webpack": null
+      }
+    }
+  }
+}

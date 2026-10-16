@@ -1,5 +1,6 @@
 import { join, resolve } from "node:path";
 import {
+  type Bundle,
   type Collect,
   type Compatibility,
   type Cost,
@@ -9,6 +10,14 @@ import {
   SCHEMA_VERSION,
   type Security,
 } from "../report.ts";
+import {
+  type BundleOutcome,
+  bundleEntry,
+  bundleReasons,
+  bundlerName,
+  externalPackages,
+} from "./bundle.ts";
+import { type BundleEntry, normalizedSnippet } from "./bundle-entry.ts";
 import {
   atNewestInstalled,
   builtinReport,
@@ -55,6 +64,7 @@ type Context = {
   projectError: string | null;
   /** Resolved once, on first use. */
   token: () => Promise<string | null>;
+  bundleEntries: ReadonlyMap<string, BundleEntry>;
 };
 
 function failedReport(spec: string, name: string, error: string, unavailable: string[]) {
@@ -74,6 +84,7 @@ function failedReport(spec: string, name: string, error: string, unavailable: st
     compatibility: null,
     maintenance: null,
     security: null,
+    bundle: null,
   } satisfies PackageReport;
 }
 
@@ -89,15 +100,46 @@ async function githubSection(
   return { ...(await settle(githubFacts(repo.owner, repo.repo, auth))), repository };
 }
 
-/** Everything that needs the isolated install of the candidate itself. */
-async function treeFacts(resolved: Resolved) {
+/**
+ * Everything that needs the isolated install of the candidate itself. The bundle is built from
+ * the same install, so peers stay installed (and in `cost`); they are external only in the bundler.
+ */
+async function treeFacts(resolved: Resolved, entry: BundleEntry | null, externals: string[]) {
   return withIsolatedInstall(resolved.name, resolved.version, async ({ dir, tree }) => {
-    const [vulnerabilities, bundledTypes] = await Promise.all([
+    const [vulnerabilities, bundledTypes, bundle] = await Promise.all([
       settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree))),
       shipsTypes(join(dir, "node_modules", resolved.name), resolved.manifest),
+      entry ? settle(bundleEntry(dir, entry, externals)) : null,
     ]);
-    return { tree, vulnerabilities, bundledTypes };
+    return { tree, vulnerabilities, bundledTypes, bundle };
   });
+}
+
+/** `bundle` for a package bundling was requested for, and its `unavailable` entries. */
+async function bundleSection(
+  entry: BundleEntry,
+  externals: string[],
+  outcome: Settled<BundleOutcome> | null,
+): Promise<{ bundle: Bundle; reasons: string[] }> {
+  const bytes = outcome?.ok ? outcome.value.bytes : null;
+  let reasons: string[] = [];
+  if (outcome && !outcome.ok) reasons = [`bundle: BUNDLER_ERROR ${outcome.error}`];
+  else if (outcome) reasons = bundleReasons(outcome.value.problems);
+  const bundler = await settle(bundlerName());
+  return {
+    bundle: {
+      bundler: bundler.ok ? bundler.value : "rolldown",
+      target: "browser",
+      entry: normalizedSnippet(entry),
+      entry_source: "requested",
+      eager_js_min_bytes: bytes?.eager_js_min_bytes ?? null,
+      eager_js_gzip9_bytes: bytes?.eager_js_gzip9_bytes ?? null,
+      lazy_js_min_bytes: bytes?.lazy_js_min_bytes ?? null,
+      lazy_js_gzip9_bytes: bytes?.lazy_js_gzip9_bytes ?? null,
+      external_packages: externals,
+    },
+    reasons,
+  };
 }
 
 function typesFacts(
@@ -133,8 +175,10 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
 
   // DefinitelyTyped is looked up alongside the install, and ignored if the install ships types.
   const declaresTypes = manifestDeclaresTypes(manifest);
+  const entry = context.bundleEntries.get(name) ?? null;
+  const externals = externalPackages(manifest);
   const [install, ownAdvisories, github, downloadStats, typesLookup] = await Promise.all([
-    settle(treeFacts(resolved)),
+    settle(treeFacts(resolved, entry, externals)),
     settle(advisories(name, version, inRepo?.installed_versions ?? [])),
     githubSection(manifest, context.token),
     settle(weeklyDownloads(name)),
@@ -150,6 +194,10 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
   if (!github.ok) unavailable.push(`github: ${github.error}`);
   if (!downloadStats.ok) unavailable.push(`downloads: ${downloadStats.error}`);
   if (types && !types.ok) unavailable.push(`types: ${types.error}`);
+  const bundled = entry
+    ? await bundleSection(entry, externals, install.ok ? install.value.bundle : null)
+    : null;
+  if (bundled) unavailable.push(...bundled.reasons);
 
   const tree: TreePackage[] | null = install.ok ? install.value.tree : null;
   const runtime = project?.info.runtime ?? null;
@@ -205,10 +253,11 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
     compatibility,
     maintenance,
     security,
+    bundle: bundled?.bundle ?? null,
   };
 }
 
-export const collect: Collect = async (specs, { cwd }) => {
+export const collect: Collect = async (specs, { cwd, bundleEntries = new Map() }) => {
   const generatedAt = new Date().toISOString();
   const loaded = await settle(loadProject(resolve(cwd)));
   const project = loaded.ok ? loaded.value : null;
@@ -221,6 +270,7 @@ export const collect: Collect = async (specs, { cwd }) => {
       token ??= githubToken();
       return token;
     },
+    bundleEntries,
   };
 
   const packages = await Promise.all(

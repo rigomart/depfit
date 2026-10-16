@@ -1,0 +1,19 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "crelt": "1.0.7"
+      }
+    },
+    "node_modules/crelt": {
+      "version": "1.0.7",
+      "resolved": "https://registry.npmjs.org/crelt/-/crelt-1.0.7.tgz",
+      "integrity": "sha512-aK6BbWfhf4U/wCcLHKPJl/xa6VkVstRaPywWtMKGwuOLc/wZTyQYuoxgvZnNsBvv7Kg3YTBQYYBCggcviQczuA==",
+      "license": "MIT"
+    }
+  }
+}

@@ -2,7 +2,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseCliArgs, resolveOutput, USAGE, useColor } from "./args.ts";
+import { type BundleEntry, prepareBundleEntries } from "./collect/bundle-entry.ts";
 import { collect } from "./collect/index.ts";
+import { parseSpec } from "./collect/registry.ts";
 import { renderTable } from "./render/table.ts";
 import type { Report } from "./report.ts";
 import { schemaDocument } from "./schema-docs.ts";
@@ -42,11 +44,27 @@ async function main(argv: string[]): Promise<number> {
       return 2;
   }
 
+  let bundleEntries = new Map<string, BundleEntry>();
+  if (command.bundleEntries.length > 0) {
+    const npmNames = command.specs
+      .map(parseSpec)
+      .flatMap((spec) => (spec.kind === "npm" ? [spec.name] : []));
+    const prepared = await prepareBundleEntries(command.bundleEntries, [...new Set(npmNames)]);
+    if (!prepared.ok) {
+      process.stderr.write(`depfit: ${prepared.message}\n\n${USAGE}\n`);
+      return 2;
+    }
+    bundleEntries = prepared.entries;
+  }
+
   const stdoutIsTTY = process.stdout.isTTY === true;
   const clear = progress(command.specs);
   let report: Report;
   try {
-    report = await collect(command.specs, { cwd: resolve(command.cwd ?? process.cwd()) });
+    report = await collect(command.specs, {
+      cwd: resolve(command.cwd ?? process.cwd()),
+      bundleEntries,
+    });
   } catch (error) {
     clear();
     process.stderr.write(`depfit: ${error instanceof Error ? error.message : String(error)}\n`);

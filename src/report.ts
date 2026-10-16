@@ -9,7 +9,9 @@
  * - Units and caveats live in field names (`_bytes`, `_last_year`), not in commentary.
  */
 
-export const SCHEMA_VERSION = 4;
+import type { BundleEntry } from "./collect/bundle-entry.ts";
+
+export const SCHEMA_VERSION = 5;
 
 export type Lockfile = "package-lock.json" | "pnpm-lock.yaml" | "yarn.lock" | "bun.lock";
 
@@ -79,6 +81,8 @@ export type PackageReport = {
   compatibility: Compatibility | null;
   maintenance: Maintenance | null;
   security: Security | null;
+  /** null unless bundling was requested for this package (`--bundle-entry`), or when `error` is set. */
+  bundle: Bundle | null;
 };
 
 /** Facts derived from the current project. null when there is no project. */
@@ -207,7 +211,34 @@ export type Security = {
   dependency_vulnerabilities: string[];
 };
 
-export type CollectOptions = { cwd: string };
+/**
+ * Bytes a production browser bundler ships for one import snippet, measured standalone from the
+ * candidate's isolated install. Byte fields are null when the build is unmeasurable; the reason is
+ * in `unavailable` as "bundle: <CODE> [specifier]".
+ */
+export type Bundle = {
+  /** e.g. "rolldown@1.2.14". */
+  bundler: string;
+  target: "browser";
+  /** The snippet that was measured, normalized. */
+  entry: string;
+  entry_source: "requested" | "repo_usage";
+  /** Entry chunk plus its static-import closure, minified. */
+  eager_js_min_bytes: number | null;
+  /** The same chunks, each gzipped at level 9, summed. */
+  eager_js_gzip9_bytes: number | null;
+  /** Chunks reached only through dynamic import(), each counted once; 0 when there are none. */
+  lazy_js_min_bytes: number | null;
+  lazy_js_gzip9_bytes: number | null;
+  /** Peer dependencies (and their subpaths) left out of the bundle. */
+  external_packages: string[];
+};
+
+export type CollectOptions = {
+  cwd: string;
+  /** Validated `--bundle-entry` snippets by npm name; empty when bundling was not requested. */
+  bundleEntries?: ReadonlyMap<string, BundleEntry>;
+};
 
 /** Implemented in src/collect/index.ts. */
 export type Collect = (specs: string[], options: CollectOptions) => Promise<Report>;

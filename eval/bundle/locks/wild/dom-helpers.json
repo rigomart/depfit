@@ -1,0 +1,38 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "dom-helpers": "6.0.1"
+      }
+    },
+    "node_modules/@babel/runtime": {
+      "version": "7.29.10",
+      "resolved": "https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.10.tgz",
+      "integrity": "sha512-NpugTzbKgGrNe45Ui32cN8vCFFMxVtP/9rtfwv0nP5FRDAjvYBxJcLVpYA9mr1jxP6cnIT7x9LUzuDTbWYYNRA==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=6.9.0"
+      }
+    },
+    "node_modules/csstype": {
+      "version": "3.2.3",
+      "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz",
+      "integrity": "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==",
+      "license": "MIT"
+    },
+    "node_modules/dom-helpers": {
+      "version": "6.0.1",
+      "resolved": "https://registry.npmjs.org/dom-helpers/-/dom-helpers-6.0.1.tgz",
+      "integrity": "sha512-IKySryuFwseGkrCA/pIqlwUPOD50w1Lj/B2Yief3vBOP18k5y4t+hTqKh55gULDVeJMRitcozve+g/wVFf4sFQ==",
+      "license": "MIT",
+      "dependencies": {
+        "@babel/runtime": "^7.27.1",
+        "csstype": "^3.1.3"
+      }
+    }
+  }
+}

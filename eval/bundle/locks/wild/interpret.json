@@ -1,0 +1,22 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "interpret": "3.1.1"
+      }
+    },
+    "node_modules/interpret": {
+      "version": "3.1.1",
+      "resolved": "https://registry.npmjs.org/interpret/-/interpret-3.1.1.tgz",
+      "integrity": "sha512-6xwYfHbajpoF0xLW+iwLkhwgvLoZDfjYfoFNu8ftMoXINzwuymNLd9u/KmwtdT2GbR+/Cz66otEGEVVUHX9QLQ==",
+      "license": "MIT",
+      "engines": {
+        "node": ">=10.13.0"
+      }
+    }
+  }
+}

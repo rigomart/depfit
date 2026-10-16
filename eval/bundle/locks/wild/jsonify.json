@@ -1,0 +1,22 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "jsonify": "0.0.1"
+      }
+    },
+    "node_modules/jsonify": {
+      "version": "0.0.1",
+      "resolved": "https://registry.npmjs.org/jsonify/-/jsonify-0.0.1.tgz",
+      "integrity": "sha512-2/Ki0GcmuqSrgFyelQq9M05y7PS0mEwuIzrf3f1fPqkVDVRvZrPZtVSMHxdgo8Aq0sxAOb/cr2aqqA3LeWHVPg==",
+      "license": "Public Domain",
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    }
+  }
+}

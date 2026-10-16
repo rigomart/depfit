@@ -1,0 +1,1040 @@
+[
+  {
+    "id": "date-fns-named",
+    "package": "date-fns",
+    "version": "4.4.0",
+    "imports": [
+      {
+        "from": "date-fns",
+        "named": ["format", "parseISO"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["treeshake-esm", "sideeffects-false"],
+    "expect": "measure",
+    "notes": "Happy path. Root is a barrel with sideEffects:false; named import should be far below the whole-package size. Old full-namespace number would be ~2.7x too high.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 18423,
+        "gzip_bytes_node_full_import": 18423,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "date-fns-side-effect-only",
+    "package": "date-fns",
+    "version": "4.4.0",
+    "imports": [
+      {
+        "from": "date-fns"
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["sideeffects-false", "side-effect-import"],
+    "expect": "measure",
+    "notes": "AMBIGUOUS EDGE. `import \"date-fns\"` with nothing used: sideEffects:false lets bundlers drop the whole package, so the true bundle cost is ~0 B. Old code (namespace escaped to globalThis) said 18.4 KB gz. Checks that the tool measures the user's snippet rather than assuming use.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 18423,
+        "gzip_bytes_node_full_import": 18423,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "lodash-es-debounce",
+    "package": "lodash-es",
+    "version": "4.18.1",
+    "imports": [
+      {
+        "from": "lodash-es",
+        "named": ["debounce"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["treeshake-esm", "sideeffects-false"],
+    "expect": "measure",
+    "notes": "Extreme ratio case: ~1.4 KB gz used vs ~36 KB gz whole package (25x). Package has no exports map; module field/ESM main.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 35982,
+        "gzip_bytes_node_full_import": 35982,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "valibot-named",
+    "package": "valibot",
+    "version": "1.5.0",
+    "imports": [
+      {
+        "from": "valibot",
+        "named": ["object", "string", "number", "safeParse"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["treeshake-esm", "sideeffects-false"],
+    "expect": "measure",
+    "notes": "Designed for tree-shaking; ~1.1 KB gz used vs ~15 KB gz whole (13x). Optional peer typescript must not count.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 15430,
+        "gzip_bytes_node_full_import": 15430,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "lucide-named-2-icons",
+    "package": "lucide-react",
+    "version": "1.57.0",
+    "imports": [
+      {
+        "from": "lucide-react",
+        "named": ["Camera", "Check"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["treeshake-esm", "sideeffects-false", "react-peers"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "Icon barrel. ~2 KB gz used vs ~200 KB gz whole (100x). react is a peer and must be excluded or reported separately.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 202021,
+        "gzip_bytes_node_full_import": 192759,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "lucide-namespace-all",
+    "package": "lucide-react",
+    "version": "1.57.0",
+    "imports": [
+      {
+        "from": "lucide-react",
+        "namespace": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["namespace-heavy", "react-peers"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "Paired with lucide-named-2-icons. `import * as Icons` and passing it around (icon picker) really ships everything; the honest number is the full ~200 KB gz. Same package, 100x apart, decided only by import form.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 202021,
+        "gzip_bytes_node_full_import": 192759,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "immutable-map",
+    "package": "immutable",
+    "version": "5.1.9",
+    "imports": [
+      {
+        "from": "immutable",
+        "named": ["Map"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["sideeffects-undeclared", "treeshake-esm"],
+    "expect": "measure",
+    "notes": "No sideEffects field and top-level side effects: importing only Map still ships ~18.6 KB gz (namespace is ~19.4 KB). Shows named imports do not always shrink.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 19416,
+        "gzip_bytes_node_full_import": 19694,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "core-js-stable",
+    "package": "core-js",
+    "version": "3.50.0",
+    "imports": [
+      {
+        "from": "core-js/stable"
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["sideeffects-true", "side-effect-import", "subpath"],
+    "expect": "measure",
+    "notes": "Side-effect-only import of a package with sideEffects:true; must not be dropped to 0. ~90 KB gz. Contrast with a side-effect import of a sideEffects:false package, which bundlers drop to ~0.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 107426,
+        "gzip_bytes_node_full_import": 107426,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "zod-named-z-members",
+    "package": "zod",
+    "version": "4.6.7",
+    "imports": [
+      {
+        "from": "zod",
+        "named": ["z"],
+        "members": ["z.object", "z.string"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["namespace-heavy"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "`import { z } from 'zod'` then z.object/z.string. `z` is an `export * as z` namespace. With rolldown, rollup and webpack the used members shake (~22 KB gzip); esbuild and bun do not (~93 KB), which is why they are not references.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 93025,
+        "gzip_bytes_node_full_import": 93025,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "zod-namespace-members",
+    "package": "zod",
+    "version": "4.6.7",
+    "imports": [
+      {
+        "from": "zod",
+        "namespace": true,
+        "members": ["*.object", "*.string"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["namespace-heavy"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "`import * as z from 'zod'` with property access. Shakes to the same ~22 KB gzip as the `{ z }` form. Paired with zod-named-z-members: the two forms must give the same answer.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 93025,
+        "gzip_bytes_node_full_import": 93025,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "lodash-default-debounce",
+    "package": "lodash",
+    "version": "4.18.1",
+    "imports": [
+      {
+        "from": "lodash",
+        "default": true,
+        "members": ["default.debounce"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["cjs-only"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "CJS monolith: `_.debounce` cannot be shaken, ~26.8 KB gz whole. No exports map, no sideEffects.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 26803,
+        "gzip_bytes_node_full_import": 26803,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "lodash-subpath-debounce",
+    "package": "lodash",
+    "version": "4.18.1",
+    "imports": [
+      {
+        "from": "lodash/debounce",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["cjs-only", "subpath"],
+    "expect": "measure",
+    "notes": "Pair with lodash-default-debounce: the per-method CJS file is far smaller than the lodash root, which cannot be shaken."
+  },
+  {
+    "id": "moment-default",
+    "package": "moment",
+    "version": "2.31.0",
+    "imports": [
+      {
+        "from": "moment",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["cjs-only", "dynamic-require"],
+    "expect": "measure",
+    "notes": "CJS-only with a computed require('./locale/' + name) inside try/catch that Rollup-family bundlers leave as a runtime require; locales are not in the number (~20 KB gz). Was expect null OPAQUE_RUNTIME_LOAD; changed to measure because SPEC's claim was narrowed to emitted bytes (bytes shipped, no claim it runs), user decision. Webpack turns the computed require into a context module that bundles every locale, so the webpack reference is excluded from this case's band (reference.ts detects context modules from webpack's module types).",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 20744,
+        "gzip_bytes_node_full_import": 20744,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "ajv-default",
+    "package": "ajv",
+    "version": "8.20.0",
+    "imports": [
+      {
+        "from": "ajv",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["cjs-only", "json-import", "code-from-strings"],
+    "expect": "measure",
+    "notes": "CJS that require()s .json meta-schemas, so the JSON loader must work (~37 KB gz). ajv compiles validators with new Function. History: expect measure, then null OPAQUE_RUNTIME_LOAD by the structural rule's 'code from strings' clause (a pre-written rule, not depfit's output), now measure again because SPEC's claim was narrowed to emitted bytes (bytes shipped, no claim it runs), user decision.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 38083,
+        "gzip_bytes_node_full_import": 38083,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "uuid-v4",
+    "package": "uuid",
+    "version": "14.0.3",
+    "imports": [
+      {
+        "from": "uuid",
+        "named": ["v4"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["dual-package", "conditions"],
+    "expect": "measure",
+    "notes": "exports has node/default conditions. Old whole-package browser number 3.9 KB gz vs ~0.5 KB for v4 alone. Node build would use node:crypto, browser build must not.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 3884,
+        "gzip_bytes_node_full_import": 2306,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "axios-default",
+    "package": "axios",
+    "version": "1.20.0",
+    "imports": [
+      {
+        "from": "axios",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["dual-package", "conditions", "browser-field"],
+    "expect": "measure",
+    "notes": "Browser vs node builds differ 3.4x (19.7 KB gz vs 66.7 KB gz) via the `browser` export condition. Picking the wrong condition silently triples the number.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 19699,
+        "gzip_bytes_node_full_import": 66666,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "ws-default",
+    "package": "ws",
+    "version": "8.22.0",
+    "imports": [
+      {
+        "from": "ws",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["browser-field", "stub"],
+    "expect": "measure",
+    "notes": "AMBIGUOUS. The `browser` field swaps in browser.js, a ~0.46 KB gz stub that throws at runtime ('ws does not work in the browser'). Build succeeds and old code reported browser_compatible true. See open questions.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 459,
+        "gzip_bytes_node_full_import": 14320,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "pdnd-subpath",
+    "package": "@atlaskit/pragmatic-drag-and-drop",
+    "version": "4.0.0",
+    "imports": [
+      {
+        "from": "@atlaskit/pragmatic-drag-and-drop/element/adapter",
+        "named": ["draggable", "monitorForElements"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["subpath", "subpath-only-root"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "No exports map; the code is in nested folders with their own package.json. The subpath is ~6.9 KB gz.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 149,
+        "gzip_bytes_node_full_import": 414,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "pdnd-root",
+    "package": "@atlaskit/pragmatic-drag-and-drop",
+    "version": "4.0.0",
+    "imports": [
+      {
+        "from": "@atlaskit/pragmatic-drag-and-drop",
+        "namespace": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["subpath-only-root", "empty-root"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "AMBIGUOUS. The root exports nothing: 148 B gz, accurate for that import and useless as a package cost. Old code reported 149 B and 0 named exports. Tests that the tool surfaces the subpath need instead of presenting the root number as the package cost.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 149,
+        "gzip_bytes_node_full_import": 414,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "react-dom-client",
+    "package": "react-dom",
+    "version": "19.3.1",
+    "imports": [
+      {
+        "from": "react-dom/client",
+        "named": ["createRoot"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["subpath", "node-env", "react-peers"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "Old code measured the root (`react-dom`, ~2 KB gz) while real use is react-dom/client (~66 KB gz with react external, ~69 KB with react bundled). Also production vs development builds selected by process.env.NODE_ENV.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 1948,
+        "gzip_bytes_node_full_import": 4388,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "react-dom-server-workerd",
+    "package": "react-dom",
+    "version": "19.3.1",
+    "imports": [
+      {
+        "from": "react-dom/server",
+        "named": ["renderToString"]
+      }
+    ],
+    "target": "workerd",
+    "step": "workers",
+    "class": ["workers", "node-env", "react-peers", "subpath", "cjs-only"],
+    "expect": "measure",
+    "notes": "process.env.NODE_ENV branches. esbuild only auto-defines NODE_ENV for platform browser when minifying; on the workerd (neutral) build with no define the bundle holds both production and development React DOM: ~179 KB gz vs ~68 KB gz with NODE_ENV=production (2.6x). Old gzip_bytes_node_full_import for react was 9.8 KB gz vs 3.4 KB gz browser (2.9x) for the same reason.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 1948,
+        "gzip_bytes_node_full_import": 4388,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "sonner-named",
+    "package": "sonner",
+    "version": "2.0.8",
+    "imports": [
+      {
+        "from": "sonner",
+        "named": ["Toaster", "toast"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["react-peers", "dual-package"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "Peers react/react-dom must be excluded (or reported) consistently; ~9.7 KB gz. The package injects CSS via JS at runtime so no .css file is emitted.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 9905,
+        "gzip_bytes_node_full_import": 9905,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "recharts-named",
+    "package": "recharts",
+    "version": "3.10.1",
+    "imports": [
+      {
+        "from": "recharts",
+        "named": ["LineChart", "Line", "XAxis"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["react-peers", "treeshake-esm", "sideeffects-false"],
+    "expect": "measure",
+    "notes": "Large dependency tree (d3, immer, redux toolkit). Named ~95 KB gz vs ~162 KB gz whole (round 3 showed whole 161,974 browser vs 256,366 node and evaluators were confused by the gap).",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 161806,
+        "gzip_bytes_node_full_import": 256667,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "react-markdown-default",
+    "package": "react-markdown",
+    "version": "10.1.0",
+    "imports": [
+      {
+        "from": "react-markdown",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["react-peers", "conditions", "cjs-in-esm"],
+    "expect": "measure",
+    "notes": "Large ESM dependency tree with a few CJS packages inside; react is a peer. Paired with react-markdown-workerd: the workerd condition picks a different decode-named-character-reference entry."
+  },
+  {
+    "id": "react-markdown-workerd",
+    "package": "react-markdown",
+    "version": "10.1.0",
+    "imports": [
+      {
+        "from": "react-markdown",
+        "default": true
+      }
+    ],
+    "target": "workerd",
+    "step": "workers",
+    "class": ["react-peers", "conditions", "workers"],
+    "expect": "measure",
+    "notes": "Same import as react-markdown-default on the workerd target; the target changes the answer."
+  },
+  {
+    "id": "simple-git-default",
+    "package": "simple-git",
+    "version": "4.0.2",
+    "imports": [
+      {
+        "from": "simple-git",
+        "named": ["simpleGit"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["node-only"],
+    "expect": "null",
+    "code": "UNRESOLVED_IMPORT",
+    "reason": "imports fs and child_process (Node built-ins) with no browser condition",
+    "notes": "Old code: browser_compatible false, browser sizes null (correct), node size 24.8 KB gz. Round 1 evaluators were confused by null gzip_bytes_full_import next to a node figure.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 24813,
+        "browser_compatible": false,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "execa-named",
+    "package": "execa",
+    "version": "10.1.1",
+    "imports": [
+      {
+        "from": "execa",
+        "named": ["execa"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["node-only"],
+    "expect": "null",
+    "code": "MISSING_EXPORT",
+    "reason": "depends on node:child_process, node:events, node:stream etc.; no browser condition",
+    "notes": "Old code failed the exports probe with `No matching export in unicorn-magic/default.js for import toPath` (round 1 bug 6): error text came from a different build than the label implied.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 40246,
+        "browser_compatible": false,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "blessed-default",
+    "package": "blessed",
+    "version": "0.1.81",
+    "imports": [
+      {
+        "from": "blessed",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["node-only", "unresolvable-optional"],
+    "expect": "null",
+    "code": "UNRESOLVED_IMPORT",
+    "reason": "requires net/tty/fs/child_process; also an unresolvable optional require('term.js')",
+    "notes": "Round 1 bug 7: old code failed the whole node build on term.js and left browser_compatible null with a 3-build error dump. Unresolvable optional import plus Node built-ins in one package.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 78885,
+        "browser_compatible": false,
+        "unresolved_imports": ["pty.js", "term.js"]
+      }
+    }
+  },
+  {
+    "id": "biome-default",
+    "package": "@biomejs/biome",
+    "version": "2.5.15",
+    "imports": [
+      {
+        "from": "@biomejs/biome",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["no-entry", "cli-only"],
+    "expect": "null",
+    "code": "NO_ENTRY",
+    "reason": "package has bin only, no main/exports entry to import",
+    "notes": "Old code printed `Could not resolve \"@biomejs/biome\"` as a build error. Honest answer is null with a reason, not an error string.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 72,
+        "gzip_bytes_node_full_import": 72,
+        "browser_compatible": true,
+        "unresolved_imports": ["@biomejs/biome"]
+      }
+    }
+  },
+  {
+    "id": "node-pty-named",
+    "package": "@lydell/node-pty",
+    "version": "1.2.0-beta.15",
+    "imports": [
+      {
+        "from": "@lydell/node-pty",
+        "named": ["spawn"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["native-binary", "dynamic-require"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "Round 3 issue 1: old code reported 1,332 B gz and browser_compatible true. Was expect null OPAQUE_RUNTIME_LOAD; now measure because SPEC's claim was narrowed to emitted bytes (bytes shipped, no claim it runs), user decision. The number is the loader's bytes only; whether it can run is answered by cost.native_binaries (gate H0 question 6).",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 1332,
+        "gzip_bytes_node_full_import": 1332,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "better-sqlite3-default",
+    "package": "better-sqlite3",
+    "version": "13.0.3",
+    "imports": [
+      {
+        "from": "better-sqlite3",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["native-binary", "node-only"],
+    "expect": "null",
+    "code": "UNRESOLVED_IMPORT",
+    "reason": "native addon (bindings/.node) and fs/path",
+    "notes": "Browser build fails on fs; no install script in v13 (round 2 rejected claim) but still a native addon at runtime.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 5060,
+        "browser_compatible": false,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "sharp-default",
+    "package": "sharp",
+    "version": "0.35.5",
+    "imports": [
+      {
+        "from": "sharp",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["native-binary", "node-only"],
+    "expect": "null",
+    "code": "UNRESOLVED_IMPORT",
+    "reason": "native libvips binding via per-platform optional packages; requires child_process",
+    "notes": "Old node build gave 39 KB gz which excludes the ~several-MB native binary: a number that is true of the JS shell and misleading about cost.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 39440,
+        "browser_compatible": false,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "prisma-client-named",
+    "package": "@prisma/client",
+    "version": "7.10.1",
+    "imports": [
+      {
+        "from": "@prisma/client",
+        "named": ["PrismaClient"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["generated-code"],
+    "expect": "null",
+    "code": "UNRESOLVED_IMPORT",
+    "specifier": ".prisma/client/index-browser",
+    "reason": "root re-exports `.prisma/client/*` which only exists after `prisma generate` in the app; size depends on the user's schema",
+    "mandatory": true,
+    "notes": "Round 3 issue 4: old code marked the generated path external and reported 523 B. Note the package also has workerd/edge conditions, but the generated client is still required.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 525,
+        "gzip_bytes_node_full_import": 515,
+        "browser_compatible": true,
+        "unresolved_imports": [".prisma/client/default", ".prisma/client/index-browser"]
+      }
+    }
+  },
+  {
+    "id": "shiki-codeToHtml",
+    "package": "shiki",
+    "version": "4.5.0",
+    "imports": [
+      {
+        "from": "shiki",
+        "named": ["codeToHtml"]
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["dynamic-import", "chunks"],
+    "expect": "measure",
+    "mandatory": true,
+    "notes": "AMBIGUOUS. Languages and themes are dynamic import()s. Without splitting esbuild inlines all 389 modules: 1.70 MB gz / 10.1 MB min. With splitting the initial chunk is 2.1 KB gz and total is 1.71 MB gz. Old number was the total with no way to tell. See open questions.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 1725045,
+        "gzip_bytes_node_full_import": 1725029,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "md-editor-default",
+    "package": "@uiw/react-md-editor",
+    "version": "4.1.2",
+    "imports": [
+      {
+        "from": "@uiw/react-md-editor",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "non-js",
+    "class": ["css-import", "react-peers"],
+    "expect": "measure",
+    "notes": "JS imports .css files. Old build threw `Cannot import ...markdown.css into a JavaScript file without an output path configured` (no outdir). With outdir: 364 KB gz JS plus 33.7 KB css. AMBIGUOUS whether CSS counts.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": null,
+        "browser_compatible": null,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "monaco-editor-api",
+    "package": "monaco-editor",
+    "version": "0.57.0",
+    "imports": [
+      {
+        "from": "monaco-editor/editor/editor.api",
+        "named": ["editor"]
+      }
+    ],
+    "target": "browser",
+    "step": "non-js",
+    "class": ["css-import", "asset-import", "subpath"],
+    "expect": "measure",
+    "notes": "Imports css (90.8 KB) from JS. The package root `monaco-editor` additionally imports a codicon .ttf and fails with `No loader is configured for \".ttf\"`; editor.api avoids the font. Old root-import build failed with 131 errors (`Cannot import ...css into a JavaScript file without an output path configured`). Editor/language workers are separate entry points and are not in this number. Note the exports map `./*` -> `./esm/vs/*.js` makes the obvious path monaco-editor/esm/vs/editor/editor.api unresolvable; the subpath is monaco-editor/editor/editor.api.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": null,
+        "browser_compatible": null,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "tiktoken-default",
+    "package": "tiktoken",
+    "version": "1.0.22",
+    "imports": [
+      {
+        "from": "tiktoken",
+        "named": ["get_encoding"]
+      }
+    ],
+    "target": "browser",
+    "step": "non-js",
+    "class": ["wasm-import"],
+    "expect": "measure",
+    "notes": "AMBIGUOUS. Imports tiktoken_bg.wasm; old browser build failed `No loader is configured for \".wasm\" files` (browser_compatible null, node build 2.6 KB gz because node reads the wasm with fs at runtime). With a file loader the JS is 1.7 KB gz and the wasm is a separate 5.6 MB raw asset; with an inline binary loader the JS balloons to 3.3 MB gz. The answer depends on how wasm is counted.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 2600,
+        "browser_compatible": null,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "hono-workerd",
+    "package": "hono",
+    "version": "4.13.13",
+    "imports": [
+      {
+        "from": "hono",
+        "named": ["Hono"]
+      }
+    ],
+    "target": "workerd",
+    "step": "workers",
+    "class": ["workers", "dual-package"],
+    "expect": "measure",
+    "notes": "Happy path on Workers. Runtime-agnostic, no Node built-ins, ~7.7 KB gz. Same number for browser and workerd.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 7749,
+        "gzip_bytes_node_full_import": 7749,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "postgres-workerd",
+    "package": "postgres",
+    "version": "3.4.9",
+    "imports": [
+      {
+        "from": "postgres",
+        "default": true
+      }
+    ],
+    "target": "workerd",
+    "step": "workers",
+    "class": ["workers", "workerd-condition", "node-builtins-compat"],
+    "expect": "measure",
+    "notes": "Has a top-level `workerd` export condition (./cf/src/index.js) that uses cloudflare:sockets plus node:events/buffer/stream; ~15.8 KB gz when node:* are treated as provided by nodejs_compat. Fails on the plain browser platform (net/tls/crypto). Depends on the nodejs_compat open question.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 14742,
+        "browser_compatible": false,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "postgres-browser",
+    "package": "postgres",
+    "version": "3.4.9",
+    "imports": [
+      {
+        "from": "postgres",
+        "default": true
+      }
+    ],
+    "target": "browser",
+    "step": "1",
+    "class": ["node-only", "workerd-condition"],
+    "expect": "null",
+    "code": "UNRESOLVED_IMPORT",
+    "reason": "only the workerd/default conditions exist; default needs net/tls/crypto",
+    "notes": "Paired with postgres-workerd: same package, null on browser, measurable on workerd. Target must be an input to the measurement.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 14742,
+        "browser_compatible": false,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "libsql-workerd",
+    "package": "@libsql/client",
+    "version": "0.18.0",
+    "imports": [
+      {
+        "from": "@libsql/client",
+        "named": ["createClient"]
+      }
+    ],
+    "target": "workerd",
+    "step": "workers",
+    "class": ["workers", "workerd-condition", "conditions"],
+    "expect": "measure",
+    "notes": "exports.import has workerd/browser -> lib-esm/web.js and default/node -> lib-esm/node.js (native libsql, fs). Workers must resolve web.js: ~19.2 KB gz vs 38.7 KB for the node build.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": 19290,
+        "gzip_bytes_node_full_import": 38702,
+        "browser_compatible": true,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "vercel-og-workerd",
+    "package": "@vercel/og",
+    "version": "1.0.3",
+    "imports": [
+      {
+        "from": "@vercel/og",
+        "named": ["ImageResponse"]
+      }
+    ],
+    "target": "workerd",
+    "step": "workers",
+    "class": ["workers", "wasm-import", "workerd-condition"],
+    "expect": "measure",
+    "notes": "AMBIGUOUS. The workerd condition resolves to index.edge.js which imports yoga.wasm?module and resvg.wasm?module (Workers wasm module bindings) and also a bare `module` import: ~155 KB gz JS plus ~1.45 MB wasm assets. Shows wasm and `?module` handling.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 234977,
+        "browser_compatible": false,
+        "unresolved_imports": []
+      }
+    }
+  },
+  {
+    "id": "jsonwebtoken-workerd",
+    "package": "jsonwebtoken",
+    "version": "9.0.3",
+    "imports": [
+      {
+        "from": "jsonwebtoken",
+        "default": true
+      }
+    ],
+    "target": "workerd",
+    "step": "workers",
+    "class": ["workers", "node-builtins-compat", "cjs-only"],
+    "expect": "measure",
+    "notes": "AMBIGUOUS. CJS using buffer/crypto/stream/util. Works only with the nodejs_compat flag; ~18.5 KB gz with those external. Without nodejs_compat the honest answer is null. The tool cannot know the flag unless it reads wrangler config.",
+    "history": {
+      "v3_output": {
+        "gzip_bytes_browser_full_import": null,
+        "gzip_bytes_node_full_import": 18488,
+        "browser_compatible": false,
+        "unresolved_imports": []
+      }
+    }
+  }
+]

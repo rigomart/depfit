@@ -6,7 +6,14 @@ export type Command =
   | { kind: "help" }
   | { kind: "version" }
   | { kind: "schema" }
-  | { kind: "run"; specs: string[]; cwd: string | null; output: OutputMode | "auto" }
+  | {
+      kind: "run";
+      specs: string[];
+      cwd: string | null;
+      output: OutputMode | "auto";
+      /** `--bundle-entry` snippets as typed, validated later against the specs. */
+      bundleEntries: string[];
+    }
   | { kind: "usage-error"; message: string };
 
 export const USAGE = `Usage: depfit <spec>... [options]
@@ -16,12 +23,17 @@ A spec is an npm package with an optional range (zod, zod@^3) or a runtime built
 (node:sqlite, bun:sqlite).
 
 Options:
-  --cwd <dir>    Project to compare against (default: current directory)
-  --json         Print the report as JSON (default when stdout is not a TTY)
-  --table        Print a table (default when stdout is a TTY)
-  --schema       Print a one-sentence description of every JSON field, then exit
-  -h, --help     Show this help
-  -v, --version  Show the version`;
+  --cwd <dir>             Project to compare against (default: current directory)
+  --bundle-entry <js>     Measure the browser bundle of an import of one candidate, e.g.
+                          'import { z } from "zod"; z.object; z.string'. Only imports from that
+                          candidate (or its subpaths) and member statements on the imported
+                          names; bindings without members are kept whole. Repeat once per
+                          candidate.
+  --json                  Print the report as JSON (default when stdout is not a TTY)
+  --table                 Print a table (default when stdout is a TTY)
+  --schema                Print a one-sentence description of every JSON field, then exit
+  -h, --help              Show this help
+  -v, --version           Show the version`;
 
 function errorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -52,6 +64,7 @@ export function parseCliArgs(argv: string[]): Command {
     specs: positionals,
     cwd: values.cwd ?? null,
     output: values.json ? "json" : values.table ? "table" : "auto",
+    bundleEntries: values["bundle-entry"] ?? [],
   };
 }
 
@@ -62,6 +75,7 @@ function parse(argv: string[]) {
     strict: true,
     options: {
       cwd: { type: "string" },
+      "bundle-entry": { type: "string", multiple: true },
       json: { type: "boolean" },
       table: { type: "boolean" },
       schema: { type: "boolean" },

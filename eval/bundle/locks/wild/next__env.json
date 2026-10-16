@@ -1,0 +1,19 @@
+{
+  "name": "ref",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "ref",
+      "dependencies": {
+        "@next/env": "16.4.2"
+      }
+    },
+    "node_modules/@next/env": {
+      "version": "16.4.2",
+      "resolved": "https://registry.npmjs.org/@next/env/-/env-16.4.2.tgz",
+      "integrity": "sha512-nTUTFH7G5/J/fmpkjVLegOkqyKOP0CEsJcMsyO4UCYeN1su+YMW/MfaSErnJskL7XM+UDK6aTvslxsRCyya/sA==",
+      "license": "MIT"
+    }
+  }
+}

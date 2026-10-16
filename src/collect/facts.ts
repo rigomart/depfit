@@ -170,6 +170,7 @@ export function builtinReport(
     compatibility: null,
     maintenance: null,
     security: null,
+    bundle: null,
   };
 }
 
