@@ -20,14 +20,19 @@
  */
 import { readFileSync, realpathSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
-import { build, esmExternalRequirePlugin, rolldownVersion, version } from "vite";
+import { build, esmExternalRequirePlugin, parseAst, rolldownVersion, version } from "vite";
 
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
 
+/** Extensions Vite tries for a relative import (its default `resolve.extensions`, plus index). */
+const TRIED = ["", ".mjs", ".js", ".mts", ".ts", ".jsx", ".tsx", ".json", "/index.js"];
+
 /**
- * Does the package containing `file` map `specifier` to false in its `browser` field? Then a Node
- * built-in name resolving to Vite's empty stub is the package's own choice, not a missing built-in
- * (brorand maps `crypto` to false).
+ * Does the package containing `file` (its nearest package.json, as Vite reads it) map `specifier`
+ * to false in its `browser` field? Then Vite's empty stub is the package's own choice (brorand maps
+ * `crypto` to false; others map `./server.js`), and the bytes are measured. Every other stub, a
+ * Node built-in by any route (`node:fs`, or a `#crypto` import alias), makes the build unmeasurable.
+ * A relative specifier matches a `./` key that names the same file, with Vite's extensions.
  */
 function mappedAwayByBrowserField(file, specifier, root) {
   for (let dir = dirname(file); dir.startsWith(root); dir = dirname(dir)) {
@@ -38,9 +43,78 @@ function mappedAwayByBrowserField(file, specifier, root) {
       continue;
     }
     const browser = manifest?.browser;
-    return typeof browser === "object" && browser !== null && browser[specifier] === false;
+    if (typeof browser !== "object" || browser === null) return false;
+    if (browser[specifier] === false) return true;
+    if (!specifier.startsWith(".")) return false;
+    const target = join(dirname(file), specifier);
+    const candidates = new Set(TRIED.map((extension) => target + extension));
+    return Object.entries(browser).some(
+      ([key, value]) => value === false && key.startsWith(".") && candidates.has(join(dir, key)),
+    );
   }
   return false;
+}
+
+const LANGS = { ".ts": "ts", ".mts": "ts", ".cts": "ts", ".tsx": "tsx", ".jsx": "jsx" };
+
+/** `import.meta.url`, also as `import.meta["url"]`. */
+const isImportMetaUrl = (node) =>
+  node?.type === "MemberExpression" &&
+  node.object?.type === "MetaProperty" &&
+  node.object.meta?.name === "import" &&
+  node.object.property?.name === "meta" &&
+  (node.computed ? node.property?.value === "url" : node.property?.name === "url");
+
+/** The constructor's name in `new X(...)` or `new globalThis.X(...)`. */
+const constructed = (node) =>
+  node.callee?.type === "Identifier"
+    ? node.callee.name
+    : node.callee?.type === "MemberExpression" && !node.callee.computed
+      ? node.callee.property?.name
+      : null;
+
+const isStringLike = (node) =>
+  (node?.type === "Literal" && typeof node.value === "string") || node?.type === "TemplateLiteral";
+
+/**
+ * References in a module's source to a file the bundle does not contain (SETTINGS.md): an asset or
+ * worker URL, `new URL(x, import.meta.url)` in any spelling, and a Worker or SharedWorker started
+ * from a literal URL or path. A Worker made from in-bundle code (a Blob URL, as fflate does) loads
+ * nothing more and is measured. Read from the syntax tree, so words inside strings never count; a
+ * module the parser rejects falls back to text patterns, so a parse failure never hides one.
+ */
+function fileReferences(code, id) {
+  if (!code.includes("import.meta") && !code.includes("Worker")) return [];
+  const extension = /\.[a-z]+$/i.exec(id.split("?")[0] ?? "")?.[0] ?? "";
+  let program;
+  try {
+    program = parseAst(code, { lang: LANGS[extension] ?? "js", sourceType: "module" });
+  } catch {
+    const kinds = [];
+    if (/new\s+URL\s*\(/.test(code) && /import\s*\.\s*meta/.test(code)) {
+      kinds.push("new URL(import.meta.url)");
+    }
+    if (/new\s+(?:Shared)?Worker\s*\(/.test(code)) kinds.push("new Worker");
+    return kinds;
+  }
+  const kinds = new Set();
+  const visit = (node) => {
+    if (Array.isArray(node)) return node.forEach(visit);
+    if (typeof node !== "object" || node === null) return;
+    if (node.type === "NewExpression") {
+      const name = constructed(node);
+      const [first, second] = node.arguments ?? [];
+      if (name === "URL" && isImportMetaUrl(second)) kinds.add("new URL(import.meta.url)");
+      if ((name === "Worker" || name === "SharedWorker") && isStringLike(first)) {
+        kinds.add("new Worker");
+      }
+    }
+    for (const [key, child] of Object.entries(node)) {
+      if (key !== "parent" && typeof child === "object" && child !== null) visit(child);
+    }
+  };
+  visit(program);
+  return [...kinds];
 }
 
 /** A string property of an unknown value, or null. */
@@ -101,11 +175,7 @@ async function main() {
       // Vite's own virtual modules (`\0vite/preload-helper.js`) are not package sources.
       if (id.startsWith("\0")) return null;
       const at = label(id) ?? id;
-      // An asset or worker file (`new Worker(new URL("./w.js", import.meta.url))` too). A Worker
-      // made from in-bundle code (a Blob URL, as fflate does) fetches nothing and is measured.
-      if (/new\s+URL\s*\([^)]*import\.meta\.url/.test(code)) {
-        sourceRefs.push({ kind: "new URL(import.meta.url)", id: at });
-      }
+      for (const kind of fileReferences(code, id)) sourceRefs.push({ kind, id: at });
       return null;
     },
   };

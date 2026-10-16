@@ -26,13 +26,14 @@ Vite turns several broken inputs into a quiet success, so each is read from its 
 | Input | Vite does | depfit reports |
 |---|---|---|
 | Import that does not resolve | warns `UNRESOLVED_IMPORT`, leaves it external | `UNRESOLVED_IMPORT` (`NO_ENTRY` for the snippet's own import of the candidate) |
-| Node built-in (`node:fs`, `fs`) | resolves to an empty `__vite-browser-external` stub, warns | `UNRESOLVED_IMPORT <name>` |
-| A package's `browser: { "./x.js": false }` | resolves to the same stub, no warning | measured (the package chose it) |
+| Node built-in by any route (`node:fs`, `fs`, an import alias like `#crypto`) | resolves to an empty `__vite-browser-external` stub, warns | `UNRESOLVED_IMPORT <specifier>`: every stub is unmeasurable unless the importing package maps that import to false in its `browser` field |
+| A package's `browser` mapping to false (`"./x.js": false`, matched with Vite's extensions; `"crypto": false`) | resolves to the same stub, no warning | measured (the package chose it) |
 | Missing optional peer of a dependency | replaces it with `__vite-optional-peer-dep:*`, a throw | `UNRESOLVED_IMPORT <peer>` |
 | Missing named export | error `MISSING_EXPORT` | `MISSING_EXPORT` |
 | Missing namespace member (`m.nope`) | warns `IMPORT_IS_UNDEFINED`, emits `undefined` | `MISSING_EXPORT` |
-| CSS, wasm, images, fonts; `?url`, `?raw`, `?inline`, `?worker`, `?init` queries; `new URL(..., import.meta.url)`; `new Worker(...)`; any emitted asset | inlines a URL, emits an asset, or a worker | `NON_JS_IMPORT` (step 1 is JS only) |
+| CSS, wasm, images, fonts; `?url`, `?raw`, `?inline`, `?worker`, `?init` queries; `new URL(x, import.meta.url)` in any spelling; a Worker from a literal URL or path; any emitted asset (read from the syntax tree, text patterns only if a module does not parse) | inlines a URL, emits an asset, or a worker | `NON_JS_IMPORT` (step 1 is JS only). A Worker made from in-bundle code (a Blob URL) is measured |
 | An `import()` or import left in the output that is no emitted chunk and no peer | builds | `IMPORT_OUTSIDE_BUNDLE <specifier>` |
+| The installed Vite or rolldown is not the evaluated version | builds | `TOOLCHAIN_MISMATCH <found>` |
 | Any other build error | fails | Vite's code (`PARSE_ERROR`, `PLUGIN_ERROR`, ...) |
 
 Warnings in general, and package-authored stubs or loaders that throw, are not nulls: the number is

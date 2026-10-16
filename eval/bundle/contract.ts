@@ -26,8 +26,10 @@ export const NETWORK_ENTRY =
  * failed in transit in either run, these fields, and nothing else, may differ between the runs.
  */
 const SOURCE_FIELDS: Record<string, string[][]> = {
-  // A failed osv lookup nulls the whole section.
-  osv: [["security"]],
+  osv: [
+    ["security", "advisories"],
+    ["security", "dependency_vulnerabilities"],
+  ],
   "osv dependencies": [["security", "dependency_vulnerabilities"]],
   github: [
     ["maintenance", "archived"],
@@ -91,6 +93,11 @@ export function withoutBundle(
           )
         : maintenance;
       let sections: Record<string, unknown> = { ...pkg, unavailable: others, maintenance: stable };
+      // A failed osv lookup nulls the whole `security` section: compare it as a section with its
+      // documented keys ignored, so a surviving section must still have every key (round 5).
+      if (failed.has("osv") && "security" in sections && sections.security === null) {
+        sections.security = { advisories: IGNORED, dependency_vulnerabilities: IGNORED };
+      }
       for (const path of fed) sections = ignoredAt(sections, path);
       return sections;
     }),

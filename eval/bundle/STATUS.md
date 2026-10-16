@@ -24,6 +24,25 @@ Scorecards, 2026-10-16 (corpus 17:3x, wild 17:30):
 | W | Pass: (i) 0, (ii) 0 with 2 reviewed exceptions (tldts, server-only), (iii) 0 |
 | H0 | Pass: 3/3 blind Haiku readers correct on all six questions (Vite-based output, new docs) |
 
+**Codex review of the implementation (2026-10-16): not passing, then fixed.** Two blocking
+bypasses, each reproduced by a fixture, now null: a Node built-in behind a package `imports` alias
+(`#crypto`), because every `__vite-browser-external` stub is unmeasurable unless the importing package
+maps that import to false in its `browser` field (matched with Vite's extensions); and asset URLs in
+other spellings (`new URL(("./x"), ...)`, `new URL(f(), ...)`, `import.meta["url"]`, comments), because
+the child now reads `new URL(x, import.meta.url)` and Workers from a literal URL from the syntax
+tree (text only when a module does not parse; words in strings no longer count). Also: workers from
+a literal file or URL are NON_JS_IMPORT again (a Blob worker is still measured);
+`TOOLCHAIN_MISMATCH` when the installed Vite or rolldown is not the evaluated pin (npm ignores
+`overrides` inside installed dependencies); the auditor's webpack exemption needs every string of
+its `.u` function in an emitted chunk name and is never granted in text mode; gate E rejects a
+surviving `security` section with a missing key; the wild cache key covers all of `src/`, the lockfile
+and the runtime, and W now detects drift (a locked package missing from depfit's install). Codex
+accepted the ws and node-pty exceptions (numbers reproduced). Not done: Codex's suggested
+restructure (moving interpretation into the child), and a chunk-graph comparison in gate C (the CLI
+output does not expose chunks).
+Rerun after the fixes: corpus A-F pass (2 exceptions), W passes (2 exceptions; 1 number set aside
+as drifted: @testing-library/jest-dom's aria-query moved).
+
 **Found and fixed during the implementation, by the gates:**
 - D: a MISSING_EXPORT reason held the temp install path (different every run); log paths are
   now labeled `pkg/file.js`.
@@ -156,7 +175,8 @@ in step 1.
 
 ## To resume
 
-1. Codex review of the Vite implementation (including the two corpus exceptions).
+1. Codex re-check of the fixes for its implementation review (clientRequestId
+   `depfit-bundle-vite-fixes-review`).
 2. Then stop and present to the user before step 2.
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and

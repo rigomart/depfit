@@ -60,6 +60,11 @@ describe("gate E contract comparison", () => {
     });
     expect(missing.network).toBe(false);
     expect(compare((p) => delete p.maintenance.weekly_downloads).diff).not.toBeNull();
+    const nested = compare((p) => {
+      p.unavailable.push("osv: HTTP 503");
+      p.security = { dependency_vulnerabilities: [] };
+    });
+    expect(nested.network).toBe(false);
   });
 });
 
@@ -79,6 +84,8 @@ describe("gate W auditor", () => {
       `${loader}const l = (id) => import("https://cdn/" + r.u(id));`,
       `${loader}const l = (id) => import("./" + r.u(id) + "https://cdn/");`,
       `${loader}const l = (id) => import("./" + app.u(id));`,
+      'r.u = (id) => "https://cdn.example/" + id; const l = (id) => import("" + r.u(id));',
+      'r.u = "x"; const l = (id) => import("./" + r.u(id));',
       'const a = () => import("../chunk-x.js");',
     ]) {
       expect(fetches(code), code).toEqual([true, true]);
@@ -87,9 +94,10 @@ describe("gate W auditor", () => {
 
   it("ignores the build's own chunks, webpack's loader, and words inside strings", () => {
     expect(fetches('const a = () => import("./chunk-x.js");')).toEqual([false, false]);
+    // Text mode cannot tie a loader to its filename function, so it reports it.
     expect(fetches(`${loader}const l = (e) => import("./" + r.p + r.u(e));`)).toEqual([
       false,
-      false,
+      true,
     ]);
     expect(
       fetches('const a = () => import("./axe.js");', ["assets/i.js", "assets/axe.js"]),

@@ -68,15 +68,8 @@ const MENTION_PATTERNS: [string, RegExp][] = [
 const WEBPACK_GLOBAL_HELPER = /try\{return this\|\|new Function\("return this"\)\(\)\}/g;
 
 const IMPORT_CALL = new RegExp(`${B}import\\s*\\(`, "g");
-/**
- * webpack's ESM chunk loader as text: `import("./" + r.p + r.u(id))` or `import("<dir>" + r.u(id))`,
- * ending right after the `.u()` call. It is exempt only when the same chunk defines `r.u = ...`,
- * webpack's chunk-filename function (round 4: any `.u()` call was not enough).
- */
 /** A URL with a scheme, or protocol-relative: never webpack's own (relative) chunk directory. */
 const REMOTE = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
-const WEBPACK_CHUNK_LOADER =
-  /^\s*["'][^"']*["']\s*\+\s*(?:[\w$]+\.p\s*\+\s*)?([\w$]+)\.u\(\s*[\w$]+\s*\)\s*\)/;
 
 const CONTEXT = 40;
 
@@ -126,8 +119,10 @@ function memberName(node: Node): string | null {
 
 /**
  * webpack's ESM chunk loader: `"<dir>" + ... + r.u(id)`, a string concatenation that starts with a
- * literal and ends in a call to `r.u()`, where `r` is a binding the chunk assigns a function to
- * `r.u` (webpack's chunk-filename function). `chunkFilenameOwners` are those binding names.
+ * relative literal and ends in a call to `r.u()`, where the chunk assigns `r.u` a function whose
+ * every string literal is part of an emitted chunk's file name (webpack's chunk-filename function,
+ * `e => e + ".js"`). `chunkFilenameOwners` are those binding names. Bindings are matched by name,
+ * not scope: a function parameter shadowing `r` is not told apart (a known limit).
  */
 function isWebpackChunkLoader(source: Node, chunkFilenameOwners: Set<string>): boolean {
   if (source.type !== "BinaryExpression" || source.operator !== "+") return false;
@@ -150,6 +145,7 @@ function isWebpackChunkLoader(source: Node, chunkFilenameOwners: Set<string>): b
 function fetchSites(
   code: string,
   parse: ParseModule,
+  chunkNames: Set<string>,
 ): { imports: ImportSite[]; scripts: number[] } | null {
   let program: unknown;
   try {
@@ -160,8 +156,19 @@ function fetchSites(
   if (!isNode(program)) return null;
   const scripts: number[] = [];
   const importNodes: Node[] = [];
-  // Bindings `r` with `r.u = function` / `r.u = () => ...`: webpack's chunk-filename function.
+  // Bindings `r` with `r.u = function` / `r.u = () => ...` that build emitted file names only.
   const chunkFilenameOwners = new Set<string>();
+  const fileNames = [...chunkNames].map((name) => name.replace(/^.*\//, ""));
+  const buildsChunkNames = (fn: Node) => {
+    const literals: string[] = [];
+    walk(fn, (inner) => {
+      const value = literalValue(inner);
+      if (value) literals.push(value);
+    });
+    return literals.every(
+      (value) => !REMOTE.test(value) && fileNames.some((file) => file.includes(value)),
+    );
+  };
   walk(program, (node) => {
     if (node.type === "ImportExpression" && isNode(node.source)) {
       importNodes.push(node);
@@ -175,7 +182,9 @@ function fetchSites(
         node.right.type === "FunctionExpression" || node.right.type === "ArrowFunctionExpression";
       if (isFunction && memberName(target) === "u" && isNode(target.object)) {
         const owner = target.object.type === "Identifier" ? target.object.name : null;
-        if (typeof owner === "string") chunkFilenameOwners.add(owner);
+        if (typeof owner === "string" && buildsChunkNames(node.right)) {
+          chunkFilenameOwners.add(owner);
+        }
       }
     }
   });
@@ -237,14 +246,9 @@ function textImportSites(code: string): ImportSite[] {
   return [...code.matchAll(IMPORT_CALL)].map((match) => {
     const at = match.index ?? 0;
     const source = at + match[0].length;
-    const { literal, raw } = importTarget(code, source);
-    const loader = literal === null ? WEBPACK_CHUNK_LOADER.exec(raw) : null;
-    const prefix = loader ? /^\s*["']([^"']*)["']/.exec(raw)?.[1] : undefined;
-    const owner = prefix !== undefined && !REMOTE.test(prefix) ? loader?.[1] : undefined;
-    const defined = owner
-      ? new RegExp(`${B}${owner.replace(/\$/g, "\\$")}\\.u\\s*=`).test(code)
-      : false;
-    return { literal, at, source, webpackLoader: defined };
+    const { literal } = importTarget(code, source);
+    // Without a parse there is no way to tie a loader to its filename function: no exemption.
+    return { literal, at, source, webpackLoader: false };
   });
 }
 
@@ -301,7 +305,7 @@ export function auditChunk(
   const chunks = new Set(chunkNames.map((chunk) => posix.normalize(chunk)));
   const masked = code.replace(WEBPACK_GLOBAL_HELPER, "");
   const taken: Array<[number, number]> = [];
-  const parsed = parse ? fetchSites(code, parse) : null;
+  const parsed = parse ? fetchSites(code, parse, chunks) : null;
   const fetches = parsed
     ? parsed.scripts.length
       ? [

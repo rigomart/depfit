@@ -177,6 +177,10 @@ an acorn AST: an `ImportExpression`, or a call whose callee is `importScripts` o
 `x.importScripts`. A chunk acorn cannot parse falls back to the text patterns, so a parse failure
 never hides a fetch. `load` and `mention` stay text patterns.
 
+**Amended after the Vite implementation review (2026-10-16).** webpack's loader is exempt only in
+parse mode, and only when every string in the `.u` function it calls is part of an emitted chunk's
+file name. Text mode no longer exempts it, so a chunk that fails to parse reports its loader.
+
 **Amended after Codex review round 3 (2026-10-16).** Three gaps that both modes had: a literal
 target counted as a chunk when its base name matched one (`import("https://cdn/entry.js")` passed
 next to an `entry.js` chunk); now only a relative path that resolves, against the importing chunk's
@@ -231,9 +235,12 @@ references add 400-900 B of CommonJS interop and runtime). A blanket "within 3% 
 was rejected in review (a shared engine bug would pass), so each one is an entry in `exceptions.json`
 (shared with gates A and B) with a written cause, exact-match conditions and a review.
 
-`--resume` reuses a package's cached measurement only when its key matches: the toolchain, depfit's
-bundle sources, the snippet and the lock hash. Ranges, audits and exceptions are recomputed on
-every run (Codex round 4: resuming reused stale verdicts).
+`--resume` reuses a package's cached measurement only when its key matches: the toolchain, all of
+depfit's `src/`, `package.json`, `bun.lock`, the runtime versions, the snippet and the lock hash.
+Ranges, audits, exceptions and drift are recomputed on every run (Codex rounds 4 and 5). A package
+whose install is missing a locked package (`cost.new_packages` against the frozen lock; extra
+packages are expected, since depfit installs peers the reference locks leave out) is drifted and not
+compared in (ii).
 
 The report also gives the null rate by code (no threshold), numbers outside the band but not gross,
 numbers for which neither reference built (nothing to check them against), and how many numbers the

@@ -12,7 +12,7 @@
  */
 import { spawn } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
-import { builtinModules, createRequire } from "node:module";
+import { createRequire } from "node:module";
 import { join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
@@ -39,12 +39,11 @@ const JS_EXTENSIONS = new Set([
 
 /** Vite's import queries that turn a file into a URL, a string, a worker or a wasm instance. */
 const ASSET_QUERY = /[?&](url|raw|inline|worker|sharedworker|init)\b/;
-const NODE_BUILTINS = new Set(builtinModules);
 
 /**
  * One reason a bundle is unmeasurable. `code` is UNRESOLVED_IMPORT, MISSING_EXPORT,
- * IMPORT_OUTSIDE_BUNDLE, NO_ENTRY, or NON_JS_IMPORT (SPEC.md), or Vite's own code for any other
- * build error (e.g. PARSE_ERROR).
+ * IMPORT_OUTSIDE_BUNDLE, NO_ENTRY, NON_JS_IMPORT or TOOLCHAIN_MISMATCH (SPEC.md), or Vite's own
+ * code for any other build error (e.g. PARSE_ERROR).
  */
 export type BundleProblem = { code: string; specifier: string | null };
 
@@ -97,7 +96,7 @@ export type ViteBuildResult = {
   rolldown: string;
   resolutions: ViteResolution[];
   logs: ViteLog[];
-  /** `new URL(..., import.meta.url)` in package sources (assets, worker files), by module. */
+  /** In package sources, by module: `new URL(x, import.meta.url)`, or a Worker from a literal URL. */
   sourceRefs: { kind: string; id: string }[];
   chunks: ViteChunk[];
   assets: string[];
@@ -292,15 +291,6 @@ export function isNonJsModule(id: string): boolean {
   return extension !== "" && extension !== ".node" && !JS_EXTENSIONS.has(extension);
 }
 
-/** `fs`, `node:fs`, `fs/promises`: names Vite replaces with an empty browser stub. */
-function isNodeBuiltin(specifier: string): boolean {
-  return (
-    specifier.startsWith("node:") ||
-    NODE_BUILTINS.has(specifier) ||
-    NODE_BUILTINS.has(specifier.split("/")[0] ?? "")
-  );
-}
-
 // --- what the build means -------------------------------------------------------------------------
 
 /**
@@ -346,9 +336,10 @@ export function problemsFromBuild(
     if (id === null) {
       unresolved.add(source);
       problems.push(unresolvedProblem(source, importer === ENTRY_FILE, candidate));
-    } else if (id.includes("__vite-browser-external") && isNodeBuiltin(source) && !browserFalse) {
-      // A package's own `browser` mapping to false (`"./x.js": false`, or `"crypto": false`)
-      // resolves to the same stub and is measured; only an unmapped Node built-in is not.
+    } else if (id.includes("__vite-browser-external") && !browserFalse) {
+      // Vite's empty stub. It means a Node built-in, reached by any route (`node:fs`, an import
+      // alias like `#crypto`), unless the importing package itself maps the import to false in its
+      // `browser` field (`"./x.js": false`, `"crypto": false`), which is measured.
       problems.push({ code: "UNRESOLVED_IMPORT", specifier: source });
     } else if (
       !external &&
@@ -477,6 +468,25 @@ function loadParser(): Promise<Parse> {
   return parser;
 }
 
+let toolchain: Promise<{ vite: string; rolldown: string }> | null = null;
+
+/**
+ * The Vite and rolldown versions the eval measured (eval/bundle/SPEC.md): depfit's own pins,
+ * `dependencies.vite` and `overrides.rolldown` in its package.json.
+ */
+function evaluatedToolchain(): Promise<{ vite: string; rolldown: string }> {
+  toolchain ??= readFile(new URL("../../package.json", import.meta.url), "utf8").then((text) => {
+    const manifest: unknown = JSON.parse(text);
+    const pin = (section: string, name: string) => {
+      const value = isRecord(manifest) ? manifest[section] : null;
+      const version = isRecord(value) ? value[name] : null;
+      return typeof version === "string" ? version : "?";
+    };
+    return { vite: pin("dependencies", "vite"), rolldown: pin("overrides", "rolldown") };
+  });
+  return toolchain;
+}
+
 /** `vite@<version> (rolldown@<version>)` of the Vite that `vite-build.mjs` imports. */
 export async function bundlerName(): Promise<string> {
   const require = createRequire(RUNNER);
@@ -504,6 +514,13 @@ export async function bundleEntry(
     runViteBuild({ root: dir, entry: entryFile, peers: externals }),
     loadParser(),
   ]);
+  const expected = await evaluatedToolchain();
+  if (result.vite !== expected.vite || result.rolldown !== expected.rolldown) {
+    // npm applies depfit's `overrides` only when depfit is the install root; elsewhere Vite may
+    // resolve another rolldown. Numbers from a toolchain the eval did not cover are not reported.
+    const found = `vite@${result.vite} rolldown@${result.rolldown}`;
+    return { bytes: null, problems: [{ code: "TOOLCHAIN_MISMATCH", specifier: found }] };
+  }
   const problems = problemsFromBuild(result, externals, entry.candidate, parse);
   if (problems.length) return { bytes: null, problems };
   return { bytes: chunkBytes(result.chunks), problems: [] };

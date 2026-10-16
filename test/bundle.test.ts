@@ -211,6 +211,23 @@ describe("bundleEntry on fixture packages", () => {
     });
   });
 
+  it("gives no number for a Node built-in behind an import alias", async () => {
+    expect(await build('import { u } from "alias-builtin"', ["alias-builtin"])).toEqual({
+      bytes: null,
+      problems: [{ code: "UNRESOLVED_IMPORT", specifier: "#crypto" }],
+    });
+  });
+
+  it("measures a browser:false mapping named without its extension, and URL words in a string", async () => {
+    const mapped = await build('import { run } from "browser-false-relative-noext"', [
+      "browser-false-relative-noext",
+    ]);
+    expect(mapped.problems).toEqual([]);
+    expect(mapped.bytes?.eager_js_min_bytes).toBeLessThan(2000);
+    const text = await build('import { text } from "asset-url-in-string"', ["asset-url-in-string"]);
+    expect(text.problems).toEqual([]);
+  });
+
   it("measures a browser:false mapping of a Node built-in name, and a Worker made from bundled code", async () => {
     const mapped = await build('import { random } from "browser-false-builtin"', [
       "browser-false-builtin",
@@ -236,7 +253,10 @@ describe("bundleEntry on fixture packages", () => {
     "asset-url",
     "asset-url-large",
     "asset-url-missing",
+    "asset-url-spellings",
     "worker-url",
+    "worker-file",
+    "worker-remote",
     "worker-inline",
     "css-import",
   ])("gives no number for the non-JS import in %s", async (name) => {

@@ -136,6 +136,39 @@ export function hasCode(reasons: string[], c: Case): boolean {
   );
 }
 
+// --- frozen locks ------------------------------------------------------------------------------
+
+/** Whether an `os`/`cpu` list from a lockfile entry allows this machine (`!x` entries exclude). */
+function allowedHere(list: string[], value: string): boolean {
+  if (!list.length) return true;
+  if (list.some((entry) => entry.startsWith("!"))) return !list.includes(`!${value}`);
+  return list.includes(value);
+}
+
+/**
+ * name@version of the packages in a frozen lock. `required` is every non-optional package that
+ * installs on this platform (optional ones are left out: npm skips some of them here without
+ * recording an os/cpu in the lock). `all` is every entry, for the opposite check: a package depfit
+ * installed that the lock has no entry for at all.
+ */
+export function lockPackages(lockText: string): { required: string[]; all: Set<string> } {
+  const packages = asRecord(asRecord(JSON.parse(lockText)).packages);
+  const required: string[] = [];
+  const all = new Set<string>();
+  for (const [path, value] of Object.entries(packages)) {
+    const entry = asRecord(value);
+    const version = asString(entry.version);
+    if (!path.includes("node_modules/") || !version) continue;
+    const name = asString(entry.name) ?? path.slice(path.lastIndexOf("node_modules/") + 13);
+    all.add(`${name}@${version}`);
+    if (entry.optional === true) continue;
+    if (!allowedHere(asStringArray(entry.os), process.platform)) continue;
+    if (!allowedHere(asStringArray(entry.cpu), process.arch)) continue;
+    required.push(`${name}@${version}`);
+  }
+  return { required, all };
+}
+
 // --- references and bands ------------------------------------------------------------------------
 
 export type Range = { lo: number; hi: number };

@@ -1,0 +1,1 @@
+{ "name": "alias-builtin", "version": "1.0.0", "type": "module", "main": "index.js" , "imports": { "#crypto": "node:crypto" } }

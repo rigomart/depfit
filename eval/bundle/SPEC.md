@@ -46,7 +46,11 @@ number.
   statically. Most such loads are dead code in a browser, or belong to a package that doesn't work
   there, and in both cases the emitted bytes are still correct. So the claim was narrowed to emitted
   bytes, and only `IMPORT_OUTSIDE_BUNDLE` remains (user decision).
-  - `NON_JS_IMPORT`.
+  - `NON_JS_IMPORT`: a CSS, wasm or asset module, an asset or worker query, `new URL(x,
+    import.meta.url)` in any spelling, or a Worker started from a literal URL (read from the syntax
+    tree). A Worker made from in-bundle code (a Blob URL) is measured.
+  - `TOOLCHAIN_MISMATCH <found>`: the installed Vite or its rolldown is not the version the eval
+    covered (depfit's `overrides` apply only when depfit is the install root).
   - Any other bundler error passes through with the bundler's own code (e.g. `PARSE_ERROR`).
 
   Failed builds are never retried with failures marked external.

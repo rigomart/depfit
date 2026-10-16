@@ -27,7 +27,7 @@
         "lazy_gzip_bytes": 0
       },
       "cause": "ws's browser build is a 150-byte function that throws. A default import of a CommonJS module gets rolldown's interop helpers (`__commonJS`, `__toESM`, about 430 B min), which Vite emits exactly so (708 B); rollup's commonjs plugin and webpack's strict-ESM interop add far less (271-274 B). The number is what Vite ships; the difference is fixed wrapper code, not the package.",
-      "reviewed": "pending Codex review of the vite build implementation"
+      "reviewed": "Codex review of the vite build implementation, 2026-10-16 (accepted; numbers reproduced)"
     },
     {
       "set": "corpus",
@@ -54,8 +54,8 @@
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0
       },
-      "cause": "node-pty requires its own package.json. Vite's JSON handling turns that into an ES module namespace with interop helpers (3,432 B min), where rollup's json plugin inlines a plain object (1,926 B). webpack is not a reference for this case (it builds a context module for a computed require), so the band is rollup alone. depfit equals a stock vite build (gate C).",
-      "reviewed": "pending Codex review of the vite build implementation"
+      "cause": "node-pty requires its own package.json for one field. rollup's json plugin keeps only that property (1,926 B min); Vite materializes the whole JSON module as an ES namespace with interop helpers (3,432 B, equal to a stock vite build, gate C). webpack is not a reference for this case (it builds a context module for a computed require), so the band is rollup alone.",
+      "reviewed": "Codex review of the vite build implementation, 2026-10-16 (accepted; numbers reproduced)"
     },
     {
       "set": "wild",
@@ -83,7 +83,7 @@
         "lazy_gzip_bytes": 0
       },
       "cause": "oxc's minifier (Vite 8) copies the 67,094-character `labelText` string constant into each of its three use sites; terser and webpack's minifier keep one binding. A stock vite build emits the same 264,321 B. The references are right for their minifiers; depfit is right for Vite.",
-      "reviewed": "Codex review round 3 (cause), pending Codex review of the vite build implementation"
+      "reviewed": "Codex review round 3 (cause), 2026-10-16"
     },
     {
       "set": "wild",
@@ -111,7 +111,7 @@
         "lazy_gzip_bytes": 0
       },
       "cause": "The package is a single `throw` statement. Vite drops everything after it (126 B); rollup's CommonJS wrapper and webpack's runtime add a fixed 500-900 B. The difference is reference wrapper code, not the package.",
-      "reviewed": "Codex review round 3 (cause), pending Codex review of the vite build implementation"
+      "reviewed": "Codex review round 3 (cause), 2026-10-16"
     }
   ]
 }

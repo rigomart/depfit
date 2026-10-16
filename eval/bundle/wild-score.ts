@@ -13,10 +13,10 @@
  * Function) are information only.
  */
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { bundlerName } from "../../src/collect/bundle.ts";
-import { asNumber, asRecord, asString } from "../../src/collect/util.ts";
+import { asNumber, asRecord, asString, asStringArray } from "../../src/collect/util.ts";
 import { entryArgs, loadWild, loadWildPackages } from "./cases.ts";
 import {
   exceptionMismatch,
@@ -30,7 +30,9 @@ import {
   depfit,
   grossError,
   inBand,
+  lockPackages,
   observe,
+  packageOf,
   REPORT_FIELD,
   referenceRanges,
   scratchProject,
@@ -71,6 +73,9 @@ type WildResult = {
   /** Gross errors a reviewed exception in exceptions.json covers: listed, not failed. */
   reviewed_exception: string[];
   out_of_band: string[];
+  /** Whether depfit installed the frozen tree; a drifted package is not compared (ii). */
+  drift: "none" | "drifted" | "unknown";
+  drift_missing: string[];
 };
 
 function parseHits(value: unknown): Hit[] | null {
@@ -103,36 +108,43 @@ type Measurement = {
   reasons: string[];
   problem: string | null;
   bundler: string | null;
+  /** `cost.new_packages` of the run: the tree depfit installed, checked against the frozen lock. */
+  new_packages: string[];
   ms: number;
 };
 
-/** The depfit sources a measurement depends on; a change to any of them invalidates the cache. */
-const DEPFIT_SOURCES = [
-  "../../src/collect/bundle.ts",
-  "../../src/collect/bundle-entry.ts",
-  "../../src/collect/vite-build.mjs",
-  "../../package.json",
-].map((path) => join(HERE, path));
+const REPO = join(HERE, "../..");
 
 /**
- * Identity of a measurement: toolchain, depfit's bundle code, the snippet and the frozen tree. A
- * cached measurement is reused only when its key is equal (round 4: resuming must not reuse stale
- * numbers).
+ * Hash of everything a measurement depends on besides the package: depfit's source, its
+ * dependencies and the runtime that runs it. Computed once per run.
  */
-async function measurementKey(snippet: string, lock: string): Promise<string> {
+async function depfitIdentity(): Promise<string> {
   const hash = createHash("sha256");
-  hash.update(await bundlerName());
-  for (const file of DEPFIT_SOURCES) hash.update(await readFile(file));
-  hash.update(snippet).update(lock);
+  hash.update(await bundlerName()).update(JSON.stringify(process.versions));
+  const sources = (await readdir(join(REPO, "src"), { recursive: true }))
+    .filter((name) => /\.(ts|mjs)$/.test(name))
+    .sort();
+  for (const name of sources) hash.update(name).update(await readFile(join(REPO, "src", name)));
+  for (const file of ["package.json", "bun.lock"]) hash.update(await readFile(join(REPO, file)));
   return hash.digest("hex");
 }
+
+/**
+ * Identity of a measurement: depfit (source, dependencies, runtime), the snippet and the frozen
+ * lock. A cached measurement is reused only when its key is equal (rounds 4 and 5: resuming must
+ * not reuse stale numbers).
+ */
+const measurementKey = (depfit: string, snippet: string, lock: string) =>
+  createHash("sha256").update(depfit).update(snippet).update(lock).digest("hex");
 
 async function measureCli(scratch: string, spec: string, args: string[]): Promise<Measurement> {
   const cli = await depfit([spec, ...args], scratch);
   const seen = observe(cli);
+  const newPackages = asStringArray(asRecord(packageOf(cli.report)?.cost).new_packages);
   if ("problem" in seen) {
     const base = { bytes: null, code: null, reasons: [], bundler: null, ms: cli.ms };
-    return { ...base, outcome: "error", problem: seen.problem };
+    return { ...base, outcome: "error", problem: seen.problem, new_packages: newPackages };
   }
   const nulls = BYTE_FIELDS.filter((field) => seen.bundle[field] === null);
   if (!nulls.length) {
@@ -143,6 +155,7 @@ async function measureCli(scratch: string, spec: string, args: string[]): Promis
       reasons: seen.reasons,
       problem: null,
       bundler: seen.bundler,
+      new_packages: newPackages,
       ms: cli.ms,
     };
   }
@@ -159,6 +172,7 @@ async function measureCli(scratch: string, spec: string, args: string[]): Promis
         ? null
         : "null without a `bundle:` entry in unavailable",
     bundler: seen.bundler,
+    new_packages: newPackages,
     ms: cli.ms,
   };
 }
@@ -168,7 +182,13 @@ function scoreOne(
   pkg: { id: string; name: string; version: string; downloads: number },
   m: Measurement,
   reference: Record<string, unknown>,
-  context: { exception: ReviewedException | null; snippet: string; lock: string },
+  context: {
+    exception: ReviewedException | null;
+    snippet: string;
+    lock: string;
+    /** Locked packages that depfit's install did not have: the tree moved since the references. */
+    drift: string[] | null;
+  },
 ): WildResult {
   const audit: Audit = {
     rollup: parseHits(asRecord(reference.audit).rollup),
@@ -179,7 +199,8 @@ function scoreOne(
   let reviewed: string[] = [];
   const outOfBand: string[] = [];
   const bytes = m.bytes;
-  if (m.outcome === "number" && bytes && ranges) {
+  const drifted = (context.drift?.length ?? 0) > 0;
+  if (m.outcome === "number" && bytes && ranges && !drifted) {
     for (const field of BYTE_FIELDS) {
       const x = bytes[field] ?? 0;
       const range = ranges[field];
@@ -220,6 +241,8 @@ function scoreOne(
     gross,
     reviewed_exception: reviewed,
     out_of_band: outOfBand,
+    drift: context.drift === null ? "unknown" : drifted ? "drifted" : "none",
+    drift_missing: context.drift ?? [],
   };
 }
 
@@ -229,7 +252,9 @@ const isMeasurement = (value: unknown): value is Measurement =>
   "outcome" in value &&
   (value.outcome === "number" || value.outcome === "null" || value.outcome === "error") &&
   "reasons" in value &&
-  Array.isArray(value.reasons);
+  Array.isArray(value.reasons) &&
+  "new_packages" in value &&
+  Array.isArray(value.new_packages);
 
 async function runAll(resume: boolean): Promise<WildResult[]> {
   const packages = await loadWild();
@@ -245,6 +270,7 @@ async function runAll(resume: boolean): Promise<WildResult[]> {
   const scratch = await scratchProject("browser");
   const queue = [...packages];
   const done: WildResult[] = [];
+  const identity = await depfitIdentity();
   let reused = 0;
   try {
     const workers = Array.from({ length: CONCURRENCY }, async (_, index) => {
@@ -253,7 +279,7 @@ async function runAll(resume: boolean): Promise<WildResult[]> {
         const args = entryArgs(c.imports);
         const snippet = args[1] ?? "";
         const lock = await lockSha256("wild", c.id);
-        const key = await measurementKey(snippet, lock);
+        const key = measurementKey(identity, snippet, lock);
         const file = join(RUN_DIR, `${c.id}.json`);
         const cached = resume
           ? asRecord(JSON.parse(await readFile(file, "utf8").catch(() => "{}")))
@@ -273,10 +299,18 @@ async function runAll(resume: boolean): Promise<WildResult[]> {
           downloads: downloads.get(c.package) ?? 0,
         };
         const exception = exceptions.find((e) => e.id === c.id) ?? null;
+        // Only locked packages missing from the install count: depfit also installs peers, which
+        // the peer-less reference locks leave out, so an extra package is not drift.
+        const lockText = await readFile(join(HERE, "locks", "wild", `${c.id}.json`), "utf8");
+        const installed = new Set(measurement.new_packages);
+        const drift = installed.size
+          ? lockPackages(lockText).required.filter((entry) => !installed.has(entry))
+          : null;
         const result = scoreOne(pkg, measurement, asRecord(references[c.id]), {
           exception,
           snippet,
           lock,
+          drift,
         });
         done.push(result);
         console.log(
@@ -300,6 +334,7 @@ export async function runWild(options: { resume: boolean }): Promise<void> {
   const errors = results.filter((r) => r.outcome === "error");
   const fetchedNumbers = numbers.filter((r) => r.auditor_fetch);
   const grossErrors = numbers.filter((r) => r.gross.length);
+  const driftedNumbers = numbers.filter((r) => r.drift === "drifted");
   const reviewedExceptions = numbers.filter((r) => r.reviewed_exception?.length);
   const unverified = numbers.filter((r) => !r.reference.rollup && !r.reference.webpack);
   const unaudited = numbers.filter((r) => !r.audit?.rollup && !r.audit?.webpack);
@@ -329,7 +364,7 @@ export async function runWild(options: { resume: boolean }): Promise<void> {
     `  (iii) packages that are neither a number nor a null with a code: ${errors.length} (max 0) ${verdict(errors.length)}`,
   );
   lines.push(
-    `  info: gross errors covered by a reviewed exception ${reviewedExceptions.length}; numbers outside the band but not gross ${numbers.filter((r) => r.out_of_band.length).length}; numbers with neither reference built ${unverified.length}; numbers with no audited output ${unaudited.length}; numbers where the auditor found other loads (require, eval, Function, ...) ${numbers.filter(otherLoads).length}`,
+    `  info: drifted from the frozen tree, not compared ${driftedNumbers.length}; gross errors covered by a reviewed exception ${reviewedExceptions.length}; numbers outside the band but not gross ${numbers.filter((r) => r.out_of_band.length).length}; numbers with neither reference built ${unverified.length}; numbers with no audited output ${unaudited.length}; numbers where the auditor found other loads (require, eval, Function, ...) ${numbers.filter(otherLoads).length}`,
   );
   if (fetchedNumbers.length) {
     lines.push("\n(i) numbers with code fetched from outside the bundle:");
