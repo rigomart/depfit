@@ -800,7 +800,7 @@ export const valibotInBrowser: PackageReport = {
     exports: 320,
     exports_measured: 320,
     single_export_median_eager_js_gzip9_bytes: 550,
-    external_packages: ["typescript"],
+    external_packages: [],
   },
 };
 
@@ -838,6 +838,6 @@ export const hugeInBrowser: PackageReport = {
     exports: 1204,
     exports_measured: null,
     single_export_median_eager_js_gzip9_bytes: null,
-    external_packages: [],
+    external_packages: null,
   },
 };

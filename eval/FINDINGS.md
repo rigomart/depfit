@@ -558,7 +558,10 @@ After these results the user amended the bar (SPEC.md, reviewed independently; S
 verdict): two gate S table rows now follow the rule they cite; the 16 single-export nulls, listed
 with their expected reason, count under gate A, not as B or C failures; react-hook-form
 `FormProvider` has a reviewed exception with its emitted code kept as evidence; server-only's
-exception was re-recorded for the gzip change; and depfit gives one `unavailable` entry per cause. With them, every iteration-1 gate passes. The decision evaluators
+exception was re-recorded for the gzip change; depfit gives one `unavailable` entry per cause; and
+`external_packages` lists only the peers the output imports (valibot no longer shows its optional
+types-only `typescript`; 10 of the 65 probe packages read differently, none in a way a decision
+rested on, STATUS.md). With them, every iteration-1 gate passes. The decision evaluators
 above read reports made before gzip moved into the Node child (shifts of 2% or less) and were not
 rerun.
 

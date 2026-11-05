@@ -124,6 +124,17 @@ export async function measureRootEntry(
   }
 }
 
+/**
+ * Peers the measured builds left out: those any build that gave bytes (the whole entry point or
+ * an export alone) still imports. null when no build gave bytes, so nothing was left out of a number.
+ */
+function leftOut({ whole, singles }: RootEntryMeasurement): string[] | null {
+  const measured = [whole, ...(singles ?? []).map((single) => single.outcome)].flatMap((outcome) =>
+    outcome.bytes ? [outcome.externals] : [],
+  );
+  return measured.length ? [...new Set(measured.flat())].sort() : null;
+}
+
 /** Median of integers, rounded to a whole number; null for none. */
 export function medianBytes(values: number[]): number | null {
   if (!values.length) return null;
@@ -144,7 +155,6 @@ export function medianBytes(values: number[]): number | null {
 export function rootEntryFacts(
   measurement: RootEntryMeasurement,
   bundler: string,
-  externals: string[],
 ): { bundle: Bundle; reasons: string[] } {
   const { whole, names, singles } = measurement;
   const measured = singles?.flatMap(({ outcome }) => (outcome.bytes ? [outcome.bytes] : [])) ?? [];
@@ -180,7 +190,7 @@ export function rootEntryFacts(
       single_export_median_eager_js_gzip9_bytes: medianBytes(
         measured.map((bytes) => bytes.eager_js_gzip9_bytes),
       ),
-      external_packages: externals,
+      external_packages: leftOut(measurement),
     },
     reasons: [...reasons],
   };
@@ -198,7 +208,7 @@ export async function rootEntryBundle(
   const externals = externalPackages(manifest);
   const bundler = await bundlerName();
   try {
-    return rootEntryFacts(await measureRootEntry(dir, candidate, externals), bundler, externals);
+    return rootEntryFacts(await measureRootEntry(dir, candidate, externals), bundler);
   } catch (error) {
     const crashed: RootEntryMeasurement = {
       whole: { bytes: null, problems: [] },
@@ -206,7 +216,7 @@ export async function rootEntryBundle(
       listProblems: [],
       singles: null,
     };
-    const { bundle } = rootEntryFacts(crashed, bundler, externals);
+    const { bundle } = rootEntryFacts(crashed, bundler);
     return { bundle, reasons: [`bundle: BUNDLER_ERROR ${errorMessage(error)}`] };
   }
 }

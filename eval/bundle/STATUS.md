@@ -45,7 +45,7 @@ E, H0, R and S were rerun on the final code.
 | F. Cost | Pass: with no browser signal no Vite or rolldown module is resolved (the tracer sees 7 in a browser workspace); added time per package over 65 probe candidates (59 distinct packages, each counted per probe), bundle step alone on frozen installs: median 318 ms (max 1500), p90 5.2 s, max 18.7 s (maplibre-gl, 87 large exports). CLI wall time per probe, advisory: median 2.5 s on, 1.7 s off |
 | S. Browser signal | Pass (amendment 1): 22/22 workspaces match the table |
 | R. Real usage | Pass: 59/64 in `[0.9 x median, 1.1 x whole]` (92%; round-4 probes 30/34, holdout 29/30); pairs 43/44 (98%); all 5 misses are class 1 (subpath); auto-animate left out (its real usage is null) |
-| H0. Comprehension | Pass: 3/3 blind Haiku readers, all 5 questions; rerun on 2026-11-05 with the final code (one entry per cause, new `exports_measured` wording, Node gzip), again 3/3 |
+| H0. Comprehension | Pass: 3/3 blind Haiku readers, all 5 questions; rerun on 2026-11-05 with the final code (one entry per cause, new `exports_measured` wording, Node gzip), again 3/3, and after amendment 5 (`external_packages` wording), again 3/3 |
 | H. Decisions | Pass, pending review: 0 misreadings (1 ambiguous sentence, decision unchanged); v6 differed from the control on 2/22 (Sonnet) and 4/22 (Haiku) probes, none worse on the facts; one Haiku difference is a reading of the question (FINDINGS round 5) |
 
 ### Questions the 2026-11-05 bar amendments resolved
@@ -80,6 +80,33 @@ E, H0, R and S were rerun on the final code.
    more than one per cause. Resolved by amendment 4: the code now gives one entry per cause (the
    whole build's), the per-export summary lists only other causes, and stop condition 5 is
    unchanged.
+
+### Amendment 5: `external_packages` lists only the peers the output imports (2026-11-05)
+
+User-approved after seeing the round-5 reports. The field listed every declared peer, optional
+ones included, so valibot showed `typescript`, an optional types-only peer its JS never imports.
+It now lists the peers a measured build (whole or one export) still imports, by package name, and
+is null when no build was measured; peers stay external in every build. Schema 6 is unreleased,
+so this is a meaning change inside schema 6, with no version bump. Gates A, D, E, R and H0 were
+rerun on this code.
+
+The reports the round-5 decision evaluators read would now differ for 10 of 65 packages:
+valibot (`typescript` to none), zustand (`immer, react, use-sync-external-store` to `react`), motion
+in two probes (`react, react-dom, remix` to none: the root never imports React, `motion/react`
+does), @tanstack/react-form (`@tanstack/react-start, react` to `react`), markdown-to-jsx
+(`react, react-native, solid-js, vue` to `react`), and recharts, react-hot-toast, react-toastify and
+react-window (`react, react-dom` to `react`). zustand still shows `react`. Evaluators cited the
+field in two places: on Preact shared state, zustand's listed peers as code its bytes leave out
+(still true for `react`), and on exercise forms, Haiku flagged `@tanstack/react-start` as absent
+from `peer_dependencies` (no longer listed). No decision rested on a listed peer the output does not
+import. The evaluators were not rerun.
+
+Independent review (Codex gpt-6.1-sol, high effort, read-only): agree with changes. It found that
+`importedPeers` also matched the build's own chunk paths, so an unused peer named like a chunk
+directory (`assets`) would have been listed; chunk file names are now excluded, with a regression
+test, and a CommonJS `require()` of a peer is now checked to be listed. It also asked to reword a
+SPEC line that still said every peer is listed. Both are fixed. No reported peer in the rerun was
+a chunk name, so the rerun results stand.
 
 ### Independent review of the bar amendments (Codex gpt-6.1-sol, high effort, 2026-11-05)
 

@@ -294,7 +294,9 @@ function bundleRows(): Row[] {
     ),
     row("Exports measured alone", exportsMeasured),
     row("Median one export, gzip", (b) => bytes(b.single_export_median_eager_js_gzip9_bytes)),
-    row("External (peers)", (b) => listOrNone(b.external_packages)),
+    row("External (peers)", (b) =>
+      b.external_packages === null ? NONE : listOrNone(b.external_packages),
+    ),
     row("Bundler", (b) => `${b.bundler}, ${b.target}`),
   ];
 }

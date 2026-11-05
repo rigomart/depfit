@@ -24,7 +24,8 @@ agreed.
   `MISSING_EXPORT`, `IMPORT_OUTSIDE_BUNDLE`, `NO_ENTRY`, `NON_JS_IMPORT`, `PEER_IN_BUNDLE`,
   `TOOLCHAIN_MISMATCH`, and pass-through bundler codes. Failed builds are never retried with
   failures marked external.
-- **Peers:** installed for `cost`, left out of every bundle and listed in `external_packages`.
+- **Peers:** installed for `cost` and left out of every bundle. `external_packages` lists only the
+  peers the measured output still imports (amendment 5, 2026-11-05).
 - **Eager vs lazy:** eager is the entry chunk plus its static-import closure; lazy is the rest of
   what `import()` reaches. Never summed.
 - **Band, gross error, reviewed exceptions, references** (rollup 4 + terser, webpack 5), and every
@@ -108,7 +109,7 @@ For each package, from its isolated install, only the root entry point (`"."`):
 | `exports` | Number of exports the entry point has (`default` included) |
 | `exports_measured` | How many of them built and passed the checks |
 | `single_export_median_eager_js_gzip9_bytes` | Median over measured exports of one export's eager gzip bytes |
-| `external_packages` | Peers left out, as v5 |
+| `external_packages` | Peers the measured builds left out and still import, by package name (amended 2026-11-05, amendment 5) |
 
 A whole-package null keeps its reason code in `unavailable`, as in v5. Unmeasured exports add
 one entry: `bundle: <n> exports unmeasurable (<codes>)`, counting and listing only the exports and
@@ -203,6 +204,13 @@ lines changed above say "amended 2026-11-05".
    per-export summary counts and lists only exports and codes the whole build does not already
    report, and a listing failure is likewise reported only for new codes. This changes the code and
    the contract wording above; stop condition 5 is unchanged.
+5. **`external_packages` lists only the peers the output imports** (decided 2026-11-05 after seeing
+   the round-5 reports). It listed every declared peer, optional ones included, so valibot showed
+   `typescript`, an optional types-only peer its JS never imports, and a reader could take it as
+   "14.6 KB plus typescript". It now lists the peers that a measured build (the whole entry point or
+   an export alone) still imports, by package name (a subpath import counts as its package), and is
+   null when no build was measured. Peers stay external in every build as before; only what is
+   reported changes. Schema 6 is unreleased, so this meaning change stays in schema 6.
 
 ### Holdout probes
 

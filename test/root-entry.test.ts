@@ -18,7 +18,7 @@ import { browserProject } from "./reports.ts";
 const BUNDLER = "vite@8.3.4 (rolldown@1.2.14)";
 const fixtures = fileURLToPath(new URL("./fixtures/", import.meta.url));
 
-const ok = (gzip: number): BundleOutcome => ({
+const ok = (gzip: number, externals: string[] = []): BundleOutcome => ({
   bytes: {
     eager_js_min_bytes: gzip * 3,
     eager_js_gzip9_bytes: gzip,
@@ -26,6 +26,7 @@ const ok = (gzip: number): BundleOutcome => ({
     lazy_js_gzip9_bytes: 0,
   },
   problems: [],
+  externals,
 });
 const failed = (code: string, specifier: string | null = null): BundleOutcome => ({
   bytes: null,
@@ -90,7 +91,8 @@ describe("rootEntryFacts", () => {
   });
 
   it("reports the whole build and the median of the measured exports", () => {
-    expect(rootEntryFacts(measurement({}), BUNDLER, ["react"])).toEqual({
+    const withReact = measurement({ whole: ok(1000, ["react"]) });
+    expect(rootEntryFacts(withReact, BUNDLER)).toEqual({
       bundle: {
         bundler: BUNDLER,
         target: "browser",
@@ -120,7 +122,6 @@ describe("rootEntryFacts", () => {
         ],
       }),
       BUNDLER,
-      [],
     );
     expect(facts.bundle).toMatchObject({
       exports: 4,
@@ -144,7 +145,6 @@ describe("rootEntryFacts", () => {
         ],
       }),
       BUNDLER,
-      [],
     );
     expect(facts.bundle).toMatchObject({ exports: 2, exports_measured: 0 });
     expect(facts.reasons).toEqual(["bundle: UNRESOLVED_IMPORT node:fs"]);
@@ -167,7 +167,6 @@ describe("rootEntryFacts", () => {
         ],
       }),
       BUNDLER,
-      [],
     );
     expect(facts.reasons).toEqual([
       "bundle: UNRESOLVED_IMPORT node:fs",
@@ -183,7 +182,6 @@ describe("rootEntryFacts", () => {
         singles: [{ name: "a", outcome: { bytes: null, problems: [] } }],
       }),
       BUNDLER,
-      [],
     );
     expect(facts.reasons).toEqual([
       "bundle: UNRESOLVED_IMPORT node:fs",
@@ -203,7 +201,6 @@ describe("rootEntryFacts", () => {
         singles: null,
       }),
       BUNDLER,
-      [],
     );
     expect(facts.reasons).toEqual(["bundle: UNRESOLVED_IMPORT missing-dep"]);
   });
@@ -213,7 +210,6 @@ describe("rootEntryFacts", () => {
     const facts = rootEntryFacts(
       measurement({ whole: problem, names: null, listProblems: problem.problems, singles: null }),
       BUNDLER,
-      [],
     );
     expect(facts.bundle).toMatchObject({
       whole_eager_js_min_bytes: null,
@@ -227,7 +223,7 @@ describe("rootEntryFacts", () => {
 
   it("does not build exports over the cap, and still reports the whole build", () => {
     const names = Array.from({ length: EXPORT_LIMIT + 1 }, (_, i) => `e${i}`);
-    const facts = rootEntryFacts(measurement({ names, singles: null }), BUNDLER, []);
+    const facts = rootEntryFacts(measurement({ names, singles: null }), BUNDLER);
     expect(facts.bundle).toMatchObject({
       whole_eager_js_gzip9_bytes: 1000,
       exports: 1001,
@@ -235,6 +231,26 @@ describe("rootEntryFacts", () => {
       single_export_median_eager_js_gzip9_bytes: null,
     });
     expect(facts.reasons).toEqual(["bundle: EXPORT_LIMIT 1001"]);
+  });
+
+  it("lists the peers any measured build imports, and null when no build was measured", () => {
+    const facts = rootEntryFacts(
+      measurement({
+        whole: failed("UNRESOLVED_IMPORT", "node:fs"),
+        singles: [
+          { name: "a", outcome: ok(100, ["react"]) },
+          { name: "b", outcome: ok(100, ["react-dom", "react"]) },
+          { name: "c", outcome: failed("UNRESOLVED_IMPORT", "node:fs") },
+        ],
+      }),
+      BUNDLER,
+    );
+    expect(facts.bundle.external_packages).toEqual(["react", "react-dom"]);
+    const none = rootEntryFacts(
+      measurement({ whole: failed("NO_ENTRY", "x"), names: null, singles: null }),
+      BUNDLER,
+    );
+    expect(none.bundle.external_packages).toBeNull();
   });
 
   it("takes the median of an even count as the rounded mean of the middle two", () => {
@@ -303,5 +319,30 @@ describe("measureRootEntry on fixture packages", () => {
     expect(result.whole).toEqual(failed("NO_ENTRY", "no-entry"));
     expect(result.names).toBeNull();
     expect(result.listProblems).toEqual([{ code: "NO_ENTRY", specifier: "no-entry" }]);
+  });
+
+  const imported = (m: Awaited<ReturnType<typeof measure>>) => ({
+    whole: m.whole.bytes ? m.whole.externals : null,
+    singles: Object.fromEntries(
+      (m.singles ?? []).map((s) => [s.name, s.outcome.bytes ? s.outcome.externals : null]),
+    ),
+  });
+
+  it("does not list an optional peer the output never imports", async () => {
+    const result = await measure("optional-peer-unused", ["optional-peer-unused"], ["typescript"]);
+    expect(imported(result)).toEqual({ whole: [], singles: { check: [], parse: [] } });
+    expect(rootEntryFacts(result, "vite").bundle.external_packages).toEqual([]);
+  });
+
+  it("lists a peer imported through a subpath, the same in the whole and per-export builds", async () => {
+    const result = await measure("subpath-peer", ["subpath-peer", "peer"], ["peer"]);
+    // `other` never calls the peer, but an external import stays as a side-effect import.
+    expect(imported(result)).toEqual({
+      whole: ["peer"],
+      singles: { other: ["peer"], run: ["peer"] },
+    });
+    const fromSingles = new Set(Object.values(imported(result).singles).flat());
+    expect([...fromSingles]).toEqual(imported(result).whole);
+    expect(rootEntryFacts(result, "vite").bundle.external_packages).toEqual(["peer"]);
   });
 });

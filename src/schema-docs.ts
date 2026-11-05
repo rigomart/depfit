@@ -184,7 +184,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].bundle.single_export_median_eager_js_gzip9_bytes":
     "Median, over the measured exports, of one export's eager JS gzip -9 bytes when it is the only import, each in its own build, rounded to whole bytes; it describes a typical single export, not any app's usage: many exports are small helpers, and one export can pull in most of the package; null when exports_measured is 0 or null.",
   "packages[].bundle.external_packages":
-    "Peer dependencies of `version` (optional ones too, types-only @types/* peers excluded), and their subpaths, left out of every bundle byte field; their own cost is in cost and compatibility.peer_dependencies; empty when it has none.",
+    "Peer dependencies of `version` that the measured builds left out and still import, by package name (an import of a subpath such as react/jsx-runtime counts as react), from the whole build and every export built alone; their bytes are not in any bundle byte field, and their own cost is in cost and compatibility.peer_dependencies; a declared peer the output never imports, such as an optional types-only typescript, is not listed; empty when the output imports no peer; null when no build was measured.",
 };
 
 export type SchemaDocument = {

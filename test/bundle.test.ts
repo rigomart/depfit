@@ -10,6 +10,7 @@ import {
   bundleReasons,
   type ChunkInfo,
   chunkBytes,
+  importedPeers,
   externalPackages,
   importsOutsideBundle,
   moduleLabel,
@@ -70,6 +71,22 @@ describe("splitChunks", () => {
       lazy_js_gzip9_bytes: 42,
     });
     expect(chunkBytes([{ ...entry, dynamicImports: [] }]).lazy_js_min_bytes).toBe(0);
+  });
+});
+
+describe("importedPeers", () => {
+  it("lists peers the chunks import, by package name, and never the build's own chunks", () => {
+    const chunks = [
+      chunk("entry.js", {
+        isEntry: true,
+        imports: ["assets/shared-1.js", "react/jsx-runtime"],
+        dynamicImports: ["assets/later-ABC.js"],
+      }),
+      chunk("assets/shared-1.js"),
+      chunk("assets/later-ABC.js", { dynamicImports: ["vue"] }),
+    ];
+    const peers = ["assets", "react", "react-dom", "typescript", "vue"];
+    expect(importedPeers(chunks, peers)).toEqual(["react", "vue"]);
   });
 });
 
@@ -299,6 +316,8 @@ describe("bundleEntry on fixture packages", () => {
   it("turns a CommonJS require() of a peer into an import, with no runtime require helper", async () => {
     const outcome = await build('import { make } from "cjs-peer"', ["cjs-peer", "peer"], ["peer"]);
     expect(outcome.problems).toEqual([]);
+    // The CommonJS require() of the peer becomes an import, so the peer is listed as left out.
+    expect(outcome.bytes && outcome.externals).toEqual(["peer"]);
     // With plain `external`, Vite's runtime `require` shim makes this 536 bytes.
     expect(outcome.bytes?.eager_js_min_bytes).toBeLessThan(400);
   });

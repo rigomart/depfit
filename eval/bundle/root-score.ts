@@ -740,7 +740,7 @@ const H0_QUESTIONS = [
 ];
 
 const H0_KEY = [
-  'Every export of the root entry point (`import * as m from "valibot"`, all kept): the eager JS (entry chunk plus its static imports) of a standalone production Vite build, gzipped, with peers (external_packages) left out; the root only, not subpaths.',
+  'Every export of the root entry point (`import * as m from "valibot"`, all kept): the eager JS (entry chunk plus its static imports) of a standalone production Vite build, gzipped, with peers left out (external_packages lists those the output imports; the output of valibot imports none); the root only, not subpaths.',
   "The median, over valibot's exports, of one export's eager gzip bytes when that export is the only import, each in its own build: a typical single export, not an app's usage.",
   "No: both are standalone builds of named imports, neither is this app's usage nor its marginal cost (what it adds given what the app already bundles); real usage of a few exports usually lies between the median and the whole.",
   "Some exports' own builds failed depfit's checks (unmeasurable) and are left out of the median; unavailable gives the reason, one entry per cause (here the whole build's UNRESOLVED_IMPORT entry covers them; a `bundle: <n> exports unmeasurable (...)` entry appears only for other codes). It does not mean they do not exist or are unused.",

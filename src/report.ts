@@ -113,8 +113,11 @@ export type Bundle = {
   exports_measured: number | null;
   /** Median over measured exports of one export's eager gzip bytes, each in its own build. */
   single_export_median_eager_js_gzip9_bytes: number | null;
-  /** Peer dependencies (and their subpaths) left out of every build. */
-  external_packages: string[];
+  /**
+   * Peers a measured build left out and still imports (by package name, a subpath counting as its
+   * package). null when no build gave bytes.
+   */
+  external_packages: string[] | null;
 };
 
 /** Facts derived from the current project. null when there is no project. */

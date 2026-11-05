@@ -37,8 +37,9 @@ export type BundleBytes = {
   lazy_js_gzip9_bytes: number;
 };
 
+/** `externals`: the peers the measured output still imports (`importedPeers`). */
 export type BundleOutcome =
-  | { bytes: BundleBytes; problems: [] }
+  | { bytes: BundleBytes; problems: []; externals: string[] }
   | { bytes: null; problems: BundleProblem[] };
 
 // --- what vite-build.mjs reads and prints -----------------------------------------------------
@@ -164,6 +165,27 @@ export function chunkBytes(chunks: ChunkInfo[]): BundleBytes {
     lazy_js_min_bytes: sum(lazy.map((c) => minBytes(c.code))),
     lazy_js_gzip9_bytes: sum(lazy.map((c) => c.gzip9Bytes)),
   };
+}
+
+/**
+ * The peers an emitted build imports, by package name (an import of `peer/sub` counts as `peer`):
+ * what the bytes leave out. A declared peer the output never imports (a types-only `typescript`)
+ * is not listed, though the build marks it external too.
+ */
+export function importedPeers(
+  chunks: Array<Pick<ChunkInfo, "fileName" | "imports" | "dynamicImports">>,
+  peers: string[],
+): string[] {
+  // `imports` also holds the build's own chunks (`assets/later-ABC.js`), which are not peers.
+  const own = new Set(chunks.map((chunk) => chunk.fileName));
+  const specifiers = new Set(
+    chunks
+      .flatMap((chunk) => [...chunk.imports, ...chunk.dynamicImports])
+      .filter((specifier) => !own.has(specifier)),
+  );
+  return peers.filter((peer) =>
+    [...specifiers].some((specifier) => isCandidateSource(specifier, peer)),
+  );
 }
 
 // --- reasons --------------------------------------------------------------------------------------
@@ -589,7 +611,11 @@ export async function outcomeOf(
   if (toolchain) return { bytes: null, problems: [toolchain] };
   const problems = problemsFromBuild(result, externals, candidate, await loadParser());
   if (problems.length) return { bytes: null, problems };
-  return { bytes: chunkBytes(result.chunks), problems: [] };
+  return {
+    bytes: chunkBytes(result.chunks),
+    problems: [],
+    externals: importedPeers(result.chunks, externals),
+  };
 }
 
 /**
