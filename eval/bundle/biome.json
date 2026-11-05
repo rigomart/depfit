@@ -1,5 +1,0 @@
-{
-  "root": false,
-  "extends": "//",
-  "files": { "includes": ["**", "!locks", "!reference.json", "!results"] }
-}

@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "sortImports": { "newlinesBetween": false },
+  "ignorePatterns": [
+    "test/fixtures",
+    "**/*.md",
+    "eval/bundle/locks",
+    "eval/bundle/reference.json",
+    "eval/bundle/results"
+  ]
+}

@@ -1,29 +1,30 @@
 {
   "name": "depfit",
   "version": "0.0.0",
-  "description": "Compare npm packages by what they would cost this repo",
-  "type": "module",
   "private": true,
+  "description": "Compare npm packages by what they would cost this repo",
+  "license": "MIT",
   "bin": {
     "depfit": "./src/cli.ts"
   },
+  "type": "module",
   "scripts": {
     "dev": "bun src/cli.ts",
     "check-types": "tsc --noEmit",
-    "lint": "biome check --write",
+    "lint": "oxlint --fix && oxfmt",
     "test": "vitest",
     "test:once": "vitest run"
   },
-  "license": "MIT",
   "dependencies": {
     "rolldown": "1.2.14",
     "semver": "^7.8.5",
     "vite": "8.3.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.15",
     "@types/node": "^26.6.5",
     "@types/semver": "^7.8.0",
+    "oxfmt": "^0.76.0",
+    "oxlint": "^1.91.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
   },

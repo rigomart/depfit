@@ -35,7 +35,7 @@ export function isCandidateSource(source: string, name: string): boolean {
  */
 function isUnsafeSegment(segment: string): boolean {
   if (["", ".", "..", "node_modules"].includes(segment)) return true;
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are rejected.
+  // oxlint-disable-next-line no-control-regex -- control characters are rejected.
   return /[\\%?#\u0000-\u001f]/.test(segment);
 }
 
@@ -229,7 +229,9 @@ export function bundleEntries(
       program = parse(snippet);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const detail = message.split("\n").find((line) => line.trim() && !/^Parse failed/.test(line));
+      const detail = message
+        .split("\n")
+        .find((line) => line.trim() && !line.startsWith("Parse failed"));
       return { ok: false, message: `--bundle-entry is not valid JS: ${detail?.trim() ?? message}` };
     }
     const validated = validateSnippet(program, snippet, candidates);

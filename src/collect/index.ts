@@ -10,6 +10,7 @@ import {
   SCHEMA_VERSION,
   type Security,
 } from "../report.ts";
+import { type BundleEntry, normalizedSnippet } from "./bundle-entry.ts";
 import {
   type BundleOutcome,
   bundleEntry,
@@ -17,7 +18,6 @@ import {
   bundlerName,
   externalPackages,
 } from "./bundle.ts";
-import { type BundleEntry, normalizedSnippet } from "./bundle-entry.ts";
 import {
   atNewestInstalled,
   builtinReport,
