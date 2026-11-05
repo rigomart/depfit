@@ -547,7 +547,20 @@ Method:
 
 Three blind Haiku readers, with three reports (a browser workspace with zod and valibot, a Node
 library whose 13 exports are all unmeasurable, and a workspace with no browser signal) and
-`--schema`, answered all five questions correctly in 3 of 3 runs.
+`--schema`, answered all five questions correctly in 3 of 3 runs. After the 2026-11-05 bar amendments (one
+`unavailable` entry per cause, so the Node library shows only its whole build's
+`UNRESOLVED_IMPORT` entry), three fresh readers again answered all five correctly; each read that
+entry as the reason none of the 13 exports was measured.
+
+## Bar amendments (2026-11-05)
+
+After these results the user amended the bar (SPEC.md, reviewed independently; STATUS.md has the
+verdict): two gate S table rows now follow the rule they cite; the 16 single-export nulls, listed
+with their expected reason, count under gate A, not as B or C failures; react-hook-form
+`FormProvider` has a reviewed exception with its emitted code kept as evidence; server-only's
+exception was re-recorded for the gzip change; and depfit gives one `unavailable` entry per cause. With them, every iteration-1 gate passes. The decision evaluators
+above read reports made before gzip moved into the Node child (shifts of 2% or less) and were not
+rerun.
 
 ## Takeaways
 

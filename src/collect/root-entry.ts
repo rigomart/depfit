@@ -135,10 +135,11 @@ export function medianBytes(values: number[]): number | null {
 }
 
 /**
- * The `bundle` section and its `unavailable` entries. Whole-build problems are reported as in v5
- * (one `bundle: <CODE> [names]` per code); listing problems only when they add an entry the whole
- * build did not; then `bundle: EXPORT_LIMIT <count>`, or one `bundle: <n> exports unmeasurable
- * (<codes>)` for the exports whose own build failed.
+ * The `bundle` section and its `unavailable` entries, one per cause: whole-build problems as in v5
+ * (one `bundle: <CODE> [names]` per code); listing problems for codes the whole build does not
+ * report; `bundle: EXPORT_LIMIT <count>`; and one `bundle: <n> exports unmeasurable (<codes>)` for
+ * the exports whose own build failed for a code the whole build does not report (n counts only
+ * those exports).
  */
 export function rootEntryFacts(
   measurement: RootEntryMeasurement,
@@ -148,16 +149,22 @@ export function rootEntryFacts(
   const { whole, names, singles } = measurement;
   const measured = singles?.flatMap(({ outcome }) => (outcome.bytes ? [outcome.bytes] : [])) ?? [];
   const failed = singles?.filter(({ outcome }) => outcome.bytes === null) ?? [];
+  // One entry per cause (a reason code): a code the whole build already reports is not repeated
+  // for the export listing or the per-export summary.
+  const wholeCodes = new Set(whole.problems.map((problem) => problem.code));
+  const isNew = (problem: BundleProblem) => !wholeCodes.has(problem.code);
   const reasons = new Set(bundleReasons(whole.problems));
-  for (const reason of bundleReasons(measurement.listProblems)) reasons.add(reason);
+  for (const reason of bundleReasons(measurement.listProblems.filter(isNew))) reasons.add(reason);
   if (names !== null && names.length > EXPORT_LIMIT) {
     reasons.add(`bundle: EXPORT_LIMIT ${names.length}`);
   }
-  if (failed.length) {
-    const codes = [
-      ...new Set(failed.flatMap(({ outcome }) => outcome.problems.map((p) => p.code))),
-    ];
-    reasons.add(`bundle: ${failed.length} exports unmeasurable (${codes.sort().join(", ")})`);
+  // A failed build that recorded no problem is still reported, as BUILD_ERROR.
+  const codesOf = ({ outcome }: ExportOutcome) =>
+    outcome.problems.length ? outcome.problems.filter(isNew).map((p) => p.code) : ["BUILD_ERROR"];
+  const otherCause = failed.filter((single) => codesOf(single).length);
+  if (otherCause.length) {
+    const codes = [...new Set(otherCause.flatMap(codesOf))].sort();
+    reasons.add(`bundle: ${otherCause.length} exports unmeasurable (${codes.join(", ")})`);
   }
   return {
     bundle: {

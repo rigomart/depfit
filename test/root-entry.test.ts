@@ -132,6 +132,82 @@ describe("rootEntryFacts", () => {
     ]);
   });
 
+  it("gives one entry per cause when the whole build and every export fail for it", () => {
+    const fs = failed("UNRESOLVED_IMPORT", "node:fs");
+    const facts = rootEntryFacts(
+      measurement({
+        whole: fs,
+        names: ["a", "b"],
+        singles: [
+          { name: "a", outcome: fs },
+          { name: "b", outcome: failed("UNRESOLVED_IMPORT", "node:path") },
+        ],
+      }),
+      BUNDLER,
+      [],
+    );
+    expect(facts.bundle).toMatchObject({ exports: 2, exports_measured: 0 });
+    expect(facts.reasons).toEqual(["bundle: UNRESOLVED_IMPORT node:fs"]);
+  });
+
+  it("counts in the summary only the exports that fail for a cause the whole build does not", () => {
+    const fs = failed("UNRESOLVED_IMPORT", "node:fs");
+    const both: BundleOutcome = {
+      bytes: null,
+      problems: [...fs.problems, { code: "NON_JS_IMPORT", specifier: "a.css" }],
+    };
+    const facts = rootEntryFacts(
+      measurement({
+        whole: fs,
+        names: ["a", "b", "c"],
+        singles: [
+          { name: "a", outcome: fs },
+          { name: "b", outcome: both },
+          { name: "c", outcome: ok(10) },
+        ],
+      }),
+      BUNDLER,
+      [],
+    );
+    expect(facts.reasons).toEqual([
+      "bundle: UNRESOLVED_IMPORT node:fs",
+      "bundle: 1 exports unmeasurable (NON_JS_IMPORT)",
+    ]);
+  });
+
+  it("reports a failed export that recorded no problem as BUILD_ERROR", () => {
+    const facts = rootEntryFacts(
+      measurement({
+        whole: failed("UNRESOLVED_IMPORT", "node:fs"),
+        names: ["a"],
+        singles: [{ name: "a", outcome: { bytes: null, problems: [] } }],
+      }),
+      BUNDLER,
+      [],
+    );
+    expect(facts.reasons).toEqual([
+      "bundle: UNRESOLVED_IMPORT node:fs",
+      "bundle: 1 exports unmeasurable (BUILD_ERROR)",
+    ]);
+  });
+
+  it("does not repeat a listing failure whose code the whole build reports", () => {
+    const facts = rootEntryFacts(
+      measurement({
+        whole: failed("UNRESOLVED_IMPORT", "missing-dep"),
+        names: null,
+        listProblems: [
+          { code: "UNRESOLVED_IMPORT", specifier: "missing-dep" },
+          { code: "UNRESOLVED_IMPORT", specifier: "other" },
+        ],
+        singles: null,
+      }),
+      BUNDLER,
+      [],
+    );
+    expect(facts.reasons).toEqual(["bundle: UNRESOLVED_IMPORT missing-dep"]);
+  });
+
   it("keeps the whole build's reason and reports a listing failure only once", () => {
     const problem = failed("UNRESOLVED_IMPORT", "missing-dep");
     const facts = rootEntryFacts(

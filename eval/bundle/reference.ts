@@ -8,6 +8,7 @@
  *   bun eval/bundle/reference.ts [caseId...]
  *   bun eval/bundle/reference.ts --wild      # wild-reference.json (gate W, and B's whole half)
  *   bun eval/bundle/reference.ts --singles   # single-reference.json (iteration 1, gates B and C)
+ *   bun eval/bundle/reference.ts --emit <wildId> <export>   # that case's emitted code, for a review
  * Re-runs itself under Node when started with Bun, so gzip (node:zlib) is the same either way.
  */
 import { execFile, spawnSync } from "node:child_process";
@@ -51,7 +52,9 @@ for (const key of Object.keys(process.env)) if (key.startsWith("VITE_")) delete 
 
 const run = promisify(execFile);
 const SINGLES = process.argv.includes("--singles");
-const WILD = process.argv.includes("--wild") || SINGLES;
+/** `--emit <wildId> <export>`: one single-export case, built three ways, emitted code saved. */
+const EMIT = process.argv.includes("--emit");
+const WILD = process.argv.includes("--wild") || SINGLES || EMIT;
 const REFERENCE_FILE = join(
   import.meta.dirname,
   SINGLES ? "single-reference.json" : WILD ? "wild-reference.json" : "reference.json",
@@ -568,6 +571,9 @@ async function buildVite(input: BuildInput): Promise<Measured> {
     for (const next of asStringArray(byName.get(name)?.imports)) visit(next);
   };
   for (const chunk of chunks) if (chunk.isEntry === true) visit(String(chunk.fileName));
+  input.onChunks?.(
+    chunks.map((chunk) => ({ name: String(chunk.fileName), code: asString(chunk.code) ?? "" })),
+  );
   const files = items.flatMap((item) => {
     const name = asString(item.fileName);
     const source = item.source;
@@ -801,8 +807,58 @@ async function referenceSingles(): Promise<void> {
   console.log(`wrote ${resolve(REFERENCE_FILE)}`);
 }
 
+/**
+ * Builds one single-export case with rollup + terser, webpack and stock Vite from its frozen wild
+ * lock and writes each bundler's emitted JS to results/emit-<id>-<export>.json, so a reviewed
+ * exception's cause can be inspected against the code itself.
+ */
+async function emitCase(id: string, exportName: string): Promise<void> {
+  const c = (await loadWild()).find((item) => item.id === id);
+  if (!c) throw new Error(`unknown wild id: ${id}`);
+  const tools = await installTools();
+  const dir = await installCandidate([c]);
+  try {
+    const peers = await peersOf(dir, c.package).catch(() => []);
+    const entry = join(dir, "__depfit_entry.mjs");
+    await writeFile(entry, singleEntrySource(c.package, exportName));
+    const base = {
+      toolsDir: tools.dir,
+      dir,
+      entry,
+      target: "browser" as const,
+      external: peerPattern(peers),
+    };
+    const emitted: Record<string, unknown> = {};
+    for (const [bundler, build] of [
+      ["rollup", buildRollup],
+      ["webpack", buildWebpack],
+      ["vite", buildVite],
+    ] as const) {
+      let chunks: { name: string; code: string }[] = [];
+      const outcome = await attempt(() =>
+        build({ ...base, builtins: new Set(), onChunks: (found) => (chunks = found) }),
+      );
+      emitted[bundler] = { outcome, chunks };
+    }
+    const out = join(import.meta.dirname, "results", `emit-${id}-${exportName}.json`);
+    await mkdir(dirname(out), { recursive: true });
+    await writeFile(
+      out,
+      `${JSON.stringify({ id, package: c.package, version: c.version, export: exportName, entry: singleEntrySource(c.package, exportName), tools: tools.versions, emitted }, null, 2)}\n`,
+    );
+    console.log(`wrote ${out}`);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
 if (SINGLES) {
   await referenceSingles();
+  process.exit(0);
+}
+if (EMIT) {
+  const at = process.argv.indexOf("--emit");
+  await emitCase(process.argv[at + 1] ?? "", process.argv[at + 2] ?? "");
   process.exit(0);
 }
 

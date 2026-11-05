@@ -16,10 +16,12 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { isBuiltin } from "node:module";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs, promisify } from "node:util";
-import { externalPackages } from "../../src/collect/bundle.ts";
+import { entryModuleSource } from "../../src/collect/bundle-entry.ts";
+import { bundlerName, externalPackages } from "../../src/collect/bundle.ts";
 import { withIsolatedInstall } from "../../src/collect/install.ts";
 import { loadProject } from "../../src/collect/project.ts";
 import { measureRootEntry, rootEntryBundle } from "../../src/collect/root-entry.ts";
@@ -34,6 +36,7 @@ import {
 import { FIELD_DESCRIPTIONS } from "../../src/schema-docs.ts";
 import { loadCases } from "./cases.ts";
 import { firstDiff, NETWORK_ENTRY, withoutBundle } from "./contract.ts";
+import { exceptionMismatch, loadExceptions, lockSha256 } from "./exceptions.ts";
 import {
   BYTE_FIELDS,
   type ByteField,
@@ -368,6 +371,48 @@ function conformance(depfitBytes: Bytes, vite: unknown): string | null {
   return null;
 }
 
+type ExpectedNull = { package: string; export: string; code: string; specifiers: unknown };
+
+/**
+ * The single-export nulls gate A accepts (single-nulls.json), or none while the list's review is
+ * pending: an unreviewed list waives nothing.
+ */
+async function loadExpectedNulls(): Promise<ExpectedNull[]> {
+  const raw = asRecord(await readJson(join(HERE, "single-nulls.json")));
+  const reviewed = asString(raw.reviewed) ?? "";
+  if (!reviewed || reviewed.startsWith("pending")) return [];
+  return asArray(raw.nulls).map((item) => {
+    const entry = asRecord(item);
+    return {
+      package: asString(entry.package) ?? "",
+      export: asString(entry.export) ?? "",
+      code: asString(entry.code) ?? "",
+      specifiers: entry.specifiers,
+    };
+  });
+}
+
+/** Why a single-export null fails gate A, or null when it is a listed null with its listed reason. */
+function nullProblem(
+  expected: ExpectedNull[],
+  pkg: string,
+  exportName: string,
+  problems: Array<{ code: string; specifier: string | null }>,
+): string | null {
+  const listed = expected.find((e) => e.package === pkg && e.export === exportName);
+  if (!listed) return "unexpected null (not in a reviewed single-nulls.json)";
+  const codes = [...new Set(problems.map((p) => p.code))];
+  if (codes.length !== 1 || codes[0] !== listed.code) {
+    return `codes ${codes.join(", ") || "none"}, expected ${listed.code}`;
+  }
+  const allowed = (specifier: string | null) =>
+    listed.specifiers === "node-builtins"
+      ? specifier !== null && isBuiltin(specifier)
+      : asStringArray(listed.specifiers).includes(specifier ?? "");
+  const other = problems.filter((p) => !allowed(p.specifier)).map((p) => p.specifier ?? "none");
+  return other.length ? `unexpected specifiers ${[...new Set(other)].join(", ")}` : null;
+}
+
 async function scoreSingles(): Promise<void> {
   const reference = asRecord(await readJson(join(HERE, "single-reference.json")));
   const packages = asArray(reference.packages).map(asRecord);
@@ -389,7 +434,15 @@ async function scoreSingles(): Promise<void> {
   const bGross: string[] = [];
   const cFail: string[] = [];
   const dFail: string[] = [];
+  const aFail: string[] = [];
+  const honestNulls: string[] = [];
+  const covered: string[] = [];
+  const exceptions = (await loadExceptions()).filter((e) => e.set === "single");
+  const expectedNulls = await loadExpectedNulls();
+  const nullResults: Record<string, unknown>[] = [];
+  const bundler = await bundlerName();
   let singles = 0;
+  let measuredSingles = 0;
   let wholes = 0;
   for (const pkg of packages) {
     const id = asString(pkg.id) ?? "";
@@ -431,23 +484,63 @@ async function scoreSingles(): Promise<void> {
           cFail.push(`${label}: not measured`);
           continue;
         }
+        // A null with a reason code is judged for honesty under gate A, not for accuracy under B
+        // and C (SPEC.md, bar amendments 2026-11-05). A null without a code fails A.
         if (!outcome.bytes) {
-          const codes = outcome.problems.map((p) => `${p.code} ${p.specifier ?? ""}`.trim());
-          bFail.push(`${label}: null (${codes.join("; ")})`);
-          cFail.push(`${label}: null`);
+          const problem = nullProblem(expectedNulls, name, exportName, outcome.problems);
+          if (problem) aFail.push(`${label}: ${problem}`);
+          else honestNulls.push(`${label}: ${[...new Set(outcome.problems.map((p) => p.code))]}`);
+          nullResults.push({ name, export: exportName, problems: outcome.problems });
           continue;
         }
         const bytes = toBytes(outcome.bytes);
         const ranges = referenceRanges(ref);
-        if (!ranges) bFail.push(`${label}: no reference built`);
+        const outside: string[] = [];
+        const gross: string[] = [];
+        if (!ranges) outside.push(`${label}: no reference built`);
         else {
           for (const field of BYTE_FIELDS) {
             const range = ranges[field];
             const text = `${label} ${field} ${bytes[field]} vs ${range.lo}..${range.hi}`;
-            if (grossError(bytes[field], range)) bGross.push(text);
-            if (!inBand(bytes[field], range)) bFail.push(text);
+            if (grossError(bytes[field], range)) gross.push(text);
+            if (!inBand(bytes[field], range)) outside.push(text);
           }
         }
+        const source = entryModuleSource({
+          candidate: name,
+          imports: [
+            {
+              source: name,
+              clauses: [
+                exportName === "default"
+                  ? { kind: "default", local: "m" }
+                  : { kind: "named", imported: exportName, local: "m" },
+              ],
+            },
+          ],
+          members: [],
+        });
+        const exception = exceptions.find((e) => e.id === id && e.entry === source) ?? null;
+        if (exception && (outside.length || gross.length)) {
+          const mismatch = exceptionMismatch(exception, {
+            version,
+            entry: source,
+            lock: await lockSha256("single", id),
+            bundler,
+            bytes,
+            reference: ref,
+          });
+          if (mismatch)
+            bFail.push(...outside.map((t) => `${t} (reviewed exception stale: ${mismatch})`));
+          else {
+            covered.push(`${label}: ${exception.cause.slice(0, 120)}...`);
+            outside.length = 0;
+            gross.length = 0;
+          }
+        }
+        bFail.push(...outside);
+        bGross.push(...gross);
+        measuredSingles += 1;
         const mismatch = conformance(bytes, ref.vite);
         if (mismatch) cFail.push(`${label}: ${mismatch}`);
         results.push({
@@ -478,15 +571,29 @@ async function scoreSingles(): Promise<void> {
     `Iteration 1, single exports: ${packages.length} packages, ${singles} exports, ${wholes} whole builds`,
     `  coverage: ${coverage.length} problems ${verdict(!coverage.length)} (every gate below fails while this does)`,
     ...coverage.map((c) => `    ${c}`),
-    `  B (single). in the rollup/webpack band: ${singles - new Set(bFail.map((f) => f.split(" ").slice(0, 2).join(" "))).size}/${singles} ${pass(!bFail.length)}; gross errors ${bGross.length} ${pass(!bGross.length)}`,
+    `  A (single-export nulls). ${honestNulls.length} nulls with their listed reason (single-nulls.json); ${aFail.length} other ${pass(!aFail.length)}`,
+    ...[...aFail, ...honestNulls].map((f) => `    ${f}`),
+    `  B (single). measured exports in the rollup/webpack band or covered by a reviewed exception: ${measuredSingles - new Set(bFail.map((f) => f.split(" ").slice(0, 2).join(" "))).size}/${measuredSingles} ${pass(!bFail.length)}; gross errors ${bGross.length} ${pass(!bGross.length)}`,
     ...bFail.map((f) => `    ${f}`),
-    `  C. equal to a stock vite build (min identical, gzip within ${GZIP_RUNTIME_TOLERANCE * 100}%): ${cFail.length} failures over ${singles} exports and ${wholes} whole builds ${pass(!cFail.length)}`,
+    ...covered.map((f) => `    covered by a reviewed exception: ${f}`),
+    `  C. equal to a stock vite build (min identical, gzip within ${GZIP_RUNTIME_TOLERANCE * 100}%): ${cFail.length} failures over ${measuredSingles} measured exports and ${wholes} whole builds ${pass(!cFail.length)}`,
     ...cFail.map((f) => `    ${f}`),
     `  D (singles). two runs per package: ${dFail.length} differences ${pass(!dFail.length)}`,
     ...dFail.map((f) => `    ${f}`),
   ];
   console.log(lines.join("\n"));
-  await save("singles", { coverage, bFail, bGross, cFail, dFail, results });
+  await save("singles", {
+    coverage,
+    aFail,
+    honestNulls,
+    nullResults,
+    covered,
+    bFail,
+    bGross,
+    cFail,
+    dFail,
+    results,
+  });
 }
 
 // --- nulls: A -----------------------------------------------------------------------------------------
@@ -636,7 +743,7 @@ const H0_KEY = [
   'Every export of the root entry point (`import * as m from "valibot"`, all kept): the eager JS (entry chunk plus its static imports) of a standalone production Vite build, gzipped, with peers (external_packages) left out; the root only, not subpaths.',
   "The median, over valibot's exports, of one export's eager gzip bytes when that export is the only import, each in its own build: a typical single export, not an app's usage.",
   "No: both are standalone builds of named imports, neither is this app's usage nor its marginal cost (what it adds given what the app already bundles); real usage of a few exports usually lies between the median and the whole.",
-  "Some exports' own builds failed depfit's checks (unmeasurable, with codes in the `bundle: <n> exports unmeasurable (...)` entry of unavailable) and are left out of the median; it does not mean they do not exist or are unused.",
+  "Some exports' own builds failed depfit's checks (unmeasurable) and are left out of the median; unavailable gives the reason, one entry per cause (here the whole build's UNRESOLVED_IMPORT entry covers them; a `bundle: <n> exports unmeasurable (...)` entry appears only for other codes). It does not mean they do not exist or are unused.",
   "The workspace has no browser signal (project.browser_signals is empty), so bundle facts were not measured (`bundle: skipped, no browser signal in workspace`); it says nothing about their size or whether they work in a browser.",
 ];
 

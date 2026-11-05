@@ -94,7 +94,7 @@
       "bundler": "vite@8.3.4 (rolldown@1.2.14)",
       "bytes": {
         "min_bytes": 126,
-        "gzip_bytes": 117,
+        "gzip_bytes": 115,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0
       },
@@ -111,7 +111,37 @@
         "lazy_gzip_bytes": 0
       },
       "cause": "The package is a single `throw` statement. Vite drops everything after it (126 B); rollup's CommonJS wrapper and webpack's runtime add a fixed 500-900 B. The difference is reference wrapper code, not the package.",
-      "reviewed": "Codex review round 3 (cause), 2026-10-16"
+      "reviewed": "Codex review round 3 (cause), 2026-10-16. Re-recorded 2026-11-05 (user-approved bar amendment): depfit's gzip moved from 117 to 115 B when gzip moved into the Node child that runs Vite; min bytes, references and cause unchanged."
+    },
+    {
+      "set": "single",
+      "id": "react-hook-form",
+      "export": "FormProvider",
+      "version": "7.90.0",
+      "entry": "import { FormProvider as __depfit_0 } from \"react-hook-form\";\nglobalThis.__depfit = [__depfit_0];\n",
+      "lock_sha256": "01348aaf35385f83c042a0c415d189f044b1ef673f36a76a768763c6d4030014",
+      "bundler": "vite@8.3.4 (rolldown@1.2.14)",
+      "bytes": {
+        "min_bytes": 1319,
+        "gzip_bytes": 592,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "rollup": {
+        "min_bytes": 941,
+        "gzip_bytes": 430,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "webpack": {
+        "min_bytes": 951,
+        "gzip_bytes": 433,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0
+      },
+      "cause": "Only the Vite output keeps 395 B of code from FormProvider's module that the export does not use: the EVENTS and INPUT_VALIDATION_RULES objects with bare member reads of the latter (286 B), and a default-options object read by bare member expressions (109 B). rolldown keeps bare member reads and the objects they read as possible side effects; rollup with terser and webpack drop them. Everything else is the same in all three builds. Without those two pieces the Vite output is 924 B min / 425 B gzip, inside the band (746.9..1146.1 / 287.0..576.3); depfit's 1319 / 592 B exceed the band maximum by 172.9 / 15.7 B.",
+      "reviewed": "Approved 2026-11-05 by an independent reviewer (Codex gpt-6.1-sol, high effort), second review round of the 2026-11-05 bar amendments: evidence accounting checked against the emitted code (286 + 109 = 395 B; 924 / 425 B without it).",
+      "evidence": "eval/bundle/evidence/react-hook-form-FormProvider.md (emitted code of all three builds; reproduce with reference.ts --emit react-hook-form FormProvider)"
     }
   ]
 }

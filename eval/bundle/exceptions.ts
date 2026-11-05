@@ -13,7 +13,8 @@ import { BYTE_FIELDS, type ByteField } from "./harness.ts";
 
 const HERE = import.meta.dirname;
 
-export type ExceptionSet = "corpus" | "wild";
+/** `single`: iteration 1's single-export reference set (single-reference.json, wild locks). */
+export type ExceptionSet = "corpus" | "wild" | "single";
 
 type Bytes = Record<ByteField, number | null>;
 
@@ -40,13 +41,18 @@ const bytesOf = (value: unknown): Bytes => {
   };
 };
 
+/** Reviewed exceptions in force: an entry whose `reviewed` is empty or "pending..." waives nothing. */
 export async function loadExceptions(): Promise<ReviewedException[]> {
   const raw = asRecord(JSON.parse(await readFile(join(HERE, "exceptions.json"), "utf8")));
   const items: unknown[] = Array.isArray(raw.exceptions) ? raw.exceptions : [];
-  return items.map((item) => {
+  const approved = items.filter((item) => {
+    const reviewed = asString(asRecord(item).reviewed) ?? "";
+    return reviewed !== "" && !reviewed.startsWith("pending");
+  });
+  return approved.map((item) => {
     const entry = asRecord(item);
     return {
-      set: entry.set === "wild" ? "wild" : "corpus",
+      set: entry.set === "wild" || entry.set === "single" ? entry.set : "corpus",
       id: asString(entry.id) ?? "",
       version: asString(entry.version) ?? "",
       entry: asString(entry.entry) ?? "",
@@ -62,7 +68,7 @@ export async function loadExceptions(): Promise<ReviewedException[]> {
 
 /** sha256 of the frozen lock a case is built from (locks/<id>.json or locks/wild/<id>.json). */
 export async function lockSha256(set: ExceptionSet, id: string): Promise<string> {
-  const path = join(HERE, "locks", ...(set === "wild" ? ["wild"] : []), `${id}.json`);
+  const path = join(HERE, "locks", ...(set === "corpus" ? [] : ["wild"]), `${id}.json`);
   return createHash("sha256")
     .update(await readFile(path))
     .digest("hex");
