@@ -1,8 +1,8 @@
 /**
- * Bundle size of a `--bundle-entry` snippet: a real `vite build` (Vite's production defaults) of
- * the snippet, run in its own Node process on the candidate's isolated install (`vite-build.mjs`).
- * Settings: eval/bundle/SETTINGS.md; contract: eval/bundle/SPEC.md. Nothing of Vite or rolldown is
- * loaded unless bundling is requested.
+ * Bundle size of an import snippet: a real `vite build` (Vite's production defaults) of the
+ * snippet, run in its own Node process on the candidate's isolated install (`vite-build.mjs`).
+ * Settings: eval/bundle/SETTINGS.md; bar: eval/bundle/SPEC.md. Only eval/ calls it for now; the CLI
+ * never loads Vite or rolldown.
  *
  * Unmeasurable builds give null bytes and `bundle: <CODE> [names]` reasons, never a smaller
  * number. Vite turns several broken inputs into a quiet success (a Node built-in becomes an empty

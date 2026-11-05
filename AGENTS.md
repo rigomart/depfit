@@ -7,7 +7,6 @@ and how they are maintained. Its main users are coding agents deciding which dep
 
 ```bash
 bun src/cli.ts zod valibot@^1 node:sqlite [--cwd dir] [--json|--table]
-bun src/cli.ts zod --bundle-entry 'import { z } from "zod"; z.object'   # browser bundle bytes
 bun src/cli.ts --schema   # one sentence per JSON field
 bun run check-types
 bun run lint
@@ -23,10 +22,9 @@ or a logged-in `gh`; without one they are null and listed in `unavailable`.
 - `src/report.ts`: the `Report` type, i.e. the output contract.
 - `src/schema-docs.ts`: one sentence per JSON path, printed by `--schema`.
 - `src/collect/`: builds the `Report`. `facts.ts` and `lockfile.ts` are pure; the rest read the
-  project or call npm, OSV, and GitHub. `bundle-entry.ts` validates `--bundle-entry` snippets;
-  `bundle.ts` measures them with a real `vite build`, run as a separate process
-  (`vite-build.mjs`, on Node) only when a snippet is given (settings and acceptance bar:
-  `eval/bundle/SPEC.md`).
+  project or call npm, OSV, and GitHub. `bundle.ts` builds with a real `vite build`, run as a
+  separate process (`vite-build.mjs`, on Node); for now only `eval/` calls it, measuring import
+  snippets that `bundle-entry.ts` validates (acceptance bar: `eval/bundle/SPEC.md`).
 - `src/render/`: the human table, a view of the `Report`.
 - `test/fixtures/`: small projects for lockfile and workspace tests (see its README).
 - `eval/`: the evaluation harness (see Evaluation).
@@ -55,6 +53,6 @@ or a logged-in `gh`; without one they are null and listed in `unavailable`.
 
 `eval/` holds the blind-evaluation harness. Probes (`eval/probes.json`, format in
 `probes.example.json`) point at local projects, so they, their results (`eval/results/`), and
-reviews (`eval/reviews/`) stay gitignored. `bun eval/run.ts [project...]` runs them. Write
-findings in `eval/FINDINGS.md`, describing projects by characteristics (stack, lockfile, size),
-never by name or path.
+reviews (`eval/reviews/`) stay gitignored. `bun eval/run.ts [--set <name>] [project...]` runs
+them. Write findings in `eval/FINDINGS.md`, describing projects by characteristics (stack,
+lockfile, size), never by name or path.

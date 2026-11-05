@@ -10,9 +10,6 @@ import { SCHEMA_VERSION } from "./report.ts";
 const GITHUB_NULL = "null when repository is null or GitHub data is unavailable";
 const NULL_SECTION = 'null when error is set or kind is "builtin"';
 
-const BUNDLE_NULL =
-  'null when the bundle could not be measured, with the reason in unavailable as one "bundle: <CODE> [names]" entry per code, listing the first three names and counting the rest: UNRESOLVED_IMPORT (an import, often a Node built-in, does not resolve for the browser), MISSING_EXPORT (an imported name is not exported), IMPORT_OUTSIDE_BUNDLE (the output still imports a module that is neither one of its chunks nor an external peer, such as import("https://…") or a computed import(), so that code would load at runtime and is not in the bytes), NO_ENTRY (the snippet\'s import has no entry point in the package), NON_JS_IMPORT (Vite emitted a file besides JS, such as CSS, a large asset or wasm, or built a worker, inline or not; what Vite inlines into the JS is counted, and files loaded by a path at runtime are not), PEER_IN_BUNDLE (code from a peer dependency was bundled, imported through an alias), TOOLCHAIN_MISMATCH (the installed Vite or rolldown is not the version depfit was evaluated with), or another bundler error code; also null when the install failed';
-
 export const FIELD_DESCRIPTIONS: Record<string, string> = {
   schema_version:
     "Version of this report format; it changes when a field is renamed, removed, or changes meaning.",
@@ -51,7 +48,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].error":
     "Why the spec could not be resolved at all, in which case in_repo, cost, compatibility, maintenance, security, and bundle are all null; null on success.",
   "packages[].unavailable":
-    'Data sources that failed or were skipped, e.g. "github: no token", and why bundle bytes are null, as "bundle: <CODE>" plus up to three specifiers or names (codes under packages[].bundle.eager_js_min_bytes); fields fed by a listed source are null, not zero, except lists, which are empty; empty when every source answered.',
+    'Data sources that failed or were skipped, e.g. "github: no token"; fields fed by a listed source are null, not zero, except lists, which are empty; empty when every source answered.',
 
   "packages[].in_repo":
     'How this package already appears in the project; null when there is no project or error is set; for kind "builtin" only files_using can be non-empty.',
@@ -164,20 +161,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     'Advisories affecting other packages in `version`\'s dependency tree, as "name@version:ID"; the package itself is covered by advisories; empty when none, or when the install or this lookup failed (see unavailable).',
 
   "packages[].bundle":
-    "Browser bundle size of the --bundle-entry snippet for this package, a standalone `vite build` (Vite's production defaults, no project config) from `version`'s isolated install, so an app's own plugins, aliases or settings can change it, and Vite's preload helper is included when the snippet has lazy chunks; other bundlers and minifiers can emit different sizes for the same snippet, by a factor of two or more, and on small bundles by about 1 KB of their own wrapper code; it is not the marginal cost given what the repo already bundles; the bytes Vite emits, not a claim that the code runs in a browser; null when no --bundle-entry was given for this package or error is set.",
-  "packages[].bundle.bundler":
-    'The bundler that measured the bytes, with its engine, e.g. "vite@8.3.4 (rolldown@1.2.14)".',
-  "packages[].bundle.target": 'Runtime the bundle is built for; always "browser".',
-  "packages[].bundle.entry":
-    "The snippet that was measured, normalized: every imported binding with no member statements is kept whole, a binding with member statements keeps only those members, and a side-effect-only import keeps only what the package's side effects keep.",
-  "packages[].bundle.entry_source":
-    '"requested" when the entry is the --bundle-entry snippet given on the command line.',
-  "packages[].bundle.eager_js_min_bytes": `Minified JS bytes loaded up front: the entry chunk plus every chunk it imports statically, with external_packages left out; ${BUNDLE_NULL}.`,
-  "packages[].bundle.eager_js_gzip9_bytes": `The same eager chunks, each gzipped at level 9 with the running runtime's zlib and summed (each chunk is a separate transfer); ${BUNDLE_NULL}.`,
-  "packages[].bundle.lazy_js_min_bytes": `Minified JS bytes of chunks loaded only through dynamic import(), each counted once and never included in the eager fields; 0 when there are none; ${BUNDLE_NULL}.`,
-  "packages[].bundle.lazy_js_gzip9_bytes": `The same lazy chunks, each gzipped at level 9 and summed; 0 when there are none; ${BUNDLE_NULL}.`,
-  "packages[].bundle.external_packages":
-    "Peer dependencies of `version` (optional ones too, types-only @types/* peers excluded), and their subpaths, left out of every bundle byte field; their own cost is in cost and compatibility.peer_dependencies; empty when it has none.",
+    "Browser bundle size; always null, because this version of depfit does not measure it.",
 };
 
 export type SchemaDocument = {

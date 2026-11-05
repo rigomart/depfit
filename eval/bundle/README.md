@@ -1,7 +1,21 @@
 # Bundle-size evaluation
 
-The acceptance bar is [SPEC.md](SPEC.md); bundler settings are in [SETTINGS.md](SETTINGS.md). This
-directory holds the harness that measures the bar.
+The current acceptance bar is [SPEC.md](SPEC.md) (v2, no input); its progress is in
+[STATUS.md](STATUS.md). Bundler settings are in [SETTINGS.md](SETTINGS.md).
+
+## Two harnesses
+
+- **v2 ground truth (real usage).** `bun eval/run.ts` measures each probe's `bundle_entries`, import
+  snippets of how the project really uses a candidate, through `eval/snippet-bundle.ts`, and
+  writes `<probe>.snippets.json` next to the report. The snippet parser and `bundleEntry` live in
+  `src/collect/` but only `eval/` calls them: the CLI takes no snippets since schema 6. This is
+  the real usage that SPEC.md's gate R compares against.
+- **v1 scorecard (this directory).** The scripts below score the v1 bar,
+  [SPEC-snippets-v1.md](SPEC-snippets-v1.md). They drive the CLI's `--bundle-entry`, which schema
+  6 removed, so they run only against a v5 build: check out commit `3319786` elsewhere and set
+  `DEPFIT_CLI` to its `src/cli.ts`. Their cases, references, locks and auditor are reused by
+  the v2 gates, which get their own scoring before iteration 1 ships. "SPEC" below means
+  SPEC-snippets-v1.md.
 
 ```bash
 bun eval/bundle/reference.ts [caseId...]   # builds reference.json: rollup + webpack, plus Vite for mandatory browser cases (~2 min)
@@ -13,7 +27,8 @@ bun eval/bundle/score.ts --wild [--resume] # gate W
 bun eval/bundle/comprehension.ts [results.json] [caseId...]   # gate H0 prompt and key
 ```
 
-`DEPFIT_CLI` points `score.ts` and `comprehension.ts` at another build of the CLI.
+`DEPFIT_CLI` points `score.ts`, `wild-score.ts` and `comprehension.ts` at another build of the CLI;
+since schema 6 it must be a v5 build (see "Two harnesses").
 
 ## Gates
 

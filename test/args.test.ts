@@ -8,23 +8,13 @@ describe("parseCliArgs", () => {
       specs: ["zod", "valibot@^1"],
       cwd: "../app",
       output: "json",
-      bundleEntries: [],
     });
   });
 
-  it("collects every --bundle-entry snippet as typed", () => {
-    const snippets = ['import { z } from "zod"; z.object', 'import * as v from "valibot"'];
-    expect(
-      parseCliArgs([
-        "zod",
-        "valibot",
-        "--bundle-entry",
-        snippets[0] ?? "",
-        "--bundle-entry",
-        snippets[1] ?? "",
-      ]),
-    ).toMatchObject({ kind: "run", bundleEntries: snippets });
-    expect(parseCliArgs(["zod", "--bundle-entry"])).toMatchObject({ kind: "usage-error" });
+  it("rejects --bundle-entry, which was removed in schema 6", () => {
+    expect(parseCliArgs(["zod", "--bundle-entry", 'import { z } from "zod"'])).toMatchObject({
+      kind: "usage-error",
+    });
   });
 
   it("leaves the output mode to the terminal by default", () => {
@@ -44,9 +34,9 @@ describe("parseCliArgs", () => {
     expect(parseCliArgs(["--schema", "--help"])).toEqual({ kind: "help" });
   });
 
-  it("mentions --schema and --bundle-entry in the help", () => {
+  it("mentions --schema and no snippet option in the help", () => {
     expect(USAGE).toMatch(/^ {2}--schema /m);
-    expect(USAGE).toMatch(/^ {2}--bundle-entry <js> /m);
+    expect(USAGE).not.toMatch(/bundle-entry|snippet/);
   });
 
   it("rejects bad usage", () => {

@@ -737,55 +737,6 @@ export const sonner: PackageReport = {
   bundle: null,
 };
 
-/** zod measured with `--bundle-entry 'import { z } from "zod"; z.object; z.string'`. */
-export const zodBundled: PackageReport = {
-  ...zod,
-  bundle: {
-    bundler: "rolldown@1.2.14",
-    target: "browser",
-    entry: 'import { z } from "zod"; z.object; z.string;',
-    entry_source: "requested",
-    eager_js_min_bytes: 78569,
-    eager_js_gzip9_bytes: 22496,
-    lazy_js_min_bytes: 0,
-    lazy_js_gzip9_bytes: 0,
-    external_packages: [],
-  },
-};
-
-/** sonner measured with its react peers left out of the bundle. */
-export const sonnerBundled: PackageReport = {
-  ...sonner,
-  bundle: {
-    bundler: "rolldown@1.2.14",
-    target: "browser",
-    entry: 'import { Toaster, toast } from "sonner";',
-    entry_source: "requested",
-    eager_js_min_bytes: 33461,
-    eager_js_gzip9_bytes: 9280,
-    lazy_js_min_bytes: 0,
-    lazy_js_gzip9_bytes: 0,
-    external_packages: ["react", "react-dom"],
-  },
-};
-
-/** A null bundle: the output still imports a module outside the bundle. */
-export const nodePtyUnmeasurable: PackageReport = {
-  ...nodePty,
-  unavailable: [...nodePty.unavailable, "bundle: IMPORT_OUTSIDE_BUNDLE import(…)"],
-  bundle: {
-    bundler: "rolldown@1.2.14",
-    target: "browser",
-    entry: 'import { spawn } from "@lydell/node-pty";',
-    entry_source: "requested",
-    eager_js_min_bytes: null,
-    eager_js_gzip9_bytes: null,
-    lazy_js_min_bytes: null,
-    lazy_js_gzip9_bytes: null,
-    external_packages: [],
-  },
-};
-
 export function report(
   packages: PackageReport[],
   project: ProjectInfo | null = npmProject,

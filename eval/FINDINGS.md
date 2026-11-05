@@ -307,3 +307,142 @@ Lockfile and repo facts, which drove most decisions, stayed.
 Bundle size may return as an opt-in that measures a real usage snippet.
 
 Known limit: `eval/run.ts` paces probes because npm's downloads API rate-limits bursts. One-off runs aren't affected. Caching is the planned fix.
+
+---
+
+# Round 4: schema v5 bundle size, first decision run (gate H)
+
+12 browser probes across 7 local projects, each a Vite, Next or TanStack front end with a bun.lock:
+a static Preact site that keeps its JS small, a Preact + CodeMirror notes app, a Next.js app, a
+React monorepo (web app and an application package), a large pnpm React monorepo, a small Vite +
+React practice app and a React app on Cloudflare in a monorepo.
+
+Method:
+
+1. **Snippets.** One Sonnet agent per project read the project's source and `depfit --help`, then
+   wrote one `--bundle-entry` per candidate, blind to sizes. Snippets were validated with depfit's
+   own parser and failures sent back with the exact CLI error, once.
+2. **Collection.** `bun eval/run.ts` with `bundle_entries` per probe. Each report also got a
+   `.nobundle` control copy, the same report with `bundle` set to null (gate E: no other field
+   changes).
+3. **Decisions.** Per project, three blind evaluators with only the JSON, the questions and
+   `--schema`: Sonnet on the control, Sonnet on the bundle report, Haiku on the bundle report.
+4. **Numbers.** The 8 largest or most decision-relevant measurements were rebuilt with esbuild.
+
+## Snippets
+
+- **First try: 6 of 35 snippets valid, 0 of 12 probes runnable.** All 7 agents listed imported
+  names as bare statements (`signal; computed;`, `Toaster;`) to say what they use. The help
+  example (`z.object; z.string`) primes this. depfit rejects them.
+- **After one retry with the CLI error: 12 of 12 valid.** Six agents deleted the bare statements;
+  one switched to `import * as Tone; Tone.Player; Tone.start`, which measures the same thing. None
+  widened the measurement.
+- **Companion packages can't be in a snippet.** A sortable list needs `@dnd-kit/sortable`, a
+  nanostores app needs `@nanostores/preact`, README rendering needs `remark-gfm`. The one-candidate
+  rule leaves them out, and evaluators flagged the resulting comparisons as not like for like.
+
+## Numbers
+
+| Measurement | depfit gzip | esbuild gzip |
+|---|---|---|
+| streamdown `{ Streamdown }` | 153.2 KB | 162.3 KB |
+| recharts 10 named imports | 101.0 KB | 111.4 KB |
+| shiki core + JS engine | 52.6 KB | 54.0 KB |
+| tone `Player`, `start` | 57.2 KB | 60.9 KB |
+| motion `motion.li`, `AnimatePresence` | 44.5 KB | 47.1 KB |
+| chart.js registered line + scatter | 53.5 KB | 54.9 KB |
+| date-fns 4 functions | 6.2 KB | 6.5 KB |
+| zod `z.object` and 5 more | 23.7 KB | 93.0 KB |
+
+Seven agree within 3–10%. The zod gap is esbuild not shaking the `export * as z` namespace; the
+corpus's rollup reference (22.2 KB) agrees with depfit, and v3 reported 93 KB here.
+
+One null out of 35: `@formkit/auto-animate/react` gives `UNRESOLVED_IMPORT react`. The package
+declares no `peerDependencies` but its framework subpaths import the framework, so the isolated
+install has no React. Honest, but the most common usage of the package is unmeasurable.
+
+## Decisions
+
+| Probe | Control (Sonnet) | Bundle (Sonnet) | Bundle (Haiku) |
+|---|---|---|---|
+| Preact shared state | nanostores, low | @preact/signals, medium | nanostores, medium |
+| Browser route-data validation | keep zod, medium-low | valibot, high | valibot, medium |
+| Notes full-text search | minisearch, low-medium | minisearch, medium | minisearch, medium |
+| Notes markdown export | marked, medium-high | marked, medium-high | marked, high |
+| Charts | keep recharts, medium | keep, medium | keep, medium |
+| README markdown | keep streamdown, medium | keep, low | react-markdown, low |
+| Dates | keep date-fns, high | keep, high | keep, high |
+| Toasts | keep sonner, high | keep, high | keep, medium |
+| Sortable drag and drop | keep dnd-kit, medium-high | keep, medium | keep, medium |
+| Diff syntax highlighting | shiki, medium | prismjs, medium | prismjs, medium |
+| List animation | auto-animate, medium | auto-animate, medium | motion, low |
+| Audio clips | keep current, medium | keep current, medium | howler, medium |
+
+- **Every control evaluator asked for browser bundle bytes**, most as the main missing fact.
+- **Bundle bytes changed 3 of 12 Sonnet decisions.**
+  - **Better (2).** On the size-sensitive Preact site, valibot (1.4 KB) over zod (23.7 KB), whose
+    only use is a build-time pipeline; and @preact/signals, after reading that zustand's 378 B
+    leave React out (`external_packages`) and nanostores needs a binding.
+  - **Worse (1).** For diff highlighting both bundle arms chose prism (7.8 KB) over shiki
+    (52.6 KB). The web app already ships shiki through its diff library (`in_repo.pulled_in_by`
+    shows it), so shiki's marginal cost is near zero. Both evaluators wrote that the number is
+    not marginal and still let it decide. This is the standalone-not-marginal limit (SPEC step 5)
+    turning a decision.
+- **Haiku changed 5 of 12.** Two match Sonnet's. One followed size alone with low confidence
+  (react-markdown, while noting its plugins were not counted). In one, the auto-animate null
+  steered it to motion: it read the null correctly as unknown, then chose among the measured.
+- **No misreading of what the numbers are.** Every evaluator kept install bytes and bundle bytes
+  apart, read `external_packages`, and read the auto-animate null as a measurement gap. One
+  called a 2.3 KB gap "smaller than the stated noise" (the schema's ~1 KB is other bundlers'
+  wrapper code).
+
+## Takeaways
+
+1. **The snippet format fails agents on the first try.** Accepting a bare imported name as "keep
+   this binding", which is what agents mean, would remove the round trip.
+2. **Standalone bytes can outweigh in-repo facts** when a candidate already ships transitively.
+   Marginal bytes (step 5), or a fact for "already in this workspace's bundle graph", would close
+   it.
+3. **Companion packages and undeclared framework peers** limit what a snippet can measure.
+4. Numbers held up against an independent bundler, and readers understood them.
+
+## Follow-up: sizes without a snippet
+
+Constraint from here on: `depfit zod valibot` must give bundle facts with no extra input. Each
+candidate from this round (35, with auto-animate's undeclared `react` treated as external) was
+measured in four ways, using depfit's Vite settings, and compared with its real-usage size above:
+
+- **Whole:** `import * as m` of the root, kept whole.
+- **One import:** each root export alone, in its own build. Up to 40 sampled per package. One
+  multi-entry build does not work: a single-file package such as valibot puts the union of every
+  export into one shared chunk.
+- **Entry points:** each subpath in the `exports` map (no patterns), kept whole.
+
+| | Within 25% of real | Smallest candidate right | Pairs out of order |
+|---|---|---|---|
+| Whole | 25/35 | 12/12 | 2/32 (zod vs arktype, highlight.js vs shiki) |
+| Heaviest single export | 31/35 | 12/12 | 3/32 |
+| Median single export | 16/35 | 7/12 | 8/32, 6 of them by 2x or more |
+| Some listed entry point | 26/35 | | |
+
+- **Whole is right for one-piece libraries** (fuse.js, marked, markdown-it, streamdown, arktype,
+  howler, sonner) and **overstates pay-per-use ones**: valibot 14.3 vs 1.4 KB, date-fns 17.5 vs
+  6.1, zod 88.0 vs 23.1, highlight.js 298.8 vs 14.7 (real usage is `lib/core` plus 3 languages).
+- **It understates add-ons outside the root:** gsap with Flip, dayjs with a plugin, prism with
+  languages, pragmatic-drag-and-drop (root is 0.2 KB; none of these have an `exports` map).
+- **The median single export alone misleads** (motion 0.2 KB, luxon 2.2, shiki 3.0, against
+  43–52 KB real): most exports are small helpers.
+- **Two numbers, median single export and whole:** real usage falls between them in 31/35. The 4
+  misses are all subpath usage. In 24 pairs both numbers point the same way and real agrees in 23
+  (miss: highlight.js); 8 pairs point opposite ways, i.e. show a trade-off.
+- **Framework packages:** the relevant entry point is the subpath for the project's framework
+  (`motion/react` 66.0 KB whole, `@formkit/auto-animate/react`), not the root.
+- **Cost:** about 0.5–4.5 s of builds per package (40 exports plus up to 60 entry points), median
+  about 0.7 s.
+
+**Sampling check.** Every export of the 8 packages with more than 40 was built separately (in one
+Node process, one after another): 9–72 ms per export, 1.4–7.1 s per package (motion 331 exports
+4.3 s, zod 260 exports 3.4 s, tone 169 exports 7.1 s). The 40-export sample's median was the same
+or close (recharts 22.7 vs 18.4 KB full, shiki 3.0 vs 3.7) but its maximum missed motion's heaviest
+export (25.5 vs 32.2 KB). Measuring every export is affordable; the result per `name@version` never
+changes, so it can be cached.

@@ -1,8 +1,8 @@
 /**
- * `--bundle-entry` snippets: validation, the normalized form shown in the report, and the entry
- * module that is bundled. A snippet may only hold import declarations from one candidate (or its
- * subpaths) and bare member-expression statements on the imported bindings, e.g.
- * `import { z } from "zod"; z.object; z.string`.
+ * Import snippets, used only by eval/ (the ground truth for real usage; eval/bundle/SPEC.md):
+ * validation, the normalized form, and the entry module that is bundled. A snippet may only hold
+ * import declarations from one candidate (or its subpaths) and bare member-expression statements
+ * on the imported bindings, e.g. `import { z } from "zod"; z.object; z.string`.
  */
 import type { ESTree } from "rolldown/utils";
 
@@ -98,25 +98,23 @@ export function validateSnippet(
     }
     if (statement.type !== "ImportDeclaration") {
       return fail(
-        `--bundle-entry allows only import declarations and member statements like \`z.object;\`, not ${quoted(statement)}`,
+        `snippet allows only import declarations and member statements like \`z.object;\`, not ${quoted(statement)}`,
       );
     }
     if (statement.phase !== null || statement.attributes.length > 0) {
-      return fail(
-        `--bundle-entry does not support import phases or attributes: ${quoted(statement)}`,
-      );
+      return fail(`snippet does not support import phases or attributes: ${quoted(statement)}`);
     }
     const from = statement.source.value;
     const candidate = candidates.find((name) => isCandidateSource(from, name));
     if (candidate === undefined) {
       return fail(
-        `--bundle-entry imports "${from}", which is not a candidate or a subpath of one (candidates: ${candidates.join(", ") || "none"})`,
+        `snippet imports "${from}", which is not a candidate or a subpath of one (candidates: ${candidates.join(", ") || "none"})`,
       );
     }
     const subpath = from.slice(candidate.length);
     if (subpath !== "" && subpath.slice(1).split("/").some(isUnsafeSegment)) {
       return fail(
-        `--bundle-entry imports "${from}"; a subpath may not have empty, ".", "..", or "node_modules" segments, or contain \\, %, ?, or #`,
+        `snippet imports "${from}"; a subpath may not have empty, ".", "..", or "node_modules" segments, or contain \\, %, ?, or #`,
       );
     }
     used.add(candidate);
@@ -124,28 +122,28 @@ export function validateSnippet(
   }
 
   const [candidate, ...others] = [...used];
-  if (candidate === undefined) return fail("--bundle-entry has no import declaration");
+  if (candidate === undefined) return fail("snippet has no import declaration");
   if (others.length > 0) {
     return fail(
-      `--bundle-entry imports more than one candidate (${[...used].join(", ")}); give one snippet per candidate`,
+      `snippet imports more than one candidate (${[...used].join(", ")}); give one snippet per candidate`,
     );
   }
 
   const locals = imports.flatMap((i) => i.clauses.map((clause) => clause.local));
   const bindings = new Set(locals);
   const twice = locals.find((local, index) => locals.indexOf(local) !== index);
-  if (twice !== undefined) return fail(`--bundle-entry binds \`${twice}\` more than once`);
+  if (twice !== undefined) return fail(`snippet binds \`${twice}\` more than once`);
   const members: string[] = [];
   for (const statement of statements) {
     const path = memberPath(statement.expression);
     if (path === null || !path.includes(".")) {
       return fail(
-        `--bundle-entry allows only plain member statements like \`z.object;\` after the imports, not ${quoted(statement)}`,
+        `snippet allows only plain member statements like \`z.object;\` after the imports, not ${quoted(statement)}`,
       );
     }
     const root = path.slice(0, path.indexOf("."));
     if (!bindings.has(root)) {
-      return fail(`--bundle-entry: ${quoted(statement)} does not start with an imported binding`);
+      return fail(`snippet: ${quoted(statement)} does not start with an imported binding`);
     }
     if (!members.includes(path)) members.push(path);
   }
@@ -232,7 +230,7 @@ export function bundleEntries(
       const detail = message
         .split("\n")
         .find((line) => line.trim() && !line.startsWith("Parse failed"));
-      return { ok: false, message: `--bundle-entry is not valid JS: ${detail?.trim() ?? message}` };
+      return { ok: false, message: `snippet is not valid JS: ${detail?.trim() ?? message}` };
     }
     const validated = validateSnippet(program, snippet, candidates);
     if (!validated.ok) return validated;
@@ -240,7 +238,7 @@ export function bundleEntries(
     if (entries.has(candidate)) {
       return {
         ok: false,
-        message: `--bundle-entry was given twice for ${candidate}; give one snippet per candidate`,
+        message: `a snippet was given twice for ${candidate}; give one snippet per candidate`,
       };
     }
     entries.set(candidate, validated.entry);
@@ -248,7 +246,7 @@ export function bundleEntries(
   return { ok: true, entries };
 }
 
-/** Loads rolldown's parser (only when --bundle-entry is used) and validates the snippets. */
+/** Loads rolldown's parser and validates the snippets. */
 export async function prepareBundleEntries(snippets: string[], candidates: string[]) {
   const { parseAst } = await import("rolldown/parseAst");
   return bundleEntries(snippets, candidates, (source) =>

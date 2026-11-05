@@ -11,8 +11,6 @@ export type Command =
       specs: string[];
       cwd: string | null;
       output: OutputMode | "auto";
-      /** `--bundle-entry` snippets as typed, validated later against the specs. */
-      bundleEntries: string[];
     }
   | { kind: "usage-error"; message: string };
 
@@ -24,11 +22,6 @@ A spec is an npm package with an optional range (zod, zod@^3) or a runtime built
 
 Options:
   --cwd <dir>             Project to compare against (default: current directory)
-  --bundle-entry <js>     Measure the browser bundle of an import of one candidate, e.g.
-                          'import { z } from "zod"; z.object; z.string'. Only imports from that
-                          candidate (or its subpaths) and member statements on the imported
-                          names; bindings without members are kept whole. Repeat once per
-                          candidate.
   --json                  Print the report as JSON (default when stdout is not a TTY)
   --table                 Print a table (default when stdout is a TTY)
   --schema                Print a one-sentence description of every JSON field, then exit
@@ -64,7 +57,6 @@ export function parseCliArgs(argv: string[]): Command {
     specs: positionals,
     cwd: values.cwd ?? null,
     output: values.json ? "json" : values.table ? "table" : "auto",
-    bundleEntries: values["bundle-entry"] ?? [],
   };
 }
 
@@ -75,7 +67,6 @@ function parse(argv: string[]) {
     strict: true,
     options: {
       cwd: { type: "string" },
-      "bundle-entry": { type: "string", multiple: true },
       json: { type: "boolean" },
       table: { type: "boolean" },
       schema: { type: "boolean" },
