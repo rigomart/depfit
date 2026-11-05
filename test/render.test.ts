@@ -9,19 +9,16 @@ import {
   monorepoProject,
   nodeProject,
   nodePty,
-  nodePtyUnmeasurable,
   nodeSqlite,
   noProjectReport,
   report,
   sharp,
   sonner,
-  sonnerBundled,
   valibot,
   workersProject,
   yup,
   yupWithoutGithub,
   zod,
-  zodBundled,
 } from "./reports.ts";
 
 const plain = { width: 120, color: false };
@@ -98,24 +95,8 @@ describe("renderTable", () => {
     expect(block.join(" ")).toMatch(/^High performance Node\.js image processing/);
   });
 
-  it("adds a Bundle group last, only when some package has a bundle", () => {
+  it("has no Bundle group", () => {
     expect(output).not.toContain("Bundle");
-    const out = renderTable(report([zodBundled, valibot, sonnerBundled, nodePtyUnmeasurable]), {
-      width: 200,
-      color: false,
-    });
-    const titles = out.split("\n").filter((l) => /^[A-Z]/.test(l));
-    expect(titles.at(-2)).toBe("Bundle");
-    expect(row(out, "Eager JS min / gzip")).toEqual([
-      "78.6 KB / 22.5 KB",
-      "-",
-      "33.5 KB / 9.3 KB",
-      "-",
-    ]);
-    expect(row(out, "Lazy JS min / gzip")).toEqual(["0 B / 0 B", "-", "0 B / 0 B", "-"]);
-    expect(row(out, "External (peers)")).toEqual(["none", "-", "react", "none"]);
-    expect(row(out, "Bundler")[0]).toBe("rolldown@1.2.14, browser");
-    expect(out).toContain("node-pty: bundle: IMPORT_OUTSIDE_BUNDLE import(…)");
   });
 
   it("formats repo facts", () => {

@@ -133,6 +133,6 @@ describe("bundle entry snippets", () => {
   });
 
   it("reports syntax errors as usage errors", () => {
-    expect(usageError(['import { z from "zod"'])).toMatch(/^--bundle-entry is not valid JS: /);
+    expect(usageError(['import { z from "zod"'])).toMatch(/^snippet is not valid JS: /);
   });
 });

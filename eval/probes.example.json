@@ -3,6 +3,12 @@
     "project": "my-app",
     "cwd": "~/code/my-app",
     "packages": ["date-fns", "dayjs", "luxon"],
-    "question": "Should this project switch date libraries?"
+    "question": "Should this project switch date libraries?",
+    "set": "round-1",
+    "bundle_entries": [
+      "import { format, addDays } from \"date-fns\"",
+      "import dayjs from \"dayjs\"",
+      "import { DateTime } from \"luxon\""
+    ]
   }
 ]

@@ -12,12 +12,39 @@ SPEC-snippets-v1.md. Evidence: `eval/FINDINGS.md`, round 4 and its follow-up.
 
 | Iteration | State |
 |---|---|
-| 0. Remove the snippet API | Not started |
+| 0. Remove the snippet API | Built; reproduction gate awaiting a user decision (below) |
 | 1. Root entry point, two ways, browser workspaces only | Bar written |
 
 Holdout probes `holdout-1`, frozen 2026-10-19 before any iteration-1 code: 10 questions, sha256
 `f792fac58becfaed39b978a33e2e118526652b9cb6c9214b424d9cf2461f8466` of `JSON.stringify` of the
 `holdout-1` entries of `eval/probes.json` in file order.
+
+## Iteration 0: remove the snippet API (2026-11-04)
+
+Schema 6: `--bundle-entry`, `entry` and `entry_source` are gone, and `packages[].bundle` is
+always null until iteration 1 fills it. The CLI no longer imports the bundle code. The snippet
+parser, entry generator and `bundleEntry` stay in `src/collect/`, called only by
+`eval/snippet-bundle.ts`, which `eval/run.ts` uses to write `<probe>.snippets.json` for each
+probe with `bundle_entries`.
+
+| Check | Result |
+|---|---|
+| Type check, lint (`oxlint`, `oxfmt --check`), tests | Pass |
+| `--help`, README, `schema-docs` say nothing about snippets | Pass |
+| A/B on the same day: v5 CLI (`3319786`, `--bundle-entry`) vs `eval/run.ts` on the 12 round-4 probes | 35/35 identical: version, entry, all four byte fields, reasons, peers |
+| Round-4 ground truth, each candidate at its round-4 version | 33/35 within 1% (29 byte-identical); 2 outside |
+| Round-4 ground truth, versions as resolved today | 23/35 within 1%; 11 of the 35 resolve to a newer release |
+
+The two misses are at the same package version, with newer dependencies installed:
+
+- recharts 2.15.4: +3.2% min, +2.6% gzip. Eleven d3 packages and `@babel/runtime` in its isolated
+  install were published on 2026-11-03 and 2026-11-04, after round 4 (2026-10-19).
+- streamdown 2.7.0: +2.0% min, +2.1% gzip. Its `marked` dependency now resolves to 18.1.3
+  instead of 18.1.1; marked 18.1.3 alone is 5.7% larger than 18.1.1.
+
+The A/B shows the engine is unchanged. The misses come from the registry, which round 4 did not
+freeze. Whether this meets the bar ("reproduces within 1% per candidate") is the user's call; the
+bar is unchanged.
 
 The rest of this file is the v1 history.
 
