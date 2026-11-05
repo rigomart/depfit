@@ -1,6 +1,7 @@
 /**
  * Runs every probe in eval/probes.json (local, gitignored; see probes.example.json) through the CLI
- * and saves JSON + table output to eval/results/.
+ * and saves JSON + table output to eval/results/. A probe with `bundle_entries` also gets a
+ * `.nobundle` copy of both, the same report with bundle size removed, as a control.
  *   bun eval/run.ts [project...]
  */
 import { execFile } from "node:child_process";
@@ -12,7 +13,25 @@ import { renderTable } from "../src/render/table.ts";
 import type { Report } from "../src/report.ts";
 
 const run = promisify(execFile);
-type Probe = { project: string; cwd: string; packages: string[]; question: string };
+type Probe = {
+  project: string;
+  cwd: string;
+  packages: string[];
+  question: string;
+  bundle_entries?: string[];
+};
+
+/** The report as if no --bundle-entry had been given (gate E: no other field changes). */
+function withoutBundle(report: Report): Report {
+  return {
+    ...report,
+    packages: report.packages.map((pkg) => ({
+      ...pkg,
+      bundle: null,
+      unavailable: pkg.unavailable.filter((entry) => !entry.startsWith("bundle:")),
+    })),
+  };
+}
 
 const only = process.argv.slice(2);
 const probes = (JSON.parse(await readFile("eval/probes.json", "utf8")) as Probe[]).filter(
@@ -28,11 +47,20 @@ for (const probe of probes) {
   const dir = join("eval/results", probe.project);
   await mkdir(dir, { recursive: true });
   const started = performance.now();
-  const json = await run("bun", [cli, ...probe.packages, "--json"], { cwd, maxBuffer: 1 << 26 });
-  const table = renderTable(JSON.parse(json.stdout) as Report, { width: 140, color: false });
+  const bundleArgs = (probe.bundle_entries ?? []).flatMap((entry) => ["--bundle-entry", entry]);
+  const json = await run("bun", [cli, ...probe.packages, ...bundleArgs, "--json"], {
+    cwd,
+    maxBuffer: 1 << 26,
+  });
+  const report = JSON.parse(json.stdout) as Report;
   const base = join(dir, `${n}-${probe.packages.join("-vs-").replaceAll("/", "_")}`);
-  await writeFile(`${base}.json`, json.stdout);
-  await writeFile(`${base}.txt`, `# ${probe.question}\n\n${table}`);
+  const save = async (path: string, r: Report) => {
+    await writeFile(`${path}.json`, `${JSON.stringify(r, null, 2)}\n`);
+    const table = renderTable(r, { width: 140, color: false });
+    await writeFile(`${path}.txt`, `# ${probe.question}\n\n${table}`);
+  };
+  await save(base, report);
+  if (bundleArgs.length) await save(`${base}.nobundle`, withoutBundle(report));
   await writeFile(`${base}.question.txt`, probe.question);
   console.log(
     `${probe.project} #${n} ${probe.packages.join(" ")}: ${Math.round(performance.now() - started)}ms`,

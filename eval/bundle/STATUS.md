@@ -1,7 +1,25 @@
-# Bundle size: status and handoff (2026-10-16)
+# Bundle size: status and handoff
 
-Work in progress on branch `t3/b368aecf`, saved as a WIP commit. Read SPEC.md first: it is the bar,
-the decisions, and the stop conditions.
+Read SPEC.md first: it is the bar, the decisions, and the stop conditions.
+
+## v2 direction (2026-10-19)
+
+The snippet API (schema v5, `--bundle-entry`) shipped in #1 and is being replaced. In the round-4
+decision eval, agents wrote valid snippets on the first try 6 times out of 35, and the CLI must work
+as `depfit zod valibot` with no extra input (user decision). The new bar is SPEC.md (v2): sizes with
+no input, in iterations, each with its own bar written before its code. The v1 bar is
+SPEC-snippets-v1.md. Evidence: `eval/FINDINGS.md`, round 4 and its follow-up.
+
+| Iteration | State |
+|---|---|
+| 0. Remove the snippet API | Not started |
+| 1. Root entry point, two ways, browser workspaces only | Bar written |
+
+Holdout probes `holdout-1`, frozen 2026-10-19 before any iteration-1 code: 10 questions, sha256
+`f792fac58becfaed39b978a33e2e118526652b9cb6c9214b424d9cf2461f8466` of `JSON.stringify` of the
+`holdout-1` entries of `eval/probes.json` in file order.
+
+The rest of this file is the v1 history.
 
 ## Where things stand (2026-10-16, end of step 1)
 
