@@ -1,8 +1,18 @@
 /** Isolated `npm install` of one package in a temp dir, to see its own tree with no dedupe. */
 import { execFile } from "node:child_process";
-import { mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import {
+  copyFile,
+  link,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import type { TreeEdge, TreePackage } from "./facts.ts";
 import { resolveAlias } from "./lockfile.ts";
@@ -82,6 +92,36 @@ async function readTree(dir: string): Promise<TreePackage[]> {
   );
 }
 
+const NPM_FLAGS = ["--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error"];
+
+/**
+ * Eval-only (eval/run.ts): `DEPFIT_LOCK_DIR` names a directory of frozen install trees, one npm
+ * lockfile per name@version. An install replays the frozen tree with `npm ci` when there is one,
+ * and otherwise records the tree it resolved, so a later run installs the same packages.
+ */
+function frozenLockPath(name: string, version: string): string | null {
+  const dir = process.env.DEPFIT_LOCK_DIR;
+  return dir ? join(dir, `${name.replace("/", "__")}@${version}.package-lock.json`) : null;
+}
+
+/**
+ * Publishes a recorded tree at `lockPath` atomically and never over an existing record: written to a
+ * temp file beside it, then hard-linked into place, which fails if another install recorded first
+ * (that record stands; this install's tree is only used for this run).
+ */
+async function recordLock(source: string, lockPath: string): Promise<void> {
+  await mkdir(dirname(lockPath), { recursive: true });
+  const temp = `${lockPath}.${process.pid}.${Date.now()}.tmp`;
+  await copyFile(source, temp);
+  try {
+    await link(temp, lockPath);
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
+  } finally {
+    await rm(temp, { force: true });
+  }
+}
+
 /**
  * Installs name@version alone (scripts disabled), runs `use` on the result, and always removes
  * the temp dir afterwards.
@@ -92,28 +132,27 @@ export async function withIsolatedInstall<T>(
   use: (install: Install) => Promise<T>,
 ): Promise<T> {
   const dir = await mkdtemp(join(tmpdir(), "depfit-"));
+  const options = {
+    cwd: dir,
+    timeout: 180_000,
+    maxBuffer: 16 * 1024 * 1024,
+    shell: process.platform === "win32",
+  };
   try {
-    await writeFile(
-      join(dir, "package.json"),
-      JSON.stringify({ name: "depfit-probe", private: true }),
-    );
-    await run(
-      "npm",
-      [
-        "install",
-        `${name}@${version}`,
-        "--ignore-scripts",
-        "--no-audit",
-        "--no-fund",
-        "--loglevel=error",
-      ],
-      {
-        cwd: dir,
-        timeout: 180_000,
-        maxBuffer: 16 * 1024 * 1024,
-        shell: process.platform === "win32",
-      },
-    );
+    const lockPath = frozenLockPath(name, version);
+    const frozen = lockPath ? await readFile(lockPath, "utf8").catch(() => null) : null;
+    const manifest = { name: "depfit-probe", private: true };
+    if (frozen) {
+      const root = asRecord(asRecord(asRecord(JSON.parse(frozen)).packages)[""]);
+      const dependencies = asStringRecord(root.dependencies);
+      await writeFile(join(dir, "package.json"), JSON.stringify({ ...manifest, dependencies }));
+      await writeFile(join(dir, "package-lock.json"), frozen);
+      await run("npm", ["ci", ...NPM_FLAGS], options);
+    } else {
+      await writeFile(join(dir, "package.json"), JSON.stringify(manifest));
+      await run("npm", ["install", `${name}@${version}`, ...NPM_FLAGS], options);
+      if (lockPath) await recordLock(join(dir, "package-lock.json"), lockPath);
+    }
     return await use({ dir, tree: await readTree(dir) });
   } finally {
     await rm(dir, { recursive: true, force: true });

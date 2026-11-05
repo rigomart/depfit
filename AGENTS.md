@@ -13,7 +13,9 @@ bun run lint
 bun run test:once
 ```
 
-Collecting needs network access and `npm` on PATH. GitHub facts need `GITHUB_TOKEN`, `GH_TOKEN`,
+Collecting needs network access and `npm` on PATH. Two environment switches exist for the eval only:
+`DEPFIT_BUNDLE=0` turns bundle facts off, and `DEPFIT_LOCK_DIR=<dir>` records each isolated install's
+lockfile there, or replays it with `npm ci` when one exists. GitHub facts need `GITHUB_TOKEN`, `GH_TOKEN`,
 or a logged-in `gh`; without one they are null and listed in `unavailable`.
 
 ## Layout
@@ -22,9 +24,12 @@ or a logged-in `gh`; without one they are null and listed in `unavailable`.
 - `src/report.ts`: the `Report` type, i.e. the output contract.
 - `src/schema-docs.ts`: one sentence per JSON path, printed by `--schema`.
 - `src/collect/`: builds the `Report`. `facts.ts` and `lockfile.ts` are pure; the rest read the
-  project or call npm, OSV, and GitHub. `bundle.ts` builds with a real `vite build`, run as a
-  separate process (`vite-build.mjs`, on Node); for now only `eval/` calls it, measuring import
-  snippets that `bundle-entry.ts` validates (acceptance bar: `eval/bundle/SPEC.md`).
+  project or call npm, OSV, and GitHub. `bundle.ts` builds with a real `vite build` in a separate
+  Node process (`vite-build.mjs`, one process per package, one build per request).
+  `root-entry.ts` measures the root entry point whole and each export alone; `index.ts` imports
+  it only in a browser workspace (`project.browser_signals`), so Vite is never loaded otherwise.
+  The eval also measures import snippets (`bundle-entry.ts`) as real-usage ground truth.
+  Acceptance bar: `eval/bundle/SPEC.md`.
 - `src/render/`: the human table, a view of the `Report`.
 - `test/fixtures/`: small projects for lockfile and workspace tests (see its README).
 - `eval/`: the evaluation harness (see Evaluation).

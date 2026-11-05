@@ -446,3 +446,114 @@ Node process, one after another): 9–72 ms per export, 1.4–7.1 s per package 
 or close (recharts 22.7 vs 18.4 KB full, shiki 3.0 vs 3.7) but its maximum missed motion's heaviest
 export (25.5 vs 32.2 KB). Measuring every export is affordable; the result per `name@version` never
 changes, so it can be cached.
+
+# Round 5: schema v6, bundle facts with no input (iteration 1, gate H)
+
+22 browser probes across 9 local projects: round 4's 12, plus 10 holdout questions frozen on
+2026-10-19 before any iteration-1 code (a static Astro portfolio, a React component package in a UI
+monorepo, and new questions for the round-4 projects). Every candidate is measured with no flags:
+the root entry point whole (`import * as m`, kept) and each export alone, in a Vite build per export.
+
+Method:
+
+1. **Ground truth.** Round-4 snippets were kept. For the holdout probes, one blind Sonnet agent per
+   project read the project's source and wrote one import snippet per candidate, without sizes. All
+   30 were valid on the first try (round 4: 6 of 35), because the prompt said not to write bare
+   names. Side-effect `.css` imports (6 snippets) were removed before measuring, by a rule written
+   before any measurement: non-JS output is out of scope.
+2. **Collection.** `bun eval/run.ts` once with ground truth, then again on the same frozen installs
+   (gate D) and with `DEPFIT_BUNDLE=0` (gate E, and the control arm). Each candidate's install tree
+   is saved as an npm lockfile next to the results, so the run can be reproduced.
+3. **Decisions.** Per project, three blind evaluators with only the JSON, the questions and
+   `--schema`: Sonnet on the control (bundle off), Sonnet on v6, Haiku on v6.
+
+## Real usage against the two numbers (gate R)
+
+| | Round-4 probes | Holdout | All |
+|---|---|---|---|
+| Real usage in `[0.9 x single-export median, 1.1 x whole]` | 30/34 | 29/30 | 59/64 (92%) |
+| Pairs where both numbers point the same way and real usage differs by 10% or more: real agrees | | | 43/44 (98%) |
+
+- **All five misses import a subpath** (miss class 1): dayjs with a plugin, gsap with Flip,
+  photoswipe's `lightbox` subpath, highlight.js's `lib/core` plus three languages, and
+  pragmatic-drag-and-drop's adapters (its root is 0.2 KB). The one pair that disagrees is shiki vs
+  highlight.js, for the same highlight.js reason.
+- **Left out:** @formkit/auto-animate, whose real usage (`@formkit/auto-animate/react`) is null
+  (`UNRESOLVED_IMPORT react`, an undeclared framework peer).
+- **Single-file and one-export packages** (CommonJS packages resolve to `default` alone: leaflet,
+  howler, dompurify, fuse.js) have median equal to whole, and real usage matched it.
+- **Pay-per-use packages** show the range: valibot 0.55 to 14.6 KB (real 1.4), date-fns 0.27 to 17.9 KB
+  (real 6.2), motion 0.19 to 59.3 KB (real, through `motion/react`, 45.0).
+
+## Decisions
+
+| Probe | Control (Sonnet) | v6 (Sonnet) | v6 (Haiku) |
+|---|---|---|---|
+| Preact shared state | @preact/signals | nanostores | nanostores |
+| Browser route-data validation | valibot | valibot | valibot |
+| Static-site station map (holdout) | leaflet | leaflet | leaflet |
+| Notes full-text search | minisearch | minisearch | minisearch |
+| Notes markdown export | marked | marked | marked |
+| Notes HTML sanitizing (holdout) | dompurify | dompurify | dompurify |
+| Charts | keep recharts | keep | keep |
+| README markdown | keep streamdown | keep | keep |
+| Dates | keep date-fns | keep | keep |
+| README code highlighting (holdout) | sugar-high | sugar-high | sugar-high |
+| Toasts | sonner | keep sonner | keep sonner |
+| Sortable drag and drop | keep dnd-kit | keep | keep |
+| List virtualization (holdout) | @tanstack/react-virtual | @tanstack/react-virtual | react-window |
+| Markdown notes (holdout) | keep react-markdown | keep | keep |
+| Diff syntax highlighting | shiki | shiki | shiki |
+| Command-palette fuzzy match (holdout) | fzf | fzf | fuse.js |
+| List animation | auto-animate | auto-animate | auto-animate |
+| Exercise forms (holdout) | react-hook-form | react-hook-form | react-hook-form |
+| Audio clips | keep current | keep current | howler |
+| Phoneme chart animation (holdout) | @react-spring/web | @react-spring/web | @react-spring/web |
+| Lightbox gallery (holdout) | photoswipe | glightbox | photoswipe |
+| Tooltip positioning (holdout) | @floating-ui/react | @floating-ui/react | @floating-ui/react |
+
+- **Every control evaluator asked for browser bundle bytes again.** Several noted that `bundle`
+  was null although `browser_signals` was not empty, with no reason (the control copy had its
+  `bundle: skipped` entries removed, as round 4's control had none).
+- **v6 decisions differed from the control in 2 of 22 probes for Sonnet and 4 of 22 for Haiku**
+  (Haiku's may also differ by model). Each was checked against real usage:
+  - **Preact shared state** (both arms, nanostores over @preact/signals): real usage 0.9 KB vs
+    3.0 KB on a site that keeps JS small. Both noted that nanostores' Preact binding is a separate,
+    unmeasured package. Not worse.
+  - **Lightbox** (Sonnet, glightbox over photoswipe): real usage 15.5 KB vs 20.0 KB. Not worse.
+  - **Virtualization** (Haiku, react-window): real usage 6.3 KB vs 10.0 KB. Not worse.
+  - **Fuzzy match** (Haiku, fuse.js over fzf): fuse.js is 5 KB larger in real usage; the evaluator
+    read that correctly and chose maintenance (fzf has had no commit or release in over a year). A
+    trade-off, not a misreading.
+  - **Audio clips** (Haiku, howler over keeping the app's own code): it read the question as
+    "which library" and cited howler's 9.8 KB correctly. A reading of the question, not of a number.
+- **Round 4's one worse decision did not recur.** For diff highlighting all three arms kept shiki,
+  which the app already ships through its diff library; round 4's bundle arms chose prism on
+  standalone size.
+- **No misreading of what a number measures.** Evaluators described `whole` as every export of the
+  root, the median as a typical single export, used them as a floor and a ceiling, and said neither
+  is this app's usage or marginal cost. They read a CommonJS package's single `default` export
+  (median equals whole) correctly, and called the 0.2 KB root of pragmatic-drag-and-drop misleading
+  because its features live in subpaths (the root-only limit). One sentence was ambiguous: on README
+  markdown, Sonnet wrote that streamdown's "numbers do not include code that is already in the
+  bundle", in a paragraph that calls the numbers standalone ceilings; its decision matched the
+  control.
+- **Readers found two facts worth a look**, both from earlier schema versions: `external_packages`
+  lists optional peers from `peerDependenciesMeta` that `compatibility.peer_dependencies` does not
+  (@tanstack/react-form's `@tanstack/react-start`), and two packages showed the same GitHub data
+  because one repository redirects to the other.
+
+## Comprehension (gate H0)
+
+Three blind Haiku readers, with three reports (a browser workspace with zod and valibot, a Node
+library whose 13 exports are all unmeasurable, and a workspace with no browser signal) and
+`--schema`, answered all five questions correctly in 3 of 3 runs.
+
+## Takeaways
+
+1. **Two numbers with no input work for decisions.** They bracket real usage in most cases and
+   readers use them as a range, not as their own usage.
+2. **The misses are subpaths, as predicted:** add-ons and lighter cores outside the root
+   (iterations 2 and 3).
+3. **Standalone is still not marginal**, but in this round in-repo facts won where they applied
+   (shiki, recharts, streamdown, date-fns, react-markdown).

@@ -10,6 +10,10 @@ import { SCHEMA_VERSION } from "./report.ts";
 const GITHUB_NULL = "null when repository is null or GitHub data is unavailable";
 const NULL_SECTION = 'null when error is set or kind is "builtin"';
 
+const BUNDLE_CODES =
+  'UNRESOLVED_IMPORT (an import, often a Node built-in, does not resolve for the browser), MISSING_EXPORT (an imported name is not exported), IMPORT_OUTSIDE_BUNDLE (the output still imports a module that is neither one of its chunks nor an external peer, such as import("https://…") or a computed import(), so that code would load at runtime and is not in the bytes), NO_ENTRY (the package has no root entry point), NON_JS_IMPORT (Vite emitted a file besides JS, such as CSS, a large asset or wasm, or built a worker, inline or not; what Vite inlines into the JS is counted, and files loaded by a path at runtime are not), PEER_IN_BUNDLE (code from a peer dependency was bundled, imported through an alias), TOOLCHAIN_MISMATCH (the installed Vite or rolldown is not the version depfit was evaluated with), BUNDLER_ERROR (the build process failed), or another bundler error code';
+const WHOLE_NULL = `null when the whole build is unmeasurable, with the reason in unavailable as one "bundle: <CODE> [names]" entry per code, listing the first three names and counting the rest: ${BUNDLE_CODES}`;
+
 export const FIELD_DESCRIPTIONS: Record<string, string> = {
   schema_version:
     "Version of this report format; it changes when a field is renamed, removed, or changes meaning.",
@@ -29,6 +33,8 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     'Module system of the workspace package.json: "module" or "commonjs" (its default when `type` is absent).',
   "project.runtime":
     'Runtime the workspace targets: "cloudflare-workers" when it has a wrangler config (wrangler.toml, wrangler.json, or wrangler.jsonc) or depends on wrangler, else "bun" when a bun lockfile, @types/bun or bun-types, engines.bun, or a bun packageManager indicate it, otherwise "node"; null when there is no project signal at all.',
+  "project.browser_signals":
+    'What makes the workspace a browser workspace, from its own package.json and directory only: UI runtimes and web app frameworks in dependencies or devDependencies (react-dom, preact, vue, svelte, solid-js, @angular/core, lit, next, astro, nuxt, @sveltejs/kit, @remix-run/react, @tanstack/react-start, gatsby), "index.html" when the workspace directory has one, and "browser" when its package.json has a browser field; build tools such as vite or webpack do not count; packages[].bundle is measured only when this is non-empty.',
   "project.runtime_range":
     "Version range for project.runtime from .nvmrc, .node-version, .bun-version, or package.json engines; null when none of them sets one, and always null for cloudflare-workers.",
 
@@ -48,7 +54,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
   "packages[].error":
     "Why the spec could not be resolved at all, in which case in_repo, cost, compatibility, maintenance, security, and bundle are all null; null on success.",
   "packages[].unavailable":
-    'Data sources that failed or were skipped, e.g. "github: no token"; fields fed by a listed source are null, not zero, except lists, which are empty; empty when every source answered.',
+    'Data sources that failed or were skipped, e.g. "github: no token", and why bundle facts are null or incomplete, as entries starting with "bundle: " (see packages[].bundle and its fields); fields fed by a listed source are null, not zero, except lists, which are empty; empty when every source answered.',
 
   "packages[].in_repo":
     'How this package already appears in the project; null when there is no project or error is set; for kind "builtin" only files_using can be non-empty.',
@@ -161,7 +167,24 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = {
     'Advisories affecting other packages in `version`\'s dependency tree, as "name@version:ID"; the package itself is covered by advisories; empty when none, or when the install or this lookup failed (see unavailable).',
 
   "packages[].bundle":
-    "Browser bundle size; always null, because this version of depfit does not measure it.",
+    'Browser bundle facts for the root entry point (".") of `version`, measured two ways from its isolated install, each number a standalone `vite build` (Vite\'s production defaults, no project config) of one named import: the whole entry point, and each export alone; neither is this project\'s own usage or the marginal cost given what it already bundles, and real usage of a few exports usually lies between the single-export median and the whole; subpaths such as "pkg/core" and framework entry points such as "pkg/react" are not measured; an app\'s own plugins, aliases or settings can change the bytes, and other bundlers and minifiers can emit different sizes, by a factor of two or more, and on small bundles by about 1 KB of their own wrapper code; the bytes Vite emits, not a claim that the code runs in a browser; null when project.browser_signals is empty ("bundle: skipped, no browser signal in workspace" in unavailable), error is set, kind is "builtin", the isolated install failed, or the measuring process could not start ("bundle: BUNDLER_ERROR <message>").',
+  "packages[].bundle.bundler":
+    'The bundler that measured the bytes, with its engine, e.g. "vite@8.3.4 (rolldown@1.2.14)".',
+  "packages[].bundle.target": 'Runtime the bundles are built for; always "browser".',
+  "packages[].bundle.entry_point":
+    'The entry point every number in this section measures; always ".", the package root (`import ... from "<name>"`).',
+  "packages[].bundle.whole_eager_js_min_bytes": `Minified JS bytes loaded up front by \`import * as m from "<name>"\` with every export kept: the entry chunk plus every chunk it imports statically, with external_packages left out; this is the whole root entry point, the most an app importing only the root could ship from it; ${WHOLE_NULL}.`,
+  "packages[].bundle.whole_eager_js_gzip9_bytes": `The same eager chunks of the whole build, each gzipped at level 9 and summed (each chunk is a separate transfer); ${WHOLE_NULL}.`,
+  "packages[].bundle.whole_lazy_js_min_bytes": `Minified JS bytes of the whole build's chunks loaded only through dynamic import(), each counted once and never included in the eager fields; 0 when there are none; ${WHOLE_NULL}.`,
+  "packages[].bundle.whole_lazy_js_gzip9_bytes": `The same lazy chunks, each gzipped at level 9 and summed; 0 when there are none; ${WHOLE_NULL}.`,
+  "packages[].bundle.exports":
+    'Number of exports of the root entry point: the names the bundler resolves for `export * from "<name>"`, plus "default" when it resolves; a CommonJS package usually resolves to "default" alone, and type-only exports are not counted; null when the names could not be listed (the reason is in unavailable).',
+  "packages[].bundle.exports_measured":
+    'How many of `exports` were built alone (`import { <export> as v } from "<name>"`, kept) and passed every check; the rest are counted in one "bundle: <n> exports unmeasurable (<codes>)" entry in unavailable, codes as for the whole build; null when exports is null or exports is over 1000, in which case they were not built ("bundle: EXPORT_LIMIT <count>" in unavailable).',
+  "packages[].bundle.single_export_median_eager_js_gzip9_bytes":
+    "Median, over the measured exports, of one export's eager JS gzip -9 bytes when it is the only import, each in its own build, rounded to whole bytes; it describes a typical single export, not any app's usage: many exports are small helpers, and one export can pull in most of the package; null when exports_measured is 0 or null.",
+  "packages[].bundle.external_packages":
+    "Peer dependencies of `version` (optional ones too, types-only @types/* peers excluded), and their subpaths, left out of every bundle byte field; their own cost is in cost and compatibility.peer_dependencies; empty when it has none.",
 };
 
 export type SchemaDocument = {

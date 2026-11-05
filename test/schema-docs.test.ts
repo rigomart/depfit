@@ -3,6 +3,8 @@ import { SCHEMA_VERSION } from "../src/report.ts";
 import { FIELD_DESCRIPTIONS, schemaDocument } from "../src/schema-docs.ts";
 import {
   betterSqlite3,
+  browserProject,
+  hugeInBrowser,
   bunProject,
   missing,
   nodeProject,
@@ -12,7 +14,9 @@ import {
   report,
   sharp,
   sonner,
+  sonnerInBrowser,
   valibot,
+  valibotInBrowser,
   workersProject,
   yup,
   yupWithoutGithub,
@@ -49,6 +53,7 @@ const fixtures = [
   report([sharp, sonner, yupWithoutGithub], bunProject),
   report([nodeSqlite, betterSqlite3, nodePty], nodeProject),
   report([zod], workersProject),
+  report([valibotInBrowser, sonnerInBrowser, hugeInBrowser], browserProject),
   noProjectReport,
 ];
 

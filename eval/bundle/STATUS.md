@@ -12,12 +12,130 @@ SPEC-snippets-v1.md. Evidence: `eval/FINDINGS.md`, round 4 and its follow-up.
 
 | Iteration | State |
 |---|---|
-| 0. Remove the snippet API | Built; reproduction gate awaiting a user decision (below) |
-| 1. Root entry point, two ways, browser workspaces only | Bar written |
+| 0. Remove the snippet API | Passes (user decision, 2026-11-04; below) |
+| 1. Root entry point, two ways, browser workspaces only | Built; scorecard below |
 
 Holdout probes `holdout-1`, frozen 2026-10-19 before any iteration-1 code: 10 questions, sha256
 `f792fac58becfaed39b978a33e2e118526652b9cb6c9214b424d9cf2461f8466` of `JSON.stringify` of the
 `holdout-1` entries of `eval/probes.json` in file order.
+
+## Iteration 1: root entry point, two ways (2026-11-04)
+
+Built in schema 6. In a workspace with a browser signal (`project.browser_signals`), each npm
+package gets `packages[].bundle`: the root entry point whole (`import * as m`, kept) and each export
+alone, every export in its own `vite build`, sequentially in one Node child per package
+(`src/collect/root-entry.ts`). With no signal, `bundle` is null with `bundle: skipped, no browser
+signal in workspace`, and `root-entry.ts` (and with it Vite and rolldown) is never imported.
+Scored by `eval/bundle/root-score.ts` (README "Iteration 1 scorecard").
+
+**Scorecard: not passing as written.** Gates B, C and S fail under the bar's text, for reasons the
+bar may not have meant (below). Nothing in the bar was changed; four questions are open for the user
+and an independent reviewer.
+
+| Gate | Result |
+|---|---|
+| A. Honesty | Pass: 8/8 v1 null cases (all import the root) return their code on the whole build. Gross errors 0 (single-export set and wild corpus) |
+| B. Accuracy, whole | **Fail as written, on 1 stale exception.** Gate W's 200 packages, run through the CLI with no flags, against W's conditions: (i) 0 numbers with an auditor fetch, (iii) 0 unusable results, (ii) 1 gross error. That error is server-only, whose reviewed exception went stale only because the gzip change moved its gzip from 117 to 115 B (min bytes and cause unchanged; re-recording it needs a review). 141 numbers, 59 nulls with codes; 79 packages drifted from the frozen trees since 2026-10-16, so 39 numbers were not compared (W reports drift as information) |
+| B. Accuracy, single export | **Fail as written:** 83/100 in band, 0 gross errors. 16 are nulls with a code (below), 1 is out of band |
+| C. Vite conformance | **Fail as written:** every measured build matches stock Vite: 84 single exports identical on all four fields, 10 whole builds with min bytes identical and gzip within 1%. The 16 failures are the same nulls (no depfit bytes to compare) |
+| D. Determinism | Pass: 65 probe packages across two runs on the same frozen installs; 20 reference packages measured twice |
+| E. Contract | Pass: every package has every bundle field, every field in `schema-docs`, 0 non-bundle differences with `DEPFIT_BUNDLE=0` over 22 probes |
+| F. Cost | Pass: with no browser signal no Vite or rolldown module is resolved (the tracer sees 7 in a browser workspace); added time per package over 65 probe candidates (59 distinct packages, each counted per probe), bundle step alone on frozen installs: median 318 ms (max 1500), p90 5.2 s, max 18.7 s (maplibre-gl, 87 large exports). CLI wall time per probe, advisory: median 2.5 s on, 1.7 s off |
+| S. Browser signal | **Fail as written:** 20/22 workspaces match the table; the 2 misses are rows where the table disagrees with the rule (below) |
+| R. Real usage | Pass: 59/64 in `[0.9 x median, 1.1 x whole]` (92%; round-4 probes 30/34, holdout 29/30); pairs 43/44 (98%); all 5 misses are class 1 (subpath); auto-animate left out (its real usage is null) |
+| H0. Comprehension | Pass: 3/3 blind Haiku readers, all 5 questions |
+| H. Decisions | Pass, pending review: 0 misreadings (1 ambiguous sentence, decision unchanged); v6 differed from the control on 2/22 (Sonnet) and 4/22 (Haiku) probes, none worse on the facts; one Haiku difference is a reading of the question (FINDINGS round 5) |
+
+### Open questions (user and an independent reviewer)
+
+1. **Gate S table vs rule.** The rule checks `index.html` in the workspace directory only. The
+   static Preact site keeps its `index.html` in `app/` (Vite `root`), so the rule gives `preact`
+   where the table says `preact, index.html`. The Electron app with a React renderer has
+   `index.html` in its workspace directory, so the rule gives `react-dom, index.html` where the
+   table says `react-dom`. The detector follows the rule; the table rows look like the error, but
+   that is a bar change. The exact workspaces were not recorded with the probes, so they were mapped
+   from the table's stack descriptions on 2026-11-04 before any detector code was written
+   (`eval/signals.json`, local).
+2. **Gate B (single) and C on honest nulls.** The reference set is chosen by the rule (first 20
+   wild packages with at least 10 rollup exports) and includes two Node-only CLI libraries
+   (@inquirer/core and @inquirer/prompts), whose every export imports Node built-ins
+   (`UNRESOLVED_IMPORT`). It also includes react-router and react-router-dom, where 6 exports keep a
+   computed `import()` in Vite's output (`IMPORT_OUTSIDE_BUNDLE import(…)`); rollup and webpack
+   build them. Each of these 16 nulls carries its code, which is what gate A asks for, but B and C as
+   written count them as failures. The
+   one number out of band is react-hook-form `FormProvider` (592 B gzip vs 430-433 B): depfit equals
+   stock Vite exactly, and the extra bytes are top-level constants and member reads (`r.required,
+   r.min, ...`) that rolldown keeps and rollup + terser drop. It would need a reviewed exception.
+3. **server-only's reviewed exception** (gate W, reused by B) records Bun's gzip (117 B); depfit
+   now reports Node's (115 B). Re-recording it is a review, not a lead's edit.
+4. **Stop condition 5 or contract?** A package whose every build imports a Node built-in gets two
+   entries for one cause: the whole build's `bundle: UNRESOLVED_IMPORT ...` and `bundle: <n> exports
+   unmeasurable (UNRESOLVED_IMPORT)`. The contract prescribes both entries; stop condition 5 forbids
+   more than one per cause. Not changed.
+
+### Codex review (gpt-6.1-sol, high effort, read-only, 2026-11-04)
+
+Not passing at first; fixed and rerun:
+
+- A write to a Vite child that had exited could raise an unhandled stream error. stdin errors and
+  write callbacks now fail the build (`BUNDLER_ERROR`). The race did not reproduce here (Node
+  reports the exit first); two tests cover a child that exits early.
+- Missing or short inputs could pass gates (an empty probe directory, a missing
+  reference file, fewer than 10 whole Vite references, an empty or unloadable signals list). Every
+  gate group now checks its coverage first (probe count and the holdout sha256; 20 packages x 5
+  exports and 10 whole references; 22 loadable workspaces) and fails while coverage fails.
+- Gate F counted each distinct package once; it now counts every probe candidate (65, 59
+  distinct). Median 318 ms.
+- Gate D on the reference set compared only the number of listing problems; it now compares them all.
+- Two installs of the same name@version could overwrite each other's frozen lock. A frozen lock
+  is now published atomically (temp file, then a hard link that fails if one already exists).
+- Not done: drifted wild packages are still not compared (gate W treats drift as information).
+  Replaying the frozen wild trees would need their peers; 39 numbers were not compared this run.
+
+The reviewer's opinions on the open questions (not acted on; bar changes need the user):
+
+- Gate S (question 1): agrees both table rows are wrong against the written rule; correct the table,
+  do not widen the rule to fit it.
+- Gate B and C nulls (question 2): as written the 16 nulls fail B and C. The reviewer would support a
+  narrow correction that keeps every case and judges nulls for honesty rather than accuracy, and
+  would not support dropping them from the count. FormProvider is a reasonable candidate for a specific reviewed exception (pinned
+  package, tree, import, exact bytes, the cause shown), not a blanket stock-Vite exemption.
+- Stop condition 5 (question 4): the two entries literally trip it; the contract also requires both entries. Would
+  support clarifying the stop condition to allow the two summaries; until then it is not satisfied.
+- Moving gzip into the Node child: a legitimate general fix, not a bar move. (Question 3, the
+  server-only exception, was not asked separately; it follows from that change.)
+
+### Decisions made while building (for review)
+
+- **Ground-truth rules**, written before any iteration-1 measurement: side-effect `.css` imports
+  are removed from snippets (6 holdout snippets had one); a candidate whose ground truth is null is
+  listed and left out of gate R (auto-animate). Holdout snippets live in `eval/snippets.json`
+  (local) so `probes.json`'s frozen holdout entries keep their sha256.
+- **Gate R miss classes** are assigned from the snippet's shape (README); no miss needed judgment.
+- **Gate C's "10 whole-package cases"** are the first 10 packages of the single-export reference
+  set, built whole with stock Vite (the SPEC does not name them).
+- **Gate F's added time** is the bundle step alone per probe candidate, timed sequentially on the
+  frozen installs; CLI wall time with bundling on and off is reported as advisory.
+- **Gate H's control** is the `DEPFIT_BUNDLE=0` report with its `bundle:` entries removed, as round
+  4's control had none. Evaluators read the reports from before the gzip change below (gzip values
+  differ by at most 2%).
+- **`exports` over the cap** stays the count; `exports_measured` and the median are null.
+- **Median** of an even count is the mean of the middle two, rounded.
+- **Builtins and failed packages** get no `bundle: skipped` entry (their sections are null by their
+  own rule).
+
+### Changes made after seeing results (each a general rule, recorded here)
+
+- **gzip is computed in the Node child that runs Vite** (found by gate C). depfit ran gzip in
+  Bun, whose zlib gives up to 2% fewer bytes than Node's on small chunks; the bar's 1% tolerance
+  existed for that difference. Now every byte comes from the Node process that ran Vite, and gate C
+  matches stock Vite exactly. All gzip numbers moved by up to 2%; the probe runs were redone.
+- **Export names count only from a listing build in which the candidate resolved** (found by gate
+  A's output). For a package with no root entry (biome), Vite left the import unresolved and the
+  `export { default }` listing "succeeded", giving `exports: 1` and an extra entry. Now `exports` is
+  null and the only entry is the whole build's `NO_ENTRY`.
+- **D on the reference set compares the reported facts** (bytes and the set of problems), not the
+  order in which Vite resolved imports.
 
 ## Iteration 0: remove the snippet API (2026-11-04)
 
@@ -43,8 +161,18 @@ The two misses are at the same package version, with newer dependencies installe
   instead of 18.1.1; marked 18.1.3 alone is 5.7% larger than 18.1.1.
 
 The A/B shows the engine is unchanged. The misses come from the registry, which round 4 did not
-freeze. Whether this meets the bar ("reproduces within 1% per candidate") is the user's call; the
-bar is unchanged.
+freeze.
+
+**Decision (user, 2026-11-04): iteration 0 passes.** 33 of 35 round-4 candidates reproduced within
+1%. recharts (+3.2%) and streamdown (+2.1%) missed only because their dependencies were republished
+after round 4, and the A/B against the v5 CLI was 35/35 identical, so the user accepted the result as
+meeting the bar's intent. The bar text is unchanged.
+
+**Open item (kept for later):** the round-4 ground truth was never frozen, so reproducing it drifts
+with the registry. This may need revisiting. From iteration 1 on, `eval/run.ts` freezes every
+install: each candidate's resolved tree is saved as an npm lockfile next to the results
+(`<out>/locks/`, gitignored), and a re-run with `--locks <dir>` reinstalls the same tree with
+`npm ci`.
 
 The rest of this file is the v1 history.
 

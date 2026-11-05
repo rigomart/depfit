@@ -123,6 +123,7 @@ describe("workspaces", () => {
       packages_in_lockfile: 5,
       module_type: "module",
       ...runtime,
+      browser_signals: [],
     });
 
     const zod = inRepoFacts(project, "zod", "4.6.5");

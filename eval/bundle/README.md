@@ -3,6 +3,45 @@
 The current acceptance bar is [SPEC.md](SPEC.md) (v2, no input); its progress is in
 [STATUS.md](STATUS.md). Bundler settings are in [SETTINGS.md](SETTINGS.md).
 
+## Iteration 1 scorecard
+
+`root-score.ts` scores SPEC.md's iteration 1 gates against the schema-6 CLI, which measures the
+root entry point of every candidate in a browser workspace with no flags.
+
+```bash
+bun eval/run.ts --out eval/results/v6                                   # probes: v6 numbers + ground truth
+bun eval/run.ts --out eval/results/v6-b --locks eval/results/v6/locks --no-snippets      # again (D)
+DEPFIT_BUNDLE=0 bun eval/run.ts --out eval/results/v6-off --locks eval/results/v6/locks --no-snippets  # off (E)
+bun eval/bundle/root-score.ts probes        # D, E, R (and F's CLI wall time, advisory)
+bun eval/bundle/reference.ts --singles      # once: single-reference.json (B single, C)
+bun eval/bundle/root-score.ts singles       # B (single export), C, D on the reference set
+bun eval/bundle/root-score.ts wild          # B (whole): gate W's corpus and conditions, read from whole_*
+bun eval/bundle/root-score.ts nulls         # A: v1 null cases that import the root
+bun eval/bundle/root-score.ts signals       # S: eval/signals.json (local) against project.browser_signals
+bun eval/bundle/root-score.ts cost          # F: no Vite load without a browser signal; time per package
+bun eval/bundle/root-score.ts comprehension # H0 prompt and key under results/comprehension-root/
+```
+
+- **Frozen installs.** `eval/run.ts` sets `DEPFIT_LOCK_DIR` for the CLI and the snippet engine, so
+  each candidate's tree is recorded once as `<out>/locks/<name>@<version>.package-lock.json` and
+  replayed with `npm ci` by every later run naming the same `--locks` directory. The D and E runs
+  replay the first run's trees, so they compare the engine and the contract, not the registry.
+- **Ground truth.** Round-4 probes carry `bundle_entries`. The holdout probes' snippets are in
+  `eval/snippets.json` (local, gitignored), keyed by `<project> <packages...>`, so the frozen
+  holdout entries of `probes.json` keep their sha256. Side-effect `.css` imports are removed from
+  every snippet before it is measured (non-JS output is out of scope).
+- **Gate R miss classes** are assigned from the ground-truth snippet's shape: an import from a
+  subpath named after a framework (`/react`, `/vue`, ...) is class 3, any other subpath class 1,
+  member statements on a root import class 2; anything else is unclassified and fails the gate.
+- **Single-export reference set** (`single-reference.json`, rule recorded in the file): the first 20
+  `wild.json` packages whose root has at least 10 exports as rollup counts them (`export *` plus
+  `default`), 5 exports each, evenly spaced over the sorted names, each built alone with rollup +
+  terser, webpack and a stock Vite build from the frozen wild lock. The first 10 also get a stock
+  Vite build of the whole entry point, gate C's 10 whole-package cases. `root-score.ts singles`
+  measures them with depfit's `measureRootEntry` on the same frozen trees.
+- **Gate S workspaces** are listed in `eval/signals.json` (local, gitignored) with the table row
+  each maps to; the scorecard prints rows only, never paths.
+
 ## Two harnesses
 
 - **v2 ground truth (real usage).** `bun eval/run.ts` measures each probe's `bundle_entries`, import

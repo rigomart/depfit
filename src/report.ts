@@ -43,6 +43,13 @@ export type ProjectInfo = {
    * Always null for cloudflare-workers.
    */
   runtime_range: string | null;
+  /**
+   * What makes the workspace a browser workspace, from its own package.json and directory only:
+   * UI runtimes and web app frameworks in dependencies or devDependencies (BROWSER_SIGNAL_PACKAGES
+   * in collect/project.ts), "index.html" in the workspace directory, and "browser" for a
+   * package.json `browser` field. Empty when none matched; `bundle` is then not measured.
+   */
+  browser_signals: string[];
 };
 
 /**
@@ -79,8 +86,35 @@ export type PackageReport = {
   compatibility: Compatibility | null;
   maintenance: Maintenance | null;
   security: Security | null;
-  /** Browser bundle size. Always null: this version of depfit does not measure it. */
-  bundle: null;
+  /** null when the workspace has no browser signal, bundling was skipped, or `error` is set. */
+  bundle: Bundle | null;
+};
+
+/**
+ * Browser bundle facts for the package's root entry point, each number a standalone `vite build`
+ * of a named import from `version`'s isolated install. A null number has its reason in
+ * `unavailable` ("bundle: <CODE> ...").
+ */
+export type Bundle = {
+  /** e.g. "vite@8.3.4 (rolldown@1.2.14)". */
+  bundler: string;
+  target: "browser";
+  /** The entry point every number measures: always the root, ".". */
+  entry_point: ".";
+  /** `import * as m from "<name>"`, kept whole: the entry chunk plus its static imports. */
+  whole_eager_js_min_bytes: number | null;
+  whole_eager_js_gzip9_bytes: number | null;
+  /** The same build's chunks reached only through import(); 0 when there are none. */
+  whole_lazy_js_min_bytes: number | null;
+  whole_lazy_js_gzip9_bytes: number | null;
+  /** Export names the bundler resolves for the root (`export *` plus `default`). */
+  exports: number | null;
+  /** Exports whose own build passed every check; null when not attempted (over the cap). */
+  exports_measured: number | null;
+  /** Median over measured exports of one export's eager gzip bytes, each in its own build. */
+  single_export_median_eager_js_gzip9_bytes: number | null;
+  /** Peer dependencies (and their subpaths) left out of every build. */
+  external_packages: string[];
 };
 
 /** Facts derived from the current project. null when there is no project. */

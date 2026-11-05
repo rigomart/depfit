@@ -15,7 +15,6 @@ import { readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
-import { gzipSync } from "node:zlib";
 import type { ESTree } from "rolldown/utils";
 import { type BundleEntry, entryModuleSource, isCandidateSource } from "./bundle-entry.ts";
 import { isRecord } from "./util.ts";
@@ -44,7 +43,8 @@ export type BundleOutcome =
 
 // --- what vite-build.mjs reads and prints -----------------------------------------------------
 
-export type ViteBuildRequest = { root: string; entry: string; peers: string[] };
+/** `exports`: keep the entry's export signature and list its names (`ViteBuildResult.exports`). */
+export type ViteBuildRequest = { root: string; entry: string; peers: string[]; exports?: boolean };
 
 export type ViteResolution = {
   source: string;
@@ -73,6 +73,7 @@ export type ViteChunk = {
   dynamicImports: string[];
   moduleIds: string[];
   code: string;
+  gzip9Bytes: number;
 };
 
 export type ViteBuildResult = {
@@ -84,6 +85,8 @@ export type ViteBuildResult = {
   assets: string[];
   /** Entry modules of worker sub-builds (a worker, inline or not, is not measured in step 1). */
   workers: string[];
+  /** Export names of the entry chunk when the request asked for them, else null. */
+  exports: string[] | null;
   /** The build failed: Vite's (or rolldown's) errors, with their codes. */
   errors: ViteLog[] | null;
 };
@@ -107,6 +110,12 @@ export type ChunkInfo = {
   imports: string[];
   dynamicImports: string[];
   code: string;
+  /**
+   * gzip -9 bytes of `code`, computed by the Node process that ran Vite (`vite-build.mjs`): zlib
+   * builds differ between runtimes (Bun's output is up to 2% smaller on small chunks), and Vite
+   * users run Node.
+   */
+  gzip9Bytes: number;
 };
 
 /**
@@ -144,7 +153,6 @@ export function splitChunks<T extends ChunkInfo>(chunks: T[]): { eager: T[]; laz
 }
 
 const minBytes = (code: string) => Buffer.byteLength(code);
-const gzip9Bytes = (code: string) => gzipSync(code, { level: 9 }).byteLength;
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
 
 /** Minified and gzip -9 bytes per chunk, summed separately for eager and lazy chunks. */
@@ -152,9 +160,9 @@ export function chunkBytes(chunks: ChunkInfo[]): BundleBytes {
   const { eager, lazy } = splitChunks(chunks);
   return {
     eager_js_min_bytes: sum(eager.map((c) => minBytes(c.code))),
-    eager_js_gzip9_bytes: sum(eager.map((c) => gzip9Bytes(c.code))),
+    eager_js_gzip9_bytes: sum(eager.map((c) => c.gzip9Bytes)),
     lazy_js_min_bytes: sum(lazy.map((c) => minBytes(c.code))),
-    lazy_js_gzip9_bytes: sum(lazy.map((c) => gzip9Bytes(c.code))),
+    lazy_js_gzip9_bytes: sum(lazy.map((c) => c.gzip9Bytes)),
   };
 }
 
@@ -395,6 +403,7 @@ function isBuildResult(value: unknown): value is ViteBuildResult {
     value.chunks.every(isChunk) &&
     isStringArray(value.assets) &&
     isStringArray(value.workers) &&
+    (value.exports === null || isStringArray(value.exports)) &&
     (value.errors === null || Array.isArray(value.errors))
   );
 }
@@ -405,50 +414,107 @@ function isChunk(value: unknown): value is ViteChunk {
     typeof value.fileName === "string" &&
     typeof value.isEntry === "boolean" &&
     typeof value.code === "string" &&
+    typeof value.gzip9Bytes === "number" &&
     isStringArray(value.imports) &&
     isStringArray(value.dynamicImports) &&
     isStringArray(value.moduleIds)
   );
 }
 
+/** Builds requests one at a time in one `vite-build.mjs` child process; `close` ends it. */
+export type ViteRunner = {
+  build: (request: ViteBuildRequest) => Promise<ViteBuildResult>;
+  close: () => void;
+};
+
 /**
- * Runs `vite-build.mjs` with Node, in `request.root`. Node, not depfit's own runtime: Vite's output
+ * Starts `vite-build.mjs` with Node, in `root`. Node, not depfit's own runtime: Vite's output
  * depends on the runtime (its preload helper is built from function source text), and Vite users run
- * Node. Node is already required for npm.
+ * Node. Node is already required for npm. Requests and results are one JSON object per line; a
+ * build that takes longer than BUILD_TIMEOUT_MS ends the child.
  */
-function runViteBuild(request: ViteBuildRequest): Promise<ViteBuildResult> {
-  return new Promise((resolve, reject) => {
-    const child = spawn("node", [RUNNER], {
-      cwd: request.root,
-      env: childEnv(),
-      stdio: ["pipe", "pipe", "pipe"],
-      timeout: BUILD_TIMEOUT_MS,
-    });
-    const out: Buffer[] = [];
-    let err = "";
-    child.stdout.on("data", (data: Buffer) => out.push(data));
-    child.stderr.on("data", (data: Buffer) => {
-      err += String(data);
-    });
-    child.on("error", reject);
-    child.on("close", (code) => {
+export function startViteRunner(root: string, script = RUNNER): ViteRunner {
+  const child = spawn("node", [script], {
+    cwd: root,
+    env: childEnv(),
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  let pending: { resolve: (r: ViteBuildResult) => void; reject: (e: Error) => void } | null = null;
+  let failure: Error | null = null;
+  let buffered = "";
+  let err = "";
+  const fail = (error: Error) => {
+    failure ??= error;
+    pending?.reject(failure);
+    pending = null;
+  };
+  child.stdout.setEncoding("utf8");
+  child.stdout.on("data", (data: string) => {
+    buffered += data;
+    for (let at = buffered.indexOf("\n"); at >= 0; at = buffered.indexOf("\n")) {
+      const line = buffered.slice(0, at);
+      buffered = buffered.slice(at + 1);
       let parsed: unknown = null;
       try {
-        parsed = JSON.parse(Buffer.concat(out).toString("utf8"));
+        parsed = JSON.parse(line);
       } catch {
-        // Reported below with the child's stderr.
+        // Reported below.
       }
+      if (!pending) continue;
+      const { resolve, reject } = pending;
+      pending = null;
       if (isBuildResult(parsed)) resolve(parsed);
-      else reject(new Error(`vite build exited ${code}: ${err.trim().split("\n")[0] ?? ""}`));
-    });
-    child.stdin.end(JSON.stringify(request));
+      else reject(new Error(`vite build printed an unreadable result: ${line.slice(0, 200)}`));
+    }
   });
+  child.stderr.on("data", (data: Buffer) => {
+    err += String(data);
+  });
+  child.on("error", fail);
+  // A child that exits between requests makes the next write fail (EPIPE): that is a failed build,
+  // never an unhandled stream error.
+  child.stdin.on("error", (error) => {
+    fail(error);
+    child.kill();
+  });
+  child.on("close", (code) =>
+    fail(new Error(`vite build exited ${code}: ${err.trim().split("\n")[0] ?? ""}`)),
+  );
+  return {
+    build: (request) =>
+      new Promise((resolve, reject) => {
+        if (failure) return reject(failure);
+        if (pending) return reject(new Error("vite build: one request at a time"));
+        const timer = setTimeout(() => {
+          fail(new Error(`vite build timed out after ${BUILD_TIMEOUT_MS / 60_000} min`));
+          child.kill();
+        }, BUILD_TIMEOUT_MS);
+        pending = {
+          resolve: (result) => {
+            clearTimeout(timer);
+            resolve(result);
+          },
+          reject: (error) => {
+            clearTimeout(timer);
+            reject(error);
+          },
+        };
+        child.stdin.write(`${JSON.stringify(request)}\n`, (error) => {
+          if (error) fail(error);
+        });
+      }),
+    close: () => {
+      child.stdin.end();
+      if (pending === null) return;
+      child.kill();
+    },
+  };
 }
 
 let parser: Promise<Parse> | null = null;
 
 /** rolldown's parser (the one Vite uses), loaded once on first use. */
-function loadParser(): Promise<Parse> {
+export function loadParser(): Promise<Parse> {
   parser ??= import("rolldown/parseAst").then(
     ({ parseAst }) =>
       (code: string) =>
@@ -488,6 +554,44 @@ export async function bundlerName(): Promise<string> {
   return `vite@${await versionOf(viteManifest)} (rolldown@${await versionOf(rolldownManifest)})`;
 }
 
+/** TOOLCHAIN_MISMATCH when a build ran on a Vite or rolldown other than the evaluated pins. */
+export async function toolchainProblem(result: ViteBuildResult): Promise<BundleProblem | null> {
+  const expected = await evaluatedToolchain();
+  if (result.vite === expected.vite && result.rolldown === expected.rolldown) return null;
+  // npm applies depfit's `overrides` only when depfit is the install root; elsewhere Vite may
+  // resolve another rolldown. Numbers from a toolchain the eval did not cover are not reported.
+  return {
+    code: "TOOLCHAIN_MISMATCH",
+    specifier: `vite@${result.vite} rolldown@${result.rolldown}`,
+  };
+}
+
+/** Builds `source` as the entry module in `dir` with `runner`. */
+export async function buildEntrySource(
+  runner: ViteRunner,
+  dir: string,
+  source: string,
+  externals: string[],
+  exports = false,
+): Promise<ViteBuildResult> {
+  const entryFile = join(dir, ENTRY_FILE);
+  await writeFile(entryFile, source);
+  return runner.build({ root: dir, entry: entryFile, peers: externals, exports });
+}
+
+/** Bytes, or the reasons a build of `entry` is unmeasurable. */
+export async function outcomeOf(
+  result: ViteBuildResult,
+  externals: string[],
+  candidate: string,
+): Promise<BundleOutcome> {
+  const toolchain = await toolchainProblem(result);
+  if (toolchain) return { bytes: null, problems: [toolchain] };
+  const problems = problemsFromBuild(result, externals, candidate, await loadParser());
+  if (problems.length) return { bytes: null, problems };
+  return { bytes: chunkBytes(result.chunks), problems: [] };
+}
+
 /**
  * Bundles `entry` from the install in `dir` (which has node_modules/<candidate>), with
  * `externals` and their subpaths left out. Writes the entry module into `dir`.
@@ -497,20 +601,11 @@ export async function bundleEntry(
   entry: BundleEntry,
   externals: string[],
 ): Promise<BundleOutcome> {
-  const entryFile = join(dir, ENTRY_FILE);
-  await writeFile(entryFile, entryModuleSource(entry));
-  const [result, parse] = await Promise.all([
-    runViteBuild({ root: dir, entry: entryFile, peers: externals }),
-    loadParser(),
-  ]);
-  const expected = await evaluatedToolchain();
-  if (result.vite !== expected.vite || result.rolldown !== expected.rolldown) {
-    // npm applies depfit's `overrides` only when depfit is the install root; elsewhere Vite may
-    // resolve another rolldown. Numbers from a toolchain the eval did not cover are not reported.
-    const found = `vite@${result.vite} rolldown@${result.rolldown}`;
-    return { bytes: null, problems: [{ code: "TOOLCHAIN_MISMATCH", specifier: found }] };
+  const runner = startViteRunner(dir);
+  try {
+    const result = await buildEntrySource(runner, dir, entryModuleSource(entry), externals);
+    return await outcomeOf(result, externals, entry.candidate);
+  } finally {
+    runner.close();
   }
-  const problems = problemsFromBuild(result, externals, entry.candidate, parse);
-  if (problems.length) return { bytes: null, problems };
-  return { bytes: chunkBytes(result.chunks), problems: [] };
 }

@@ -83,6 +83,7 @@ For each candidate:
 - **Compatibility:** module format, types, `engines` against your runtime (Node, Bun, or Cloudflare Workers), and peer dependencies against your lockfile. Also the license.
 - **Maintenance:** last release, releases per year, deprecation, provenance, weekly downloads, last commit, archived.
 - **Security:** OSV advisories with the versions they affect, including the ones you have installed.
+- **Bundle (browser workspaces only):** the browser JS of the package's root entry point, built with a real `vite build`, measured two ways: the whole entry point, and the median of each export built on its own. Your own usage of a few exports usually lies between the two. A workspace counts as a browser workspace when its own package.json depends on a UI runtime or web framework (react-dom, preact, vue, next, astro, ...), its directory has an `index.html`, or its package.json has a `browser` field. `project.browser_signals` lists which.
 
 The costed version is the range you typed, else the range your workspace already declares (pnpm/bun `catalog:` included), else `latest`. `version_source` says which one applied.
 
@@ -99,7 +100,7 @@ Before adding, replacing, or choosing between npm dependencies, run `depfit <can
 - **Costs are estimates.** depfit matches semver ranges against your lockfile; your package manager may dedupe differently.
 - **Sizes are platform-specific.** Install sizes and native binaries are measured on the current OS and CPU.
 - **npm only.** It reads npm, pnpm, yarn v1, and bun lockfiles.
-- **No bundle size yet.** `packages[].bundle` is always `null` in this version.
+- **Bundle facts cover the root entry point only.** Subpaths (`highlight.js/lib/core`, `gsap/Flip`) and framework entry points (`motion/react`) are not measured yet. The numbers are standalone builds, not the marginal cost given what your app already bundles. Measuring every export takes a few seconds for packages with hundreds of exports.
 - **Network calls on every run.** It queries the npm registry, the npm downloads API, OSV, and GitHub, and installs each candidate into a temp directory. Nothing in your repo is modified.
 
 ## Development

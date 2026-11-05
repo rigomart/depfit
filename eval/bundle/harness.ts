@@ -41,6 +41,17 @@ export const REPORT_FIELD: Record<ByteField, string> = {
   lazy_gzip_bytes: "lazy_js_gzip9_bytes",
 };
 
+/**
+ * The same four numbers for iteration 1's whole root entry point (`import * as m`, the build gate
+ * W measures), read from a schema-6 report run with no flags in a browser workspace.
+ */
+export const WHOLE_FIELD: Record<ByteField, string> = {
+  min_bytes: "whole_eager_js_min_bytes",
+  gzip_bytes: "whole_eager_js_gzip9_bytes",
+  lazy_min_bytes: "whole_lazy_js_min_bytes",
+  lazy_gzip_bytes: "whole_lazy_js_gzip9_bytes",
+};
+
 // --- running the CLI -----------------------------------------------------------------------------
 
 export type CliRun = {
@@ -92,9 +103,11 @@ export function packageOf(report: Record<string, unknown> | null): Record<string
   return packages.length ? asRecord(packages[0]) : null;
 }
 
-export async function scratchProject(target: Case["target"]): Promise<string> {
+/** An empty project; `browser` adds an index.html, a browser signal (iteration 1). */
+export async function scratchProject(target: Case["target"], browser = false): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "depfit-score-"));
   await writeFile(join(dir, "package.json"), JSON.stringify({ name: "scratch", private: true }));
+  if (browser) await writeFile(join(dir, "index.html"), "<!doctype html>\n");
   if (target === "workerd") {
     const toml = 'name = "scratch"\ncompatibility_date = "2025-01-01"\n';
     await writeFile(join(dir, "wrangler.toml"), toml);
@@ -110,17 +123,21 @@ export type Observed =
   | { problem: string }
   | { bundle: Bundle; reasons: string[]; target: string | null; bundler: string | null };
 
-export function observe(cli: CliRun | undefined): Observed {
+/** `fields`: REPORT_FIELD for a v5 `--bundle-entry` run, WHOLE_FIELD for an iteration-1 run. */
+export function observe(
+  cli: CliRun | undefined,
+  fields: Record<ByteField, string> = REPORT_FIELD,
+): Observed {
   if (!cli?.report) return { problem: `cli: ${cli?.error ?? "no output"}` };
   const pkg = packageOf(cli.report);
   if (!pkg || !("bundle" in pkg)) return { problem: "package has no `bundle` key" };
-  if (!isRecord(pkg.bundle)) return { problem: "bundle is null although --bundle-entry was given" };
+  if (!isRecord(pkg.bundle)) return { problem: "bundle is null although it was requested" };
   const raw = pkg.bundle;
   const bundle: Bundle = {
-    min_bytes: asNumber(raw[REPORT_FIELD.min_bytes]),
-    gzip_bytes: asNumber(raw[REPORT_FIELD.gzip_bytes]),
-    lazy_min_bytes: asNumber(raw[REPORT_FIELD.lazy_min_bytes]),
-    lazy_gzip_bytes: asNumber(raw[REPORT_FIELD.lazy_gzip_bytes]),
+    min_bytes: asNumber(raw[fields.min_bytes]),
+    gzip_bytes: asNumber(raw[fields.gzip_bytes]),
+    lazy_min_bytes: asNumber(raw[fields.lazy_min_bytes]),
+    lazy_gzip_bytes: asNumber(raw[fields.lazy_gzip_bytes]),
   };
   const reasons = asStringArray(pkg.unavailable).filter((entry) => entry.startsWith("bundle:"));
   return { bundle, reasons, target: asString(raw.target), bundler: asString(raw.bundler) };
