@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { parseAst } from "rolldown/parseAst";
 import { describe, expect, it } from "vitest";
+import { prepareBundleEntries } from "../src/collect/bundle-entry.ts";
 import {
   bundleEntry,
   bundleReasons,
@@ -18,7 +19,6 @@ import {
   unresolvedProblem,
   type ViteBuildResult,
 } from "../src/collect/bundle.ts";
-import { prepareBundleEntries } from "../src/collect/bundle-entry.ts";
 
 const chunk = (fileName: string, rest: Partial<ChunkInfo> = {}): ChunkInfo => ({
   fileName,
@@ -103,7 +103,6 @@ describe("importsOutsideBundle", () => {
     expect(outside("()=>import(`https://e.com/x.js`);()=>import('./a-1.js')")).toEqual([
       "https://e.com/x.js",
     ]);
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: the scanned code holds a template literal.
     expect(outside("let n=await import(`./lang/${e}.js`),m=await import(e)")).toEqual([
       "import(…)",
     ]);

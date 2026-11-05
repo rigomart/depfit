@@ -192,7 +192,7 @@ function resolveEdge(
   from: string,
   key: string,
 ): TreePackage | null {
-  for (let base = from; ; ) {
+  for (let base = from; ;) {
     const candidate = byPath.get(base ? `${base}/node_modules/${key}` : `node_modules/${key}`);
     if (candidate) return candidate;
     if (!base) return null;
