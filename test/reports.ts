@@ -23,6 +23,7 @@ export const npmProject: ProjectInfo = {
   module_type: "module",
   runtime: "node",
   runtime_range: ">=20",
+  browser_signals: [],
 };
 
 export const bunProject: ProjectInfo = {
@@ -33,6 +34,7 @@ export const bunProject: ProjectInfo = {
   module_type: "module",
   runtime: "bun",
   runtime_range: null,
+  browser_signals: [],
 };
 
 /** A single-package node app with a pnpm lockfile that targets Node 22.13+. */
@@ -44,6 +46,7 @@ export const nodeProject: ProjectInfo = {
   module_type: "module",
   runtime: "node",
   runtime_range: ">=22.13",
+  browser_signals: [],
 };
 
 /** Root of a bun monorepo with apps/desktop, apps/server, and apps/web; compared from the root. */
@@ -55,6 +58,7 @@ export const monorepoProject: ProjectInfo = {
   module_type: "module",
   runtime: "bun",
   runtime_range: "1.3.0",
+  browser_signals: [],
 };
 
 /** A worker workspace with a wrangler config, inside the bun monorepo. */
@@ -66,6 +70,7 @@ export const workersProject: ProjectInfo = {
   module_type: "module",
   runtime: "cloudflare-workers",
   runtime_range: null,
+  browser_signals: [],
 };
 
 export const zod: PackageReport = {
@@ -774,3 +779,65 @@ export function withoutProject(pkg: PackageReport): PackageReport {
 
 /** zod and valibot collected with no package.json or lockfile above --cwd. */
 export const noProjectReport: Report = report([zod, valibot].map(withoutProject), null);
+
+/** A Vite + React app: a browser workspace, so bundle facts are measured. */
+export const browserProject: ProjectInfo = {
+  ...bunProject,
+  browser_signals: ["react-dom", "index.html"],
+};
+
+/** valibot in a browser workspace: every export measured. */
+export const valibotInBrowser: PackageReport = {
+  ...valibot,
+  bundle: {
+    bundler: "vite@8.3.4 (rolldown@1.2.14)",
+    target: "browser",
+    entry_point: ".",
+    whole_eager_js_min_bytes: 84743,
+    whole_eager_js_gzip9_bytes: 14626,
+    whole_lazy_js_min_bytes: 0,
+    whole_lazy_js_gzip9_bytes: 0,
+    exports: 320,
+    exports_measured: 320,
+    single_export_median_eager_js_gzip9_bytes: 550,
+    external_packages: [],
+  },
+};
+
+/** sonner in a browser workspace: React left out, one export unmeasurable. */
+export const sonnerInBrowser: PackageReport = {
+  ...sonner,
+  unavailable: ["bundle: 1 exports unmeasurable (NON_JS_IMPORT)"],
+  bundle: {
+    bundler: "vite@8.3.4 (rolldown@1.2.14)",
+    target: "browser",
+    entry_point: ".",
+    whole_eager_js_min_bytes: 33950,
+    whole_eager_js_gzip9_bytes: 10125,
+    whole_lazy_js_min_bytes: 0,
+    whole_lazy_js_gzip9_bytes: 0,
+    exports: 3,
+    exports_measured: 2,
+    single_export_median_eager_js_gzip9_bytes: 5120,
+    external_packages: ["react", "react-dom"],
+  },
+};
+
+/** A package whose whole build is unmeasurable, and whose export list is over the cap. */
+export const hugeInBrowser: PackageReport = {
+  ...zod,
+  unavailable: ["bundle: UNRESOLVED_IMPORT node:fs", "bundle: EXPORT_LIMIT 1204"],
+  bundle: {
+    bundler: "vite@8.3.4 (rolldown@1.2.14)",
+    target: "browser",
+    entry_point: ".",
+    whole_eager_js_min_bytes: null,
+    whole_eager_js_gzip9_bytes: null,
+    whole_lazy_js_min_bytes: null,
+    whole_lazy_js_gzip9_bytes: null,
+    exports: 1204,
+    exports_measured: null,
+    single_export_median_eager_js_gzip9_bytes: null,
+    external_packages: null,
+  },
+};

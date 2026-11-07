@@ -1,0 +1,3443 @@
+{
+  "generated_at": "2026-11-05T01:23:16.189Z",
+  "tools": {
+    "node": "24.14.1",
+    "rollup": "4.64.7",
+    "@rollup/plugin-commonjs": "29.0.3",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "16.0.3",
+    "@rollup/plugin-replace": "6.0.3",
+    "@rollup/plugin-terser": "1.0.0",
+    "terser": "5.51.2",
+    "webpack": "5.112.0",
+    "vite": "8.3.4",
+    "minimizer-webpack-plugin": "5.14.0",
+    "rolldown": "1.2.14",
+    "acorn": "8.19.0"
+  },
+  "rule": "The first 20 wild.json packages, in order, whose root has at least 10 exports as rollup counts them (export * plus default); for each, 5 exports evenly spaced over the sorted names (index round(i * (n - 1) / 4)); each built alone with rollup + terser, webpack and a stock vite build; the first 10 also get a stock vite build of the whole entry point (gate C).",
+  "packages": [
+    {
+      "id": "opentelemetry__core",
+      "package": "@opentelemetry/core",
+      "version": "2.12.0",
+      "external_packages": ["@opentelemetry/api"],
+      "rollup_exports": 51,
+      "exports": ["AnchoredClock", "addHrTimes", "hrTimeDuration", "merge", "urlMatches"],
+      "singles": {
+        "AnchoredClock": {
+          "rollup": {
+            "min_bytes": 269,
+            "gzip_bytes": 162,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 268,
+            "gzip_bytes": 160,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 266,
+            "gzip_bytes": 160,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "addHrTimes": {
+          "rollup": {
+            "min_bytes": 127,
+            "gzip_bytes": 135,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 141,
+            "gzip_bytes": 138,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 116,
+            "gzip_bytes": 124,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "hrTimeDuration": {
+          "rollup": {
+            "min_bytes": 119,
+            "gzip_bytes": 131,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 133,
+            "gzip_bytes": 136,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 109,
+            "gzip_bytes": 122,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "merge": {
+          "rollup": {
+            "min_bytes": 2069,
+            "gzip_bytes": 945,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 2038,
+            "gzip_bytes": 932,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 2026,
+            "gzip_bytes": 947,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "urlMatches": {
+          "rollup": {
+            "min_bytes": 82,
+            "gzip_bytes": 102,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 81,
+            "gzip_bytes": 100,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 85,
+            "gzip_bytes": 103,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 12320,
+        "gzip_bytes": 5011,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "jose",
+      "package": "jose",
+      "version": "6.2.12",
+      "external_packages": [],
+      "rollup_exports": 38,
+      "exports": ["CompactEncrypt", "UnsecuredJWT", "decodeJwt", "generalVerify", "jwtVerify"],
+      "singles": {
+        "CompactEncrypt": {
+          "rollup": {
+            "min_bytes": 19219,
+            "gzip_bytes": 6895,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 19217,
+            "gzip_bytes": 6918,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 19093,
+            "gzip_bytes": 6875,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "UnsecuredJWT": {
+          "rollup": {
+            "min_bytes": 7437,
+            "gzip_bytes": 2897,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 7440,
+            "gzip_bytes": 2907,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 7423,
+            "gzip_bytes": 2896,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "decodeJwt": {
+          "rollup": {
+            "min_bytes": 1576,
+            "gzip_bytes": 779,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1593,
+            "gzip_bytes": 787,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1576,
+            "gzip_bytes": 788,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "generalVerify": {
+          "rollup": {
+            "min_bytes": 11590,
+            "gzip_bytes": 4331,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 11799,
+            "gzip_bytes": 4422,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 11677,
+            "gzip_bytes": 4404,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "jwtVerify": {
+          "rollup": {
+            "min_bytes": 13526,
+            "gzip_bytes": 5089,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 13737,
+            "gzip_bytes": 5182,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 13629,
+            "gzip_bytes": 5177,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 58822,
+        "gzip_bytes": 18570,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "domutils",
+      "package": "domutils",
+      "version": "4.0.2",
+      "external_packages": [],
+      "rollup_exports": 35,
+      "exports": ["DocumentPosition", "getAttributeValue", "getInnerHTML", "prepend", "uniqueSort"],
+      "singles": {
+        "DocumentPosition": {
+          "rollup": {
+            "min_bytes": 212,
+            "gzip_bytes": 166,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 211,
+            "gzip_bytes": 165,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 209,
+            "gzip_bytes": 163,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "getAttributeValue": {
+          "rollup": {
+            "min_bytes": 71,
+            "gzip_bytes": 91,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 70,
+            "gzip_bytes": 90,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 71,
+            "gzip_bytes": 91,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "getInnerHTML": {
+          "rollup": {
+            "min_bytes": 4331,
+            "gzip_bytes": 2152,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 4321,
+            "gzip_bytes": 2144,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 4296,
+            "gzip_bytes": 2139,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "prepend": {
+          "rollup": {
+            "min_bytes": 368,
+            "gzip_bytes": 219,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 367,
+            "gzip_bytes": 219,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 366,
+            "gzip_bytes": 227,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "uniqueSort": {
+          "rollup": {
+            "min_bytes": 807,
+            "gzip_bytes": 461,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1063,
+            "gzip_bytes": 567,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 799,
+            "gzip_bytes": 455,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 11523,
+        "gzip_bytes": 4602,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "domhandler",
+      "package": "domhandler",
+      "version": "6.0.1",
+      "external_packages": [],
+      "rollup_exports": 19,
+      "exports": ["CDATA", "Element", "Text", "isComment", "isText"],
+      "singles": {
+        "CDATA": {
+          "rollup": {
+            "min_bytes": 3109,
+            "gzip_bytes": 1078,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 3105,
+            "gzip_bytes": 1070,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 3132,
+            "gzip_bytes": 1091,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "Element": {
+          "rollup": {
+            "min_bytes": 3109,
+            "gzip_bytes": 1078,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 3105,
+            "gzip_bytes": 1070,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 3132,
+            "gzip_bytes": 1091,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "Text": {
+          "rollup": {
+            "min_bytes": 3109,
+            "gzip_bytes": 1078,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 3105,
+            "gzip_bytes": 1070,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 3132,
+            "gzip_bytes": 1091,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isComment": {
+          "rollup": {
+            "min_bytes": 324,
+            "gzip_bytes": 206,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 323,
+            "gzip_bytes": 204,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 324,
+            "gzip_bytes": 204,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isText": {
+          "rollup": {
+            "min_bytes": 321,
+            "gzip_bytes": 206,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 320,
+            "gzip_bytes": 204,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 321,
+            "gzip_bytes": 204,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 5462,
+        "gzip_bytes": 1883,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "domelementtype",
+      "package": "domelementtype",
+      "version": "3.0.0",
+      "external_packages": [],
+      "rollup_exports": 11,
+      "exports": ["CDATA", "Doctype", "Root", "Tag", "isTag"],
+      "singles": {
+        "CDATA": {
+          "rollup": {
+            "min_bytes": 295,
+            "gzip_bytes": 197,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 294,
+            "gzip_bytes": 195,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 290,
+            "gzip_bytes": 192,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "Doctype": {
+          "rollup": {
+            "min_bytes": 295,
+            "gzip_bytes": 196,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 294,
+            "gzip_bytes": 194,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 290,
+            "gzip_bytes": 191,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "Root": {
+          "rollup": {
+            "min_bytes": 295,
+            "gzip_bytes": 196,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 294,
+            "gzip_bytes": 194,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 290,
+            "gzip_bytes": 191,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "Tag": {
+          "rollup": {
+            "min_bytes": 295,
+            "gzip_bytes": 197,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 294,
+            "gzip_bytes": 194,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 290,
+            "gzip_bytes": 192,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isTag": {
+          "rollup": {
+            "min_bytes": 357,
+            "gzip_bytes": 216,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 356,
+            "gzip_bytes": 213,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 357,
+            "gzip_bytes": 215,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 671,
+        "gzip_bytes": 396,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "htmlparser2",
+      "package": "htmlparser2",
+      "version": "12.0.0",
+      "external_packages": [],
+      "rollup_exports": 11,
+      "exports": ["DefaultHandler", "ElementType", "QuoteType", "getFeed", "parseFeed"],
+      "singles": {
+        "DefaultHandler": {
+          "rollup": {
+            "min_bytes": 4964,
+            "gzip_bytes": 1637,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 4960,
+            "gzip_bytes": 1627,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 4960,
+            "gzip_bytes": 1645,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "ElementType": {
+          "rollup": {
+            "min_bytes": 532,
+            "gzip_bytes": 319,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 823,
+            "gzip_bytes": 463,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 671,
+            "gzip_bytes": 396,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "QuoteType": {
+          "rollup": {
+            "min_bytes": 2535,
+            "gzip_bytes": 943,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 2916,
+            "gzip_bytes": 1047,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 2892,
+            "gzip_bytes": 1027,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "getFeed": {
+          "rollup": {
+            "min_bytes": 2933,
+            "gzip_bytes": 1177,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 2773,
+            "gzip_bytes": 1116,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 2905,
+            "gzip_bytes": 1154,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "parseFeed": {
+          "rollup": {
+            "min_bytes": 59540,
+            "gzip_bytes": 24371,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 59375,
+            "gzip_bytes": 24512,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 59243,
+            "gzip_bytes": 24284,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 68363,
+        "gzip_bytes": 27675,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "fflate",
+      "package": "fflate",
+      "version": "0.8.3",
+      "external_packages": [],
+      "rollup_exports": 49,
+      "exports": ["AsyncCompress", "Decompress", "ZipDeflate", "gzipSync", "zlibSync"],
+      "singles": {
+        "AsyncCompress": {
+          "rollup": {
+            "min_bytes": 10642,
+            "gzip_bytes": 4942,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 10750,
+            "gzip_bytes": 4985,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 10679,
+            "gzip_bytes": 4939,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "Decompress": {
+          "rollup": {
+            "min_bytes": 6122,
+            "gzip_bytes": 2801,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 6244,
+            "gzip_bytes": 2843,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 6183,
+            "gzip_bytes": 2776,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "ZipDeflate": {
+          "rollup": {
+            "min_bytes": 8101,
+            "gzip_bytes": 3877,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 8219,
+            "gzip_bytes": 3921,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 8183,
+            "gzip_bytes": 3873,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "gzipSync": {
+          "rollup": {
+            "min_bytes": 6354,
+            "gzip_bytes": 3297,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 6476,
+            "gzip_bytes": 3352,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 6435,
+            "gzip_bytes": 3317,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "zlibSync": {
+          "rollup": {
+            "min_bytes": 6276,
+            "gzip_bytes": 3261,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 6398,
+            "gzip_bytes": 3312,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 6331,
+            "gzip_bytes": 3268,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 31973,
+        "gzip_bytes": 12134,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "floating-ui__react-dom",
+      "package": "@floating-ui/react-dom",
+      "version": "2.1.9",
+      "external_packages": ["react", "react-dom"],
+      "rollup_exports": 15,
+      "exports": ["arrow", "detectOverflow", "hide", "platform", "useFloating"],
+      "singles": {
+        "arrow": {
+          "rollup": {
+            "min_bytes": 1682,
+            "gzip_bytes": 894,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1695,
+            "gzip_bytes": 898,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1678,
+            "gzip_bytes": 884,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "detectOverflow": {
+          "rollup": {
+            "min_bytes": 1495,
+            "gzip_bytes": 693,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1526,
+            "gzip_bytes": 705,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1426,
+            "gzip_bytes": 642,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "hide": {
+          "rollup": {
+            "min_bytes": 827,
+            "gzip_bytes": 455,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 848,
+            "gzip_bytes": 463,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 827,
+            "gzip_bytes": 449,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "platform": {
+          "rollup": {
+            "min_bytes": 7557,
+            "gzip_bytes": 3064,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 7620,
+            "gzip_bytes": 3081,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 7406,
+            "gzip_bytes": 3085,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "useFloating": {
+          "rollup": {
+            "min_bytes": 12967,
+            "gzip_bytes": 5048,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 12907,
+            "gzip_bytes": 5066,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 12781,
+            "gzip_bytes": 5063,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 24727,
+        "gzip_bytes": 9316,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "opentelemetry__api",
+      "package": "@opentelemetry/api",
+      "version": "1.9.1",
+      "external_packages": [],
+      "rollup_exports": 28,
+      "exports": ["DiagConsoleLogger", "ROOT_CONTEXT", "context", "defaultTextMapSetter", "trace"],
+      "singles": {
+        "DiagConsoleLogger": {
+          "rollup": {
+            "min_bytes": 584,
+            "gzip_bytes": 307,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 583,
+            "gzip_bytes": 305,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 558,
+            "gzip_bytes": 290,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "ROOT_CONTEXT": {
+          "rollup": {
+            "min_bytes": 332,
+            "gzip_bytes": 189,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 331,
+            "gzip_bytes": 187,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 322,
+            "gzip_bytes": 192,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "context": {
+          "rollup": {
+            "min_bytes": 4191,
+            "gzip_bytes": 1695,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 4365,
+            "gzip_bytes": 1737,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 4062,
+            "gzip_bytes": 1643,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "defaultTextMapSetter": {
+          "rollup": {
+            "min_bytes": 65,
+            "gzip_bytes": 85,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 64,
+            "gzip_bytes": 84,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 54,
+            "gzip_bytes": 74,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "trace": {
+          "rollup": {
+            "min_bytes": 7576,
+            "gzip_bytes": 2711,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 7742,
+            "gzip_bytes": 2745,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 7341,
+            "gzip_bytes": 2604,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 13022,
+        "gzip_bytes": 4492,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "testing-library__dom",
+      "package": "@testing-library/dom",
+      "version": "10.4.2",
+      "external_packages": [],
+      "rollup_exports": 78,
+      "exports": [
+        "buildQueries",
+        "fireEvent",
+        "getMultipleElementsFoundError",
+        "queryAllByRole",
+        "wrapSingleQueryWithSuggestion"
+      ],
+      "singles": {
+        "buildQueries": {
+          "rollup": {
+            "min_bytes": 182491,
+            "gzip_bytes": 35797,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 177386,
+            "gzip_bytes": 32343,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 175741,
+            "gzip_bytes": 32809,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "fireEvent": {
+          "rollup": {
+            "min_bytes": 184172,
+            "gzip_bytes": 36408,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 177386,
+            "gzip_bytes": 32341,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 175742,
+            "gzip_bytes": 32809,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "getMultipleElementsFoundError": {
+          "rollup": {
+            "min_bytes": 182496,
+            "gzip_bytes": 35796,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 177391,
+            "gzip_bytes": 32341,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 175742,
+            "gzip_bytes": 32809,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "queryAllByRole": {
+          "rollup": {
+            "min_bytes": 182491,
+            "gzip_bytes": 35797,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 177386,
+            "gzip_bytes": 32342,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 175742,
+            "gzip_bytes": 32809,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "wrapSingleQueryWithSuggestion": {
+          "rollup": {
+            "min_bytes": 182491,
+            "gzip_bytes": 35797,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 177386,
+            "gzip_bytes": 32343,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 175743,
+            "gzip_bytes": 32805,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      },
+      "whole_vite": {
+        "min_bytes": 178885,
+        "gzip_bytes": 33671,
+        "lazy_min_bytes": 0,
+        "lazy_gzip_bytes": 0,
+        "css_bytes_unminified": 0,
+        "asset_bytes_not_inlined": 0,
+        "wasm_bytes": 0
+      }
+    },
+    {
+      "id": "inquirer__core",
+      "package": "@inquirer/core",
+      "version": "12.0.4",
+      "external_packages": ["@types/node"],
+      "rollup_exports": 23,
+      "exports": ["AbortPromptError", "createPrompt", "isShiftKey", "useKeypress", "useState"],
+      "singles": {
+        "AbortPromptError": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+          },
+          "webpack": {
+            "min_bytes": 143,
+            "gzip_bytes": 138,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 140,
+            "gzip_bytes": 137,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "createPrompt": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+          },
+          "webpack": {
+            "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+          },
+          "vite": {
+            "min_bytes": 14219,
+            "gzip_bytes": 6023,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isShiftKey": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+          },
+          "webpack": {
+            "min_bytes": 58,
+            "gzip_bytes": 78,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 33,
+            "gzip_bytes": 53,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "useKeypress": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+          },
+          "webpack": {
+            "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+          },
+          "vite": {
+            "min_bytes": 2254,
+            "gzip_bytes": 1070,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "useState": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT node:async_hooks, node:path, node:process, node:readline, node:util, stream, tty"
+          },
+          "webpack": {
+            "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+          },
+          "vite": {
+            "min_bytes": 1283,
+            "gzip_bytes": 698,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "react-hook-form",
+      "package": "react-hook-form",
+      "version": "7.90.0",
+      "external_packages": ["@types/react", "react"],
+      "rollup_exports": 18,
+      "exports": ["Controller", "FormProvider", "createFormControl", "useFieldArray", "useWatch"],
+      "singles": {
+        "Controller": {
+          "rollup": {
+            "min_bytes": 7421,
+            "gzip_bytes": 2809,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 7482,
+            "gzip_bytes": 2812,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 7821,
+            "gzip_bytes": 3070,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "FormProvider": {
+          "rollup": {
+            "min_bytes": 941,
+            "gzip_bytes": 430,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 951,
+            "gzip_bytes": 433,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1319,
+            "gzip_bytes": 592,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "createFormControl": {
+          "rollup": {
+            "min_bytes": 29174,
+            "gzip_bytes": 10444,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 29108,
+            "gzip_bytes": 10401,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 29076,
+            "gzip_bytes": 10481,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "useFieldArray": {
+          "rollup": {
+            "min_bytes": 11338,
+            "gzip_bytes": 4271,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 11886,
+            "gzip_bytes": 4462,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 12095,
+            "gzip_bytes": 4587,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "useWatch": {
+          "rollup": {
+            "min_bytes": 3531,
+            "gzip_bytes": 1506,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 3604,
+            "gzip_bytes": 1533,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 3899,
+            "gzip_bytes": 1730,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "react-router",
+      "package": "react-router",
+      "version": "8.4.0",
+      "external_packages": ["react", "react-dom"],
+      "rollup_exports": 131,
+      "exports": [
+        "Await",
+        "UNSAFE_FrameworkContext",
+        "createContext",
+        "unstable_setDevServerHooks",
+        "useViewTransitionState"
+      ],
+      "singles": {
+        "Await": {
+          "rollup": {
+            "min_bytes": 15714,
+            "gzip_bytes": 5886,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 15984,
+            "gzip_bytes": 6229,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 16545,
+            "gzip_bytes": 6239,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "UNSAFE_FrameworkContext": {
+          "rollup": {
+            "min_bytes": 114,
+            "gzip_bytes": 124,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 175,
+            "gzip_bytes": 168,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 111,
+            "gzip_bytes": 122,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "createContext": {
+          "rollup": {
+            "min_bytes": 73,
+            "gzip_bytes": 93,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 413,
+            "gzip_bytes": 267,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 150,
+            "gzip_bytes": 141,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "unstable_setDevServerHooks": {
+          "rollup": {
+            "min_bytes": 77,
+            "gzip_bytes": 87,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 76,
+            "gzip_bytes": 86,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 79,
+            "gzip_bytes": 88,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "useViewTransitionState": {
+          "rollup": {
+            "min_bytes": 19782,
+            "gzip_bytes": 7309,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 30481,
+            "gzip_bytes": 11474,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 32272,
+            "gzip_bytes": 11630,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "dom-helpers",
+      "package": "dom-helpers",
+      "version": "6.0.1",
+      "external_packages": [],
+      "rollup_exports": 46,
+      "exports": ["activeElement", "default", "offsetParent", "scrollLeft", "width"],
+      "singles": {
+        "activeElement": {
+          "rollup": {
+            "min_bytes": 877,
+            "gzip_bytes": 485,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1193,
+            "gzip_bytes": 636,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 838,
+            "gzip_bytes": 469,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "default": {
+          "rollup": {
+            "min_bytes": 8925,
+            "gzip_bytes": 3583,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 8928,
+            "gzip_bytes": 3576,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 8900,
+            "gzip_bytes": 3644,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "offsetParent": {
+          "rollup": {
+            "min_bytes": 1623,
+            "gzip_bytes": 873,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1945,
+            "gzip_bytes": 1007,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1575,
+            "gzip_bytes": 851,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "scrollLeft": {
+          "rollup": {
+            "min_bytes": 1045,
+            "gzip_bytes": 582,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1080,
+            "gzip_bytes": 595,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1022,
+            "gzip_bytes": 562,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "width": {
+          "rollup": {
+            "min_bytes": 1592,
+            "gzip_bytes": 812,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1607,
+            "gzip_bytes": 813,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1567,
+            "gzip_bytes": 790,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "framer-motion",
+      "package": "framer-motion",
+      "version": "14.3.0",
+      "external_packages": ["react", "react-dom"],
+      "rollup_exports": 402,
+      "exports": ["AnimatePresence", "calcRelativeAxis", "inView", "resolveMotionValue", "wrap"],
+      "singles": {
+        "AnimatePresence": {
+          "rollup": {
+            "min_bytes": 4658,
+            "gzip_bytes": 2204,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 4618,
+            "gzip_bytes": 2181,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 4583,
+            "gzip_bytes": 2156,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "calcRelativeAxis": {
+          "rollup": {
+            "min_bytes": 142,
+            "gzip_bytes": 136,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 133,
+            "gzip_bytes": 129,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 160,
+            "gzip_bytes": 143,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "inView": {
+          "rollup": {
+            "min_bytes": 693,
+            "gzip_bytes": 402,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 700,
+            "gzip_bytes": 408,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 721,
+            "gzip_bytes": 427,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "resolveMotionValue": {
+          "rollup": {
+            "min_bytes": 86,
+            "gzip_bytes": 103,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 85,
+            "gzip_bytes": 102,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 90,
+            "gzip_bytes": 107,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "wrap": {
+          "rollup": {
+            "min_bytes": 68,
+            "gzip_bytes": 85,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 67,
+            "gzip_bytes": 84,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 65,
+            "gzip_bytes": 82,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "react-router-dom",
+      "package": "react-router-dom",
+      "version": "7.18.4",
+      "external_packages": ["react", "react-dom"],
+      "rollup_exports": 130,
+      "exports": [
+        "Await",
+        "UNSAFE_FrameworkContext",
+        "createCookie",
+        "unstable_setDevServerHooks",
+        "useViewTransitionState"
+      ],
+      "singles": {
+        "Await": {
+          "rollup": {
+            "min_bytes": 32978,
+            "gzip_bytes": 11639,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 34560,
+            "gzip_bytes": 12387,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 35352,
+            "gzip_bytes": 12576,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "UNSAFE_FrameworkContext": {
+          "rollup": {
+            "min_bytes": 31409,
+            "gzip_bytes": 11289,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 32999,
+            "gzip_bytes": 12043,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 33800,
+            "gzip_bytes": 12226,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "createCookie": {
+          "rollup": {
+            "min_bytes": 37811,
+            "gzip_bytes": 13599,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 38948,
+            "gzip_bytes": 14089,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 39073,
+            "gzip_bytes": 14146,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "unstable_setDevServerHooks": {
+          "rollup": {
+            "min_bytes": 31520,
+            "gzip_bytes": 11326,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 33890,
+            "gzip_bytes": 12324,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 33946,
+            "gzip_bytes": 12282,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "useViewTransitionState": {
+          "rollup": {
+            "min_bytes": 31414,
+            "gzip_bytes": 11296,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 33005,
+            "gzip_bytes": 12047,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 33801,
+            "gzip_bytes": 12227,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "inquirer__prompts",
+      "package": "@inquirer/prompts",
+      "version": "8.7.3",
+      "external_packages": ["@types/node"],
+      "rollup_exports": 11,
+      "exports": ["Separator", "editor", "input", "rawlist", "select"],
+      "singles": {
+        "Separator": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT buffer, node:async_hooks, node:child_process, node:crypto, node:fs, node:os, node:path, node:process, node:readline, node:util, stream, string_decoder, tty"
+          },
+          "webpack": {
+            "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+          },
+          "vite": {
+            "min_bytes": 7085,
+            "gzip_bytes": 2440,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "editor": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT buffer, node:async_hooks, node:child_process, node:crypto, node:fs, node:os, node:path, node:process, node:readline, node:util, stream, string_decoder, tty"
+          },
+          "webpack": {
+            "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+          },
+          "vite": {
+            "min_bytes": 341379,
+            "gzip_bytes": 174836,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "input": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT buffer, node:async_hooks, node:child_process, node:crypto, node:fs, node:os, node:path, node:process, node:readline, node:util, stream, string_decoder, tty"
+          },
+          "webpack": {
+            "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+          },
+          "vite": {
+            "min_bytes": 23873,
+            "gzip_bytes": 9509,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "rawlist": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT buffer, node:async_hooks, node:child_process, node:crypto, node:fs, node:os, node:path, node:process, node:readline, node:util, stream, string_decoder, tty"
+          },
+          "webpack": {
+            "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+          },
+          "vite": {
+            "min_bytes": 25294,
+            "gzip_bytes": 10012,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "select": {
+          "rollup": {
+            "error": "UNRESOLVED_IMPORT buffer, node:async_hooks, node:child_process, node:crypto, node:fs, node:os, node:path, node:process, node:readline, node:util, stream, string_decoder, tty"
+          },
+          "webpack": {
+            "error": "Module build failed: UnhandledSchemeError: Reading from \"node:async_hooks\" is not handled by plugins (Unhandled scheme)."
+          },
+          "vite": {
+            "min_bytes": 27576,
+            "gzip_bytes": 10831,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "environment",
+      "package": "environment",
+      "version": "1.1.0",
+      "external_packages": [],
+      "rollup_exports": 15,
+      "exports": ["isAndroid", "isDeno", "isJsDom", "isServiceWorker", "isWindows"],
+      "singles": {
+        "isAndroid": {
+          "rollup": {
+            "min_bytes": 1055,
+            "gzip_bytes": 317,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1220,
+            "gzip_bytes": 360,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1326,
+            "gzip_bytes": 390,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isDeno": {
+          "rollup": {
+            "min_bytes": 1057,
+            "gzip_bytes": 328,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1222,
+            "gzip_bytes": 371,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1323,
+            "gzip_bytes": 389,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isJsDom": {
+          "rollup": {
+            "min_bytes": 1038,
+            "gzip_bytes": 311,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1203,
+            "gzip_bytes": 356,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1319,
+            "gzip_bytes": 383,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isServiceWorker": {
+          "rollup": {
+            "min_bytes": 1036,
+            "gzip_bytes": 314,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1205,
+            "gzip_bytes": 359,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1310,
+            "gzip_bytes": 380,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isWindows": {
+          "rollup": {
+            "min_bytes": 1053,
+            "gzip_bytes": 315,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 1218,
+            "gzip_bytes": 359,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 1324,
+            "gzip_bytes": 390,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "react-redux",
+      "package": "react-redux",
+      "version": "9.3.0",
+      "external_packages": ["@types/react", "react", "redux"],
+      "rollup_exports": 12,
+      "exports": ["Provider", "connect", "createStoreHook", "shallowEqual", "useStore"],
+      "singles": {
+        "Provider": {
+          "rollup": {
+            "min_bytes": 2729,
+            "gzip_bytes": 1242,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 2368,
+            "gzip_bytes": 1103,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 2148,
+            "gzip_bytes": 1022,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "connect": {
+          "rollup": {
+            "min_bytes": 8571,
+            "gzip_bytes": 3347,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 8017,
+            "gzip_bytes": 3159,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 8054,
+            "gzip_bytes": 3152,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "createStoreHook": {
+          "rollup": {
+            "min_bytes": 1345,
+            "gzip_bytes": 682,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 966,
+            "gzip_bytes": 524,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 781,
+            "gzip_bytes": 447,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "shallowEqual": {
+          "rollup": {
+            "min_bytes": 1238,
+            "gzip_bytes": 624,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 883,
+            "gzip_bytes": 487,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 705,
+            "gzip_bytes": 405,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "useStore": {
+          "rollup": {
+            "min_bytes": 1358,
+            "gzip_bytes": 688,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 979,
+            "gzip_bytes": 529,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 783,
+            "gzip_bytes": 448,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "preact",
+      "package": "preact",
+      "version": "11.0.1",
+      "external_packages": ["preact-render-to-string"],
+      "rollup_exports": 13,
+      "exports": ["Component", "createContext", "createRef", "isValidElement", "toChildArray"],
+      "singles": {
+        "Component": {
+          "rollup": {
+            "min_bytes": 10122,
+            "gzip_bytes": 4338,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 10114,
+            "gzip_bytes": 4336,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 10079,
+            "gzip_bytes": 4325,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "createContext": {
+          "rollup": {
+            "min_bytes": 10606,
+            "gzip_bytes": 4505,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 10598,
+            "gzip_bytes": 4501,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 10566,
+            "gzip_bytes": 4493,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "createRef": {
+          "rollup": {
+            "min_bytes": 56,
+            "gzip_bytes": 76,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 10145,
+            "gzip_bytes": 4347,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 10113,
+            "gzip_bytes": 4337,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "isValidElement": {
+          "rollup": {
+            "min_bytes": 85,
+            "gzip_bytes": 103,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 10170,
+            "gzip_bytes": 4357,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 10135,
+            "gzip_bytes": 4342,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        },
+        "toChildArray": {
+          "rollup": {
+            "min_bytes": 152,
+            "gzip_bytes": 150,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "webpack": {
+            "min_bytes": 10221,
+            "gzip_bytes": 4371,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          },
+          "vite": {
+            "min_bytes": 10186,
+            "gzip_bytes": 4358,
+            "lazy_min_bytes": 0,
+            "lazy_gzip_bytes": 0,
+            "css_bytes_unminified": 0,
+            "asset_bytes_not_inlined": 0,
+            "wasm_bytes": 0
+          }
+        }
+      }
+    }
+  ],
+  "skipped": [
+    {
+      "id": "react-is",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "string_decoder",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "isarray",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "convert-source-map",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inherits",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "vite",
+      "rollup_exports": null,
+      "reason": "rollup could not list the exports"
+    },
+    {
+      "id": "react",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "buffer",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "open",
+      "rollup_exports": 3,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "util-deprecate",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "opentelemetry__api-logs",
+      "rollup_exports": 3,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "prop-types",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "jsdom",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "opentelemetry__instrumentation",
+      "rollup_exports": 9,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "eslint-plugin-react-hooks",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "vitejs__plugin-react",
+      "rollup_exports": 3,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "ip-address",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "w3c-xmlserializer",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "tldts",
+      "rollup_exports": 7,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "react-refresh",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "symbol-tree",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "reflect.getprototypeof",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "use-callback-ref",
+      "rollup_exports": 9,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "use-sidecar",
+      "rollup_exports": 7,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "react-style-singleton",
+      "rollup_exports": 3,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "flmngr__flmngr-react",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "next__env",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "dompurify",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "testing-library__jest-dom",
+      "rollup_exports": 0,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer__type",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "testing-library__react",
+      "rollup_exports": 8,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "prompts",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "eslint-plugin-react",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "default-browser",
+      "rollup_exports": 2,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "next",
+      "rollup_exports": null,
+      "reason": "rollup could not list the exports"
+    },
+    {
+      "id": "bowser",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "formdata-polyfill",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "default-browser-id",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "client-only",
+      "rollup_exports": 0,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "zustand",
+      "rollup_exports": 3,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "space-separated-tokens",
+      "rollup_exports": 2,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer__figures",
+      "rollup_exports": 4,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "testing-library__user-event",
+      "rollup_exports": 3,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer__confirm",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "xmldom__xmldom",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "reselect",
+      "rollup_exports": 7,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "is-buffer",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "react-transition-group",
+      "rollup_exports": 6,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "comma-separated-tokens",
+      "rollup_exports": 2,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer__ansi",
+      "rollup_exports": 7,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer",
+      "rollup_exports": 2,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "path-browserify",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer__external-editor",
+      "rollup_exports": 7,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "parse-ms",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "hoist-non-react-statics",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "hast-util-to-jsx-runtime",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer__select",
+      "rollup_exports": 2,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "cross-fetch",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "vaul",
+      "rollup_exports": 7,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer__input",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "camelcase-css",
+      "rollup_exports": 1,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "inquirer__checkbox",
+      "rollup_exports": 2,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "postcss-js",
+      "rollup_exports": 5,
+      "reason": "fewer than 10 exports"
+    },
+    {
+      "id": "eslint-plugin-react-refresh",
+      "rollup_exports": 2,
+      "reason": "fewer than 10 exports"
+    }
+  ]
+}

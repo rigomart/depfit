@@ -1,5 +1,6 @@
 import { join, resolve } from "node:path";
 import {
+  type Bundle,
   type Collect,
   type Compatibility,
   type Cost,
@@ -53,6 +54,8 @@ async function settle<T>(promise: Promise<T>): Promise<Settled<T>> {
 type Context = {
   project: Project | null;
   projectError: string | null;
+  /** Why bundle facts are not measured, as its `unavailable` entry; null when they are. */
+  bundleSkipped: string | null;
   /** Resolved once, on first use. */
   token: () => Promise<string | null>;
 };
@@ -90,14 +93,32 @@ async function githubSection(
   return { ...(await settle(githubFacts(repo.owner, repo.repo, auth))), repository };
 }
 
+/**
+ * Bundle facts for the root entry point. The module that runs Vite is imported only here, so a
+ * workspace with no browser signal never loads Vite or rolldown.
+ */
+async function bundleFacts(
+  dir: string,
+  resolved: Resolved,
+): Promise<{ bundle: Bundle | null; reasons: string[] }> {
+  try {
+    const { rootEntryBundle } = await import("./root-entry.ts");
+    return await rootEntryBundle(dir, resolved.name, resolved.manifest);
+  } catch (error) {
+    // Never fails the install: cost and the other install facts stay as they are.
+    return { bundle: null, reasons: [`bundle: BUNDLER_ERROR ${errorMessage(error)}`] };
+  }
+}
+
 /** Everything that needs the isolated install of the candidate itself. */
-async function treeFacts(resolved: Resolved) {
+async function treeFacts(resolved: Resolved, measureBundle: boolean) {
   return withIsolatedInstall(resolved.name, resolved.version, async ({ dir, tree }) => {
-    const [vulnerabilities, bundledTypes] = await Promise.all([
+    const [vulnerabilities, bundledTypes, bundle] = await Promise.all([
       settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree))),
       shipsTypes(join(dir, "node_modules", resolved.name), resolved.manifest),
+      measureBundle ? bundleFacts(dir, resolved) : null,
     ]);
-    return { tree, vulnerabilities, bundledTypes };
+    return { tree, vulnerabilities, bundledTypes, bundle };
   });
 }
 
@@ -135,7 +156,7 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
   // DefinitelyTyped is looked up alongside the install, and ignored if the install ships types.
   const declaresTypes = manifestDeclaresTypes(manifest);
   const [install, ownAdvisories, github, downloadStats, typesLookup] = await Promise.all([
-    settle(treeFacts(resolved)),
+    settle(treeFacts(resolved, context.bundleSkipped === null)),
     settle(advisories(name, version, inRepo?.installed_versions ?? [])),
     githubSection(manifest, context.token),
     settle(weeklyDownloads(name)),
@@ -151,6 +172,9 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
   if (!github.ok) unavailable.push(`github: ${github.error}`);
   if (!downloadStats.ok) unavailable.push(`downloads: ${downloadStats.error}`);
   if (types && !types.ok) unavailable.push(`types: ${types.error}`);
+  const bundle = install.ok ? install.value.bundle : null;
+  if (context.bundleSkipped) unavailable.push(context.bundleSkipped);
+  if (bundle) unavailable.push(...bundle.reasons);
 
   const tree: TreePackage[] | null = install.ok ? install.value.tree : null;
   const runtime = project?.info.runtime ?? null;
@@ -206,8 +230,22 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
     compatibility,
     maintenance,
     security,
-    bundle: null,
+    bundle: bundle?.bundle ?? null,
   };
+}
+
+/**
+ * Bundle facts are measured only in a workspace with a browser signal. `DEPFIT_BUNDLE=0` turns
+ * them off everywhere: an eval-only switch (eval/bundle/SPEC.md gate E).
+ */
+export function bundleSkipped(
+  project: Pick<Project, "info"> | null,
+  env: Record<string, string | undefined> = process.env,
+): string | null {
+  if (env.DEPFIT_BUNDLE === "0") return "bundle: skipped, DEPFIT_BUNDLE=0";
+  if (!project?.info.browser_signals.length)
+    return "bundle: skipped, no browser signal in workspace";
+  return null;
 }
 
 export const collect: Collect = async (specs, { cwd }) => {
@@ -219,6 +257,7 @@ export const collect: Collect = async (specs, { cwd }) => {
   const context: Context = {
     project,
     projectError: loaded.ok ? null : loaded.error,
+    bundleSkipped: bundleSkipped(project),
     token: () => {
       token ??= githubToken();
       return token;

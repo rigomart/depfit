@@ -4,3 +4,5 @@ eval/results
 eval/reviews
 eval/probes.json
 eval/bundle/results
+eval/signals.json
+eval/snippets.json

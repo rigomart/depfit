@@ -1,0 +1,8 @@
+{
+  "name": "browser-app",
+  "private": true,
+  "type": "module",
+  "dependencies": { "preact": "^10.0.0" },
+  "devDependencies": { "vite": "^8.0.0" },
+  "peerDependencies": { "react-dom": "^19.0.0" }
+}

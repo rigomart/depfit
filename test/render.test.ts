@@ -3,7 +3,9 @@ import { renderTable } from "../src/render/table.ts";
 import type { PackageReport } from "../src/report.ts";
 import {
   betterSqlite3,
+  browserProject,
   bunProject,
+  hugeInBrowser,
   libsqlClient,
   missing,
   monorepoProject,
@@ -14,7 +16,9 @@ import {
   report,
   sharp,
   sonner,
+  sonnerInBrowser,
   valibot,
+  valibotInBrowser,
   workersProject,
   yup,
   yupWithoutGithub,
@@ -442,5 +446,22 @@ describe("renderTable", () => {
     const codes = new Set(out.match(ansi));
     expect([...codes].sort()).toEqual(["\x1b[1m", "\x1b[22m", "\x1b[2m"]);
     expect(out.replace(ansi, "")).toBe(output);
+  });
+
+  it("shows bundle facts and browser signals only for a browser workspace", () => {
+    const out = renderTable(
+      report([valibotInBrowser, sonnerInBrowser, hugeInBrowser], browserProject),
+      plain,
+    );
+    expect(out).toContain("browser signals react-dom, index.html");
+    expect(out).toContain("Bundle (root entry point)");
+    expect(rowBlock(out, "Whole eager JS min / gzip")[0]).toMatch(
+      /84\.7 KB \/ 14\.6 KB\s+34\.0 KB \/ 10\.1 KB$/,
+    );
+    expect(rowBlock(out, "Exports measured alone")[0]).toMatch(/320 of 320\s+2 of 3$/);
+    expect(rowBlock(out, "Median one export, gzip")[0]).toMatch(/550 B\s+5\.1 KB$/);
+    expect(out).toContain("- of 1204");
+    expect(out).toContain("zod: bundle: UNRESOLVED_IMPORT node:fs; bundle: EXPORT_LIMIT 1204");
+    expect(renderTable(report([valibot]), plain)).not.toContain("Bundle");
   });
 });

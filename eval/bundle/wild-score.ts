@@ -11,6 +11,10 @@
  * every verdict.
  * The null rate by code is reported, with no threshold. Other auditor findings (require, eval,
  * Function) are information only.
+ *
+ * `root: true` scores iteration 1's whole root entry point instead (SPEC.md gate B, whole): the
+ * CLI runs with no flags in a browser scratch workspace and its `whole_*` fields are read. That
+ * build is the same `import * as m` entry, so the snippet text stays the cache and exception key.
  */
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -37,12 +41,13 @@ import {
   REPORT_FIELD,
   referenceRanges,
   scratchProject,
+  WHOLE_FIELD,
 } from "./harness.ts";
 import { type Hit, hasFetch } from "./wild-audit.ts";
 
 const HERE = import.meta.dirname;
 const RESULTS_DIR = join(HERE, "results");
-const RUN_DIR = join(RESULTS_DIR, "wild-run");
+const runDir = (root: boolean) => join(RESULTS_DIR, root ? "wild-root-run" : "wild-run");
 /** Same pause as eval/run.ts between CLI runs: npm's downloads API rate-limits bursts. */
 const PAUSE_MS = 3000;
 const CONCURRENCY = 2;
@@ -142,9 +147,14 @@ async function depfitIdentity(): Promise<string> {
 const measurementKey = (depfit: string, snippet: string, lock: string) =>
   createHash("sha256").update(depfit).update(snippet).update(lock).digest("hex");
 
-async function measureCli(scratch: string, spec: string, args: string[]): Promise<Measurement> {
+async function measureCli(
+  scratch: string,
+  spec: string,
+  args: string[],
+  root: boolean,
+): Promise<Measurement> {
   const cli = await depfit([spec, ...args], scratch);
-  const seen = observe(cli);
+  const seen = observe(cli, root ? WHOLE_FIELD : REPORT_FIELD);
   const newPackages = asStringArray(asRecord(packageOf(cli.report)?.cost).new_packages);
   if ("problem" in seen) {
     const base = { bytes: null, code: null, reasons: [], bundler: null, ms: cli.ms };
@@ -260,7 +270,8 @@ const isMeasurement = (value: unknown): value is Measurement =>
   "new_packages" in value &&
   Array.isArray(value.new_packages);
 
-async function runAll(resume: boolean): Promise<WildResult[]> {
+async function runAll(resume: boolean, root: boolean): Promise<WildResult[]> {
+  const RUN_DIR = runDir(root);
   const packages = await loadWild();
   const downloads = new Map(
     (await loadWildPackages()).map((pkg) => [pkg.name, pkg.downloads_last_month]),
@@ -271,7 +282,7 @@ async function runAll(resume: boolean): Promise<WildResult[]> {
   const exceptions = (await loadExceptions()).filter((e) => e.set === "wild");
   if (!resume) await rm(RUN_DIR, { recursive: true, force: true });
   await mkdir(RUN_DIR, { recursive: true });
-  const scratch = await scratchProject("browser");
+  const scratch = await scratchProject("browser", root);
   const queue = [...packages];
   const done: WildResult[] = [];
   const identity = await depfitIdentity();
@@ -292,7 +303,8 @@ async function runAll(resume: boolean): Promise<WildResult[]> {
           cached.key === key && isMeasurement(cached.measurement) ? cached.measurement : null;
         if (measurement) reused += 1;
         else {
-          measurement = await measureCli(scratch, `${c.package}@${c.version}`, args);
+          const spec = `${c.package}@${c.version}`;
+          measurement = await measureCli(scratch, spec, root ? [] : args, root);
           await writeFile(file, `${JSON.stringify({ key, measurement })}\n`);
           await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
         }
@@ -331,8 +343,9 @@ async function runAll(resume: boolean): Promise<WildResult[]> {
   return done.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 }
 
-export async function runWild(options: { resume: boolean }): Promise<void> {
-  const results = await runAll(options.resume);
+export async function runWild(options: { resume: boolean; root?: boolean }): Promise<void> {
+  const root = options.root ?? false;
+  const results = await runAll(options.resume, root);
   const numbers = results.filter((r) => r.outcome === "number");
   const nulls = results.filter((r) => r.outcome === "null");
   const errors = results.filter((r) => r.outcome === "error");
@@ -351,7 +364,9 @@ export async function runWild(options: { resume: boolean }): Promise<void> {
   const verdict = (count: number) => (count ? "FAIL" : "PASS");
 
   const lines: string[] = [];
-  lines.push(`Gate W: wild corpus (${results.length} packages)`);
+  lines.push(
+    `${root ? "Gate B (whole), by gate W's conditions" : "Gate W"}: wild corpus (${results.length} packages)`,
+  );
   lines.push(
     `  numbers ${numbers.length} (${pct(numbers.length)}), nulls ${nulls.length} (${pct(nulls.length)}), without a usable result ${errors.length}`,
   );
@@ -397,7 +412,7 @@ export async function runWild(options: { resume: boolean }): Promise<void> {
 
   await mkdir(RESULTS_DIR, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const out = join(RESULTS_DIR, `wild-${stamp}.json`);
+  const out = join(RESULTS_DIR, `${root ? "wild-root" : "wild"}-${stamp}.json`);
   await writeFile(
     out,
     `${JSON.stringify(

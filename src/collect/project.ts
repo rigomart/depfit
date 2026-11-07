@@ -5,7 +5,7 @@ import { dirname, join, relative, sep } from "node:path";
 import type { Lockfile, ProjectInfo } from "../report.ts";
 import type { ProjectFacts, Workspace } from "./facts.ts";
 import { type LockIndex, parseLockfile } from "./lockfile.ts";
-import { asRecord, asString, asStringArray, asStringRecord, unquote } from "./util.ts";
+import { asRecord, asString, asStringArray, asStringRecord, isRecord, unquote } from "./util.ts";
 
 export type Project = ProjectFacts & { info: ProjectInfo };
 
@@ -18,6 +18,22 @@ const DECLARED_FIELDS = [
   "dependencies",
 ] as const;
 const WRANGLER_CONFIGS = ["wrangler.toml", "wrangler.json", "wrangler.jsonc"];
+/**
+ * Packages that make a workspace a browser workspace (eval/bundle/SPEC.md, iteration 1): UI
+ * runtimes, then web app frameworks. Build tools (vite, webpack, ...) are not signals: tools and
+ * test setups depend on them too.
+ */
+const UI_RUNTIMES = ["react-dom", "preact", "vue", "svelte", "solid-js", "@angular/core", "lit"];
+const WEB_FRAMEWORKS = [
+  "next",
+  "astro",
+  "nuxt",
+  "@sveltejs/kit",
+  "@remix-run/react",
+  "@tanstack/react-start",
+  "gatsby",
+];
+export const BROWSER_SIGNAL_PACKAGES = [...UI_RUNTIMES, ...WEB_FRAMEWORKS];
 const SOURCE_EXT = /\.(?:[mc]?[tj]sx?|vue|svelte|astro)$/;
 const SKIP_DIRS = new Set(["node_modules", "dist", "build", "out", "coverage"]);
 const MAX_SOURCE_FILES = 10_000;
@@ -237,6 +253,30 @@ async function runtimeFacts(
   };
 }
 
+/**
+ * The workspace's browser signals, from its own package.json and directory only: signal packages
+ * in dependencies or devDependencies, in BROWSER_SIGNAL_PACKAGES order, then "index.html" when the
+ * directory has one, then "browser" when package.json has a `browser` field.
+ */
+export function browserSignals(manifest: Record<string, unknown>, hasIndexHtml: boolean): string[] {
+  const declared = new Set([
+    ...Object.keys(asStringRecord(manifest.dependencies)),
+    ...Object.keys(asStringRecord(manifest.devDependencies)),
+  ]);
+  const { browser } = manifest;
+  return [
+    ...BROWSER_SIGNAL_PACKAGES.filter((name) => declared.has(name)),
+    ...(hasIndexHtml ? ["index.html"] : []),
+    ...(typeof browser === "string" || isRecord(browser) ? ["browser"] : []),
+  ];
+}
+
+const isFile = (path: string) =>
+  stat(path).then(
+    (found) => found.isFile(),
+    () => false,
+  );
+
 function declaredDependencies(manifest: Record<string, unknown>): Map<string, string> {
   const declared = new Map<string, string>();
   for (const field of DECLARED_FIELDS) {
@@ -286,6 +326,7 @@ export async function loadProject(cwd: string): Promise<Project | null> {
       packages_in_lockfile: lock.size,
       module_type: manifest.type === "module" ? "module" : "commonjs",
       ...(await runtimeFacts(dirs, manifests, lockfile)),
+      browser_signals: browserSignals(manifest, await isFile(join(workspace, "index.html"))),
     },
     lock,
     workspace: current,

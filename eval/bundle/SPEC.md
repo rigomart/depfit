@@ -24,7 +24,8 @@ agreed.
   `MISSING_EXPORT`, `IMPORT_OUTSIDE_BUNDLE`, `NO_ENTRY`, `NON_JS_IMPORT`, `PEER_IN_BUNDLE`,
   `TOOLCHAIN_MISMATCH`, and pass-through bundler codes. Failed builds are never retried with
   failures marked external.
-- **Peers:** installed for `cost`, left out of every bundle and listed in `external_packages`.
+- **Peers:** installed for `cost` and left out of every bundle. `external_packages` lists only the
+  peers the measured output still imports (amendment 5, 2026-11-05).
 - **Eager vs lazy:** eager is the entry chunk plus its static-import closure; lazy is the rest of
   what `import()` reaches. Never summed.
 - **Band, gross error, reviewed exceptions, references** (rollup 4 + terser, webpack 5), and every
@@ -108,10 +109,12 @@ For each package, from its isolated install, only the root entry point (`"."`):
 | `exports` | Number of exports the entry point has (`default` included) |
 | `exports_measured` | How many of them built and passed the checks |
 | `single_export_median_eager_js_gzip9_bytes` | Median over measured exports of one export's eager gzip bytes |
-| `external_packages` | Peers left out, as v5 |
+| `external_packages` | Peers the measured builds left out and still import, by package name (amended 2026-11-05, amendment 5) |
 
 A whole-package null keeps its reason code in `unavailable`, as in v5. Unmeasured exports add
-one entry: `bundle: <n> exports unmeasurable (<codes>)`. `schema-docs` says each number is a
+one entry: `bundle: <n> exports unmeasurable (<codes>)`, counting and listing only the exports and
+codes the whole build does not already report, so one cause gives one entry per package (amended
+2026-11-05, below). `schema-docs` says each number is a
 standalone build of the named import, that neither is the reader's usage nor marginal cost, and
 that real usage of a few exports usually lies between the two.
 
@@ -123,8 +126,8 @@ them in a later iteration only if gate H shows readers need them.
 | Gate | Pass condition |
 |---|---|
 | **A. Honesty** | Every v1 null case that measures the root entry point returns its expected code. 0 gross errors on whole or single-export numbers. |
-| **B. Accuracy** | **Whole:** gate W's corpus (about 200 packages, `import * as m`, the exact whole-package build) passes W's conditions (i)–(iii) against its existing references. **Single export:** a fixed reference set of 20 wild-corpus packages with at least 10 exports, as counted by the rollup reference build, not by depfit (the first 20 in `wild.json` order) × 5 exports each (evenly spaced over sorted names) is in band against rollup + webpack, or covered by a reviewed exception; 0 gross errors. |
-| **C. Vite conformance** | For the 20 × 5 set and 10 whole-package cases, depfit's bytes equal a stock `vite build` made by `reference.ts` without depfit's code: min bytes identical, gzip within 1%. |
+| **B. Accuracy** | **Whole:** gate W's corpus (about 200 packages, `import * as m`, the exact whole-package build) passes W's conditions (i)–(iii) against its existing references. **Single export:** a fixed reference set of 20 wild-corpus packages with at least 10 exports, as counted by the rollup reference build, not by depfit (the first 20 in `wild.json` order) × 5 exports each (evenly spaced over sorted names) is in band against rollup + webpack, or covered by a reviewed exception; 0 gross errors. A single-export case that is an expected null (amendment 2) counts under A, not B (amended 2026-11-05). |
+| **C. Vite conformance** | For the 20 × 5 set and 10 whole-package cases, depfit's bytes equal a stock `vite build` made by `reference.ts` without depfit's code: min bytes identical, gzip within 1%. Single-export cases that are expected nulls (amendment 2) count under A (amended 2026-11-05). |
 | **D. Determinism** | Two runs give identical bytes, counts and reasons. |
 | **E. Contract** | Every package has every bundle field (null when unknown). Every new field is in `schema-docs`. Every non-bundle field is identical with bundling on and off (an eval-only `DEPFIT_BUNDLE=0` switch). |
 | **F. Cost** | Non-browser workspace: Vite and rolldown are never loaded (hard check). Browser workspace: median added time ≤ 1.5 s per package across all probe candidates; p90 and max are reported. |
@@ -153,19 +156,61 @@ them in a later iteration only if gate H shows readers need them.
 
 | Workspace | Expected signals |
 |---|---|
-| Static Preact site, Vite | `preact`, `index.html` |
+| Static Preact site, Vite | `preact` (its `index.html` is in `app/`; amended 2026-11-05) |
 | Preact + CodeMirror notes app, Vite | `preact`, `index.html` |
 | Next.js app | `next`, `react-dom` |
 | Vite + React apps (4 workspaces) | `react-dom`, `index.html` where present |
 | React application package (no app shell) | `react-dom` |
 | Astro portfolio and Astro marketing site | `astro` |
 | Next.js docs app in a UI-library monorepo | `next`, `react-dom` |
-| Electron app with a React renderer | `react-dom` (renderer counts) |
+| Electron app with a React renderer | `react-dom` (renderer counts), `index.html` (amended 2026-11-05) |
 | Expo app with `react-dom` | `react-dom` (known limit: a React Native bundle is not a browser bundle) |
 | depfit itself (`vite` as a tool) | none |
 | Bun TUI, Bun CLI, two Node servers, a Cloudflare Workers API, a Bun resume builder, a TypeScript-only package, an Electron main-process app | none |
 
 Exact workspace paths are kept with the probes (local, gitignored).
+
+### Bar amendments (2026-11-05, user-approved)
+
+Decided by the user on 2026-11-05 after seeing iteration 1's results (`STATUS.md`), each reviewed
+by an independent reviewer (verdict in `STATUS.md`). The original text is kept in git history; the
+lines changed above say "amended 2026-11-05".
+
+1. **Gate S table, two rows.** The rule checks `index.html` in the workspace directory only. The
+   static Preact site keeps its `index.html` in `app/` (Vite `root`), so its expected signals are
+   `preact`; the Electron app with a React renderer has an `index.html` in its workspace
+   directory, so its expected signals are `react-dom`, `index.html`. The table had contradicted the
+   rule it cites; the rule and the detector are unchanged.
+2. **Gates B and C on expected nulls.** A single-export case of the reference set that depfit
+   returns as null is judged for honesty under gate A, not as a B or C accuracy failure, when it is
+   listed in `single-nulls.json` and its build gives exactly the listed code and only the listed
+   kind of specifier (in iteration 1: every export of the Node-only @inquirer/core and
+   @inquirer/prompts, `UNRESOLVED_IMPORT` of Node built-ins only; 6 react-router exports whose Vite
+   output keeps a computed `import()`, `IMPORT_OUTSIDE_BUNDLE import(…)`). Any other null, or a
+   listed one with another reason, fails gate A until it is reviewed and listed, and the list waives
+   nothing while its review is pending. Every selected case stays in the set and is reported. B's
+   band and C's comparison apply to the measured cases; whole-package builds are unchanged. The
+   rule that chooses the set is unchanged. Also a reviewed exception for react-hook-form
+   `FormProvider` (single-export set), with its emitted code in
+   `evidence/react-hook-form-FormProvider.md`: only the Vite output keeps 395 B of code the export
+   does not use (bare member reads and the objects they read, which rolldown treats as possible side
+   effects); without it the output is 924 / 425 B, inside the band, against depfit's 1319 / 592 B.
+   A reviewed exception applies only after its review; a pending one waives nothing.
+3. **server-only's reviewed exception re-recorded.** Its depfit gzip moved from 117 to 115 B when
+   gzip moved into the Node child that runs Vite (`STATUS.md`); min bytes, references and cause are
+   unchanged.
+4. **One `unavailable` entry per cause.** When a cause (a reason code) makes both the whole build
+   and some exports unmeasurable, the package gets one entry for it: the whole build's. The
+   per-export summary counts and lists only exports and codes the whole build does not already
+   report, and a listing failure is likewise reported only for new codes. This changes the code and
+   the contract wording above; stop condition 5 is unchanged.
+5. **`external_packages` lists only the peers the output imports** (decided 2026-11-05 after seeing
+   the round-5 reports). It listed every declared peer, optional ones included, so valibot showed
+   `typescript`, an optional types-only peer its JS never imports, and a reader could take it as
+   "14.6 KB plus typescript". It now lists the peers that a measured build (the whole entry point or
+   an export alone) still imports, by package name (a subpath import counts as its package), and is
+   null when no build was measured. Peers stay external in every build as before; only what is
+   reported changes. Schema 6 is unreleased, so this meaning change stays in schema 6.
 
 ### Holdout probes
 

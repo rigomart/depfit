@@ -17,7 +17,8 @@ for lazy chunks. SPEC.md wins on conflict.
 | Peers external through Vite's exported `esmExternalRequirePlugin` | Peers are excluded and listed. Plain `external` leaves a runtime `require` shim of a few hundred bytes for a CommonJS `require()` of a peer (the `cjs-peer` fixture: 536 B with plain `external`, under 400 B with the plugin); the plugin turns it into an import |
 | An observing plugin (`resolveId` returns null after recording each resolution), an `onLog` that records, and a worker-build recorder (`worker.plugins`) | The honesty checks read only what Vite resolved, logged and emitted, never package source. A build without them emits the same output (spike) |
 
-Gzip is level 9 per chunk with the parent runtime's zlib (Bun's is +0.4% against Node's).
+Gzip is level 9 per chunk, computed in the Node child that ran Vite (`vite-build.mjs`), so it is
+Node's zlib whatever runtime runs depfit (Bun's zlib gave up to 2% fewer bytes on small chunks).
 
 ## Honesty checks (`problemsFromBuild` in `src/collect/bundle.ts`)
 

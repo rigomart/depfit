@@ -6,6 +6,9 @@
  * depfit's documented configuration (the `vite` key; not part of the rollup/webpack band, because
  * depfit is Vite).
  *   bun eval/bundle/reference.ts [caseId...]
+ *   bun eval/bundle/reference.ts --wild      # wild-reference.json (gate W, and B's whole half)
+ *   bun eval/bundle/reference.ts --singles   # single-reference.json (iteration 1, gates B and C)
+ *   bun eval/bundle/reference.ts --emit <wildId> <export>   # that case's emitted code, for a review
  * Re-runs itself under Node when started with Bun, so gzip (node:zlib) is the same either way.
  */
 import { execFile, spawnSync } from "node:child_process";
@@ -48,8 +51,14 @@ process.env.NODE_ENV = "production";
 for (const key of Object.keys(process.env)) if (key.startsWith("VITE_")) delete process.env[key];
 
 const run = promisify(execFile);
-const WILD = process.argv.includes("--wild");
-const REFERENCE_FILE = join(import.meta.dirname, WILD ? "wild-reference.json" : "reference.json");
+const SINGLES = process.argv.includes("--singles");
+/** `--emit <wildId> <export>`: one single-export case, built three ways, emitted code saved. */
+const EMIT = process.argv.includes("--emit");
+const WILD = process.argv.includes("--wild") || SINGLES || EMIT;
+const REFERENCE_FILE = join(
+  import.meta.dirname,
+  SINGLES ? "single-reference.json" : WILD ? "wild-reference.json" : "reference.json",
+);
 const LOCKS_DIR = join(import.meta.dirname, "locks", ...(WILD ? ["wild"] : []));
 /** Wild packages are built this many at a time; npm is paced between installs. */
 const WILD_CONCURRENCY = 3;
@@ -562,6 +571,9 @@ async function buildVite(input: BuildInput): Promise<Measured> {
     for (const next of asStringArray(byName.get(name)?.imports)) visit(next);
   };
   for (const chunk of chunks) if (chunk.isEntry === true) visit(String(chunk.fileName));
+  input.onChunks?.(
+    chunks.map((chunk) => ({ name: String(chunk.fileName), code: asString(chunk.code) ?? "" })),
+  );
   const files = items.flatMap((item) => {
     const name = asString(item.fileName);
     const source = item.source;
@@ -601,9 +613,258 @@ async function attempt(build: () => Promise<Measured>): Promise<Outcome> {
   }
 }
 
+// --- single exports (iteration 1, gates B and C) ------------------------------------------------
+
+/** Packages in the single-export reference set, and exports per package (SPEC.md gate B). */
+const SINGLE_PACKAGES = 20;
+const SINGLE_EXPORTS = 5;
+const MIN_EXPORTS = 10;
+/** How many of the set also get a stock Vite build of the whole entry point (gate C). */
+const WHOLE_VITE_PACKAGES = 10;
+
+/**
+ * Export names of the package root as rollup counts them: the entry chunk's exports for `export *
+ * from "<name>"` (rollup's commonjs plugin detects some CommonJS names), plus `default` when
+ * `export { default } from "<name>"` builds. Independent of depfit, which counts with Vite.
+ */
+async function rollupExportNames(
+  toolsDir: string,
+  dir: string,
+  pkg: string,
+  external: RegExp | null,
+): Promise<string[]> {
+  const rollup = await loadFunction(toolsDir, "rollup", "rollup");
+  const nodeResolve = await loadFunction(toolsDir, "@rollup/plugin-node-resolve");
+  const commonjs = await loadFunction(toolsDir, "@rollup/plugin-commonjs");
+  const replace = await loadFunction(toolsDir, "@rollup/plugin-replace");
+  const json = await loadFunction(toolsDir, "@rollup/plugin-json");
+  const entry = join(dir, "__depfit_list.mjs");
+  const names = async (source: string): Promise<string[] | null> => {
+    await writeFile(entry, source);
+    try {
+      const build = asRecord(
+        await rollup({
+          input: entry,
+          preserveEntrySignatures: "strict",
+          external: (id: string) => external?.test(id) ?? false,
+          onwarn: () => {},
+          plugins: [
+            replace({ preventAssignment: true, values: PRODUCTION_DEFINES }),
+            nodeResolve({
+              rootDir: dir,
+              browser: true,
+              exportConditions: CONDITIONS.browser,
+              preferBuiltins: false,
+            }),
+            commonjs(),
+            json(),
+          ],
+        }),
+      );
+      const generate = build.generate;
+      if (typeof generate !== "function") return null;
+      const { output } = asRecord(await generate.call(build, { format: "es" }));
+      const close = build.close;
+      if (typeof close === "function") await close.call(build);
+      const chunk = asArray(output)
+        .map(asRecord)
+        .find((item) => item.type === "chunk" && item.isEntry === true);
+      return chunk ? asStringArray(chunk.exports) : null;
+    } catch {
+      return null;
+    }
+  };
+  const from = JSON.stringify(pkg);
+  const star = await names(`export * from ${from};\n`);
+  if (star === null) throw new Error("rollup could not list the exports");
+  const withDefault = await names(`export { default } from ${from};\n`);
+  return [...new Set([...star, ...(withDefault?.includes("default") ? ["default"] : [])])].sort();
+}
+
+/** `count` names evenly spaced over sorted `names`, first and last included. */
+export function evenlySpaced(names: string[], count: number): string[] {
+  if (names.length <= count) return [...names];
+  return Array.from(
+    { length: count },
+    (_, i) => names[Math.round((i * (names.length - 1)) / (count - 1))] ?? "",
+  );
+}
+
+/**
+ * The entry module depfit generates for one export (`import { <name> as __depfit_0 }`, or a
+ * default or namespace import), written out here without depfit's code so gate C compares the
+ * same module text.
+ */
+function singleEntrySource(pkg: string, name: string | null): string {
+  const from = JSON.stringify(pkg);
+  const imported = name !== null && /^[A-Za-z_$][\w$]*$/.test(name) ? name : JSON.stringify(name);
+  const clause =
+    name === null
+      ? "* as __depfit_0"
+      : name === "default"
+        ? "__depfit_0"
+        : `{ ${imported} as __depfit_0 }`;
+  return `import ${clause} from ${from};\nglobalThis.__depfit = [__depfit_0];\n`;
+}
+
+async function referenceSingles(): Promise<void> {
+  const tools = await installTools();
+  const universe = await loadWild();
+  const chosen: Record<string, unknown>[] = [];
+  const skipped: Record<string, unknown>[] = [];
+  for (const c of universe) {
+    if (chosen.length >= SINGLE_PACKAGES) break;
+    let dir: string | null = null;
+    try {
+      dir = await installCandidate([c]);
+      const peers = await peersOf(dir, c.package).catch(() => []);
+      const external = peerPattern(peers);
+      const names = await rollupExportNames(tools.dir, dir, c.package, external).catch(
+        (error: unknown) => errorMessage(error),
+      );
+      if (typeof names === "string" || names.length < MIN_EXPORTS) {
+        skipped.push({
+          id: c.id,
+          rollup_exports: typeof names === "string" ? null : names.length,
+          reason: typeof names === "string" ? names : `fewer than ${MIN_EXPORTS} exports`,
+        });
+        console.log(`${c.id}: skipped (${typeof names === "string" ? names : names.length})`);
+        continue;
+      }
+      const picked = evenlySpaced(names, SINGLE_EXPORTS);
+      const entry = join(dir, "__depfit_entry.mjs");
+      const base = { toolsDir: tools.dir, dir, entry, target: "browser" as const, external };
+      const singles: Record<string, unknown> = {};
+      for (const name of picked) {
+        await writeFile(entry, singleEntrySource(c.package, name));
+        let contexts: string[] = [];
+        const rollup = await attempt(() => buildRollup({ ...base, builtins: new Set() }));
+        const webpack = await attempt(() =>
+          buildWebpack({
+            ...base,
+            builtins: new Set(),
+            onContextModules: (found) => {
+              contexts = found;
+            },
+          }),
+        );
+        const vite = await attempt(() => buildVite({ ...base, builtins: new Set() }));
+        singles[name] = {
+          ...(contexts.length
+            ? {
+                webpack_context_modules: contexts,
+                band_excluded: {
+                  webpack:
+                    "webpack built context modules (a computed require bundled with every file it could match); the other bundlers leave the call",
+                },
+              }
+            : {}),
+          rollup,
+          webpack,
+          vite,
+        };
+        console.log(
+          `${c.id} ${name}: rollup ${show(rollup)} | webpack ${show(webpack)} | vite ${show(vite)}`,
+        );
+      }
+      let wholeVite: Outcome | null = null;
+      if (chosen.length < WHOLE_VITE_PACKAGES) {
+        await writeFile(entry, singleEntrySource(c.package, null));
+        wholeVite = await attempt(() => buildVite({ ...base, builtins: new Set() }));
+        console.log(`${c.id} (whole): vite ${show(wholeVite)}`);
+      }
+      chosen.push({
+        id: c.id,
+        package: c.package,
+        version: c.version,
+        external_packages: peers,
+        rollup_exports: names.length,
+        exports: picked,
+        singles,
+        ...(wholeVite ? { whole_vite: wholeVite } : {}),
+      });
+    } catch (error) {
+      skipped.push({ id: c.id, rollup_exports: null, reason: errorMessage(error).slice(0, 300) });
+      console.log(`${c.id}: skipped (${errorMessage(error).slice(0, 120)})`);
+    } finally {
+      if (dir) await rm(dir, { recursive: true, force: true });
+    }
+  }
+  await writeFile(
+    REFERENCE_FILE,
+    `${JSON.stringify(
+      {
+        generated_at: new Date().toISOString(),
+        tools: tools.versions,
+        rule: `The first ${SINGLE_PACKAGES} wild.json packages, in order, whose root has at least ${MIN_EXPORTS} exports as rollup counts them (export * plus default); for each, ${SINGLE_EXPORTS} exports evenly spaced over the sorted names (index round(i * (n - 1) / ${SINGLE_EXPORTS - 1})); each built alone with rollup + terser, webpack and a stock vite build; the first ${WHOLE_VITE_PACKAGES} also get a stock vite build of the whole entry point (gate C).`,
+        packages: chosen,
+        skipped,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(`wrote ${resolve(REFERENCE_FILE)}`);
+}
+
+/**
+ * Builds one single-export case with rollup + terser, webpack and stock Vite from its frozen wild
+ * lock and writes each bundler's emitted JS to results/emit-<id>-<export>.json, so a reviewed
+ * exception's cause can be inspected against the code itself.
+ */
+async function emitCase(id: string, exportName: string): Promise<void> {
+  const c = (await loadWild()).find((item) => item.id === id);
+  if (!c) throw new Error(`unknown wild id: ${id}`);
+  const tools = await installTools();
+  const dir = await installCandidate([c]);
+  try {
+    const peers = await peersOf(dir, c.package).catch(() => []);
+    const entry = join(dir, "__depfit_entry.mjs");
+    await writeFile(entry, singleEntrySource(c.package, exportName));
+    const base = {
+      toolsDir: tools.dir,
+      dir,
+      entry,
+      target: "browser" as const,
+      external: peerPattern(peers),
+    };
+    const emitted: Record<string, unknown> = {};
+    for (const [bundler, build] of [
+      ["rollup", buildRollup],
+      ["webpack", buildWebpack],
+      ["vite", buildVite],
+    ] as const) {
+      let chunks: { name: string; code: string }[] = [];
+      const outcome = await attempt(() =>
+        build({ ...base, builtins: new Set(), onChunks: (found) => (chunks = found) }),
+      );
+      emitted[bundler] = { outcome, chunks };
+    }
+    const out = join(import.meta.dirname, "results", `emit-${id}-${exportName}.json`);
+    await mkdir(dirname(out), { recursive: true });
+    await writeFile(
+      out,
+      `${JSON.stringify({ id, package: c.package, version: c.version, export: exportName, entry: singleEntrySource(c.package, exportName), tools: tools.versions, emitted }, null, 2)}\n`,
+    );
+    console.log(`wrote ${out}`);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+if (SINGLES) {
+  await referenceSingles();
+  process.exit(0);
+}
+if (EMIT) {
+  const at = process.argv.indexOf("--emit");
+  await emitCase(process.argv[at + 1] ?? "", process.argv[at + 2] ?? "");
+  process.exit(0);
+}
+
 // --- main ----------------------------------------------------------------------------------------
 
-const only = process.argv.slice(2).filter((arg) => arg !== "--wild");
+const only = process.argv.slice(2).filter((arg) => arg !== "--wild" && arg !== "--singles");
 const universe = WILD ? await loadWild() : await loadCases();
 const unknown = only.filter((id) => !universe.some((c) => c.id === id));
 if (unknown.length) throw new Error(`unknown case id: ${unknown.join(", ")}`);

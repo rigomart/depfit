@@ -8,8 +8,9 @@
  * differently (2 bytes on shiki, and every lazy chunk's hash). The parent also gives it a clean
  * environment (`NODE_ENV=production`, no `VITE_*`), because Vite reads the process environment.
  *
- * Reads a request as JSON on stdin and prints the raw facts as JSON on stdout: output chunks and
- * assets, every import resolution and captured logs. It reads no package source itself: every
+ * Reads requests on stdin, one JSON object per line, and builds them one after another in this
+ * process. For each it prints the raw facts as one JSON line on stdout: output chunks and assets,
+ * every import resolution and captured logs. It reads no package source itself: every
  * check depfit makes is on what Vite resolved and emitted. `bundle.ts` turns them into bytes or
  * reasons.
  *
@@ -21,6 +22,8 @@
  */
 import { readFileSync, realpathSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
+import { createInterface } from "node:readline";
+import { gzipSync } from "node:zlib";
 import { build, esmExternalRequirePlugin, rolldownVersion, version } from "vite";
 
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
@@ -66,18 +69,16 @@ const field = (value, key) => {
   return typeof found === "string" ? found : null;
 };
 
-async function readInput() {
-  let text = "";
-  for await (const chunk of process.stdin) text += String(chunk);
-  return text;
-}
-
-async function main() {
-  const request = JSON.parse(await readInput());
+/**
+ * One build. With `exports: true` the entry's export signature is kept (`preserveEntrySignatures:
+ * "strict"`) and its names are returned; such a build lists names and is never measured.
+ */
+async function buildOnce(request) {
   const { root, entry, peers } = request;
   if (typeof root !== "string" || typeof entry !== "string" || !Array.isArray(peers)) {
     throw new Error("vite-build: bad request");
   }
+  const keepExports = request.exports === true;
   // Module ids use the real path (on macOS the temp dir is /var -> /private/var).
   const realRoot = realpathSync(root);
   const label = (id) => {
@@ -157,6 +158,7 @@ async function main() {
         reportCompressedSize: false,
         rollupOptions: {
           input: entry,
+          ...(keepExports ? { preserveEntrySignatures: "strict" } : {}),
           onLog(level, log) {
             logs.push(toLog(level, log));
           },
@@ -166,7 +168,7 @@ async function main() {
     output = (Array.isArray(result) ? result : [result]).flatMap((item) => item.output ?? []);
   } catch (error) {
     const errors = Array.isArray(error?.errors) ? error.errors : [error];
-    print({
+    return {
       vite: version,
       rolldown: rolldownVersion,
       resolutions,
@@ -174,15 +176,17 @@ async function main() {
       chunks: [],
       assets: [],
       workers,
+      exports: null,
       errors: errors.map((item) => toLog("error", item)),
-    });
-    return;
+    };
   }
   const chunks = [];
   const assets = [];
+  let exports = null;
   for (const item of output) {
     if (item.type === "asset") assets.push(String(item.fileName));
     if (item.type !== "chunk") continue;
+    if (keepExports && item.isEntry === true) exports = item.exports.map(String);
     chunks.push({
       fileName: String(item.fileName),
       isEntry: item.isEntry === true,
@@ -190,9 +194,10 @@ async function main() {
       dynamicImports: item.dynamicImports.map(String),
       moduleIds: item.moduleIds.map((id) => label(id) ?? id),
       code: String(item.code),
+      gzip9Bytes: gzipSync(String(item.code), { level: 9 }).byteLength,
     });
   }
-  print({
+  return {
     vite: version,
     rolldown: rolldownVersion,
     resolutions,
@@ -200,12 +205,13 @@ async function main() {
     chunks,
     assets,
     workers,
+    exports,
     errors: null,
-  });
+  };
 }
 
-function print(result) {
-  process.stdout.write(JSON.stringify(result));
+const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
+for await (const line of lines) {
+  if (!line.trim()) continue;
+  process.stdout.write(`${JSON.stringify(await buildOnce(JSON.parse(line)))}\n`);
 }
-
-await main();

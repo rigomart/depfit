@@ -1,0 +1,106 @@
+{
+  "rule": "Single-export cases of single-reference.json that depfit reports as null, judged for honesty under gate A (SPEC.md, bar amendment 2, 2026-11-05). A listed case passes A only when its build is null with exactly the listed code, and every specifier of that code is a Node built-in (\"node-builtins\", checked with node:module isBuiltin) or one of the listed specifiers. Any null not listed here fails A until it is reviewed and added. A listed case that gets a number is scored by B and C like any other.",
+  "evidence": {
+    "@inquirer/core, @inquirer/prompts": "Terminal prompt libraries for Node: every export's module graph imports Node built-ins (node:async_hooks, node:readline, node:util, tty, stream, ...), which have no browser implementation. The rollup reference fails with UNRESOLVED_IMPORT for the same modules.",
+    "react-router, react-router-dom": "The output of each listed export keeps a computed import() (route module loading), which loads code at runtime that the bytes do not contain (v1 IMPORT_OUTSIDE_BUNDLE). The wild-corpus auditor independently finds a fetch in both packages' whole builds."
+  },
+  "reviewed": "Approved 2026-11-05 by an independent reviewer (Codex gpt-6.1-sol, high effort), second review round of the 2026-11-05 bar amendments: the saved per-export failures match all 16 entries.",
+  "nulls": [
+    {
+      "package": "@inquirer/core",
+      "export": "AbortPromptError",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/core",
+      "export": "createPrompt",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/core",
+      "export": "isShiftKey",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/core",
+      "export": "useKeypress",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/core",
+      "export": "useState",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/prompts",
+      "export": "Separator",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/prompts",
+      "export": "editor",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/prompts",
+      "export": "input",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/prompts",
+      "export": "rawlist",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "@inquirer/prompts",
+      "export": "select",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "react-router",
+      "export": "useViewTransitionState",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    },
+    {
+      "package": "react-router-dom",
+      "export": "Await",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    },
+    {
+      "package": "react-router-dom",
+      "export": "UNSAFE_FrameworkContext",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    },
+    {
+      "package": "react-router-dom",
+      "export": "createCookie",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    },
+    {
+      "package": "react-router-dom",
+      "export": "unstable_setDevServerHooks",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    },
+    {
+      "package": "react-router-dom",
+      "export": "useViewTransitionState",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    }
+  ]
+}

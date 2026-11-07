@@ -12,12 +12,191 @@ SPEC-snippets-v1.md. Evidence: `eval/FINDINGS.md`, round 4 and its follow-up.
 
 | Iteration | State |
 |---|---|
-| 0. Remove the snippet API | Built; reproduction gate awaiting a user decision (below) |
-| 1. Root entry point, two ways, browser workspaces only | Bar written |
+| 0. Remove the snippet API | Passes (user decision, 2026-11-04; below) |
+| 1. Root entry point, two ways, browser workspaces only | Built; scorecard below |
 
 Holdout probes `holdout-1`, frozen 2026-10-19 before any iteration-1 code: 10 questions, sha256
 `f792fac58becfaed39b978a33e2e118526652b9cb6c9214b424d9cf2461f8466` of `JSON.stringify` of the
 `holdout-1` entries of `eval/probes.json` in file order.
+
+## Iteration 1: root entry point, two ways (2026-11-04)
+
+Built in schema 6. In a workspace with a browser signal (`project.browser_signals`), each npm
+package gets `packages[].bundle`: the root entry point whole (`import * as m`, kept) and each export
+alone, every export in its own `vite build`, sequentially in one Node child per package
+(`src/collect/root-entry.ts`). With no signal, `bundle` is null with `bundle: skipped, no browser
+signal in workspace`, and `root-entry.ts` (and with it Vite and rolldown) is never imported.
+Scored by `eval/bundle/root-score.ts` (README "Iteration 1 scorecard").
+
+**Scorecard: passes with the 2026-11-05 bar amendments.** As first scored, gates B, C and S failed
+under the bar's text, for reasons the bar did not mean (the four questions below). The user decided
+four amendments on 2026-11-05 after seeing these results; they are in SPEC.md ("Bar amendments
+(2026-11-05, user-approved)") with the independent reviewer's verdict below, and gates A, B, C, D,
+E, H0, R and S were rerun on the final code.
+
+| Gate | Result |
+|---|---|
+| A. Honesty | Pass: 8/8 v1 null cases (all import the root) return their code on the whole build, now with one `unavailable` entry per cause (amendment 4). The 16 single-export nulls of the reference set each match their listed code and specifiers in `single-nulls.json` (amendment 2). Gross errors 0 (single-export set and wild corpus) |
+| B. Accuracy, whole | Pass: gate W's 200 packages through the CLI with no flags, against W's conditions: (i) 0 numbers with an auditor fetch, (ii) 0 gross errors, server-only covered by its re-recorded exception (amendment 3), (iii) 0 unusable results. 141 numbers, 59 nulls with codes. 79 packages drifted from the frozen trees since 2026-10-16, so 39 numbers were not compared (W reports drift as information) |
+| B. Accuracy, single export | Pass (amendment 2): 84/84 measured exports in band or covered by a reviewed exception (react-hook-form `FormProvider`, evidence in `evidence/react-hook-form-FormProvider.md`), 0 gross errors. The 16 listed nulls count under A |
+| C. Vite conformance | Pass (amendment 2): 84 measured single exports identical to stock Vite on all four fields, 10 whole builds with min bytes identical and gzip within 1%. The 16 listed nulls count under A |
+| D. Determinism | Pass: 65 probe packages across two runs on the same frozen installs; 20 reference packages measured twice (rerun on the final code) |
+| E. Contract | Pass: every package has every bundle field, every field in `schema-docs`, 0 non-bundle differences with `DEPFIT_BUNDLE=0` over 22 probes (rerun on the final code) |
+| F. Cost | Pass: with no browser signal no Vite or rolldown module is resolved (the tracer sees 7 in a browser workspace); added time per package over 65 probe candidates (59 distinct packages, each counted per probe), bundle step alone on frozen installs: median 318 ms (max 1500), p90 5.2 s, max 18.7 s (maplibre-gl, 87 large exports). CLI wall time per probe, advisory: median 2.5 s on, 1.7 s off |
+| S. Browser signal | Pass (amendment 1): 22/22 workspaces match the table |
+| R. Real usage | Pass: 59/64 in `[0.9 x median, 1.1 x whole]` (92%; round-4 probes 30/34, holdout 29/30); pairs 43/44 (98%); all 5 misses are class 1 (subpath); auto-animate left out (its real usage is null) |
+| H0. Comprehension | Pass: 3/3 blind Haiku readers, all 5 questions; rerun on 2026-11-05 with the final code (one entry per cause, new `exports_measured` wording, Node gzip), again 3/3, and after amendment 5 (`external_packages` wording), again 3/3 |
+| H. Decisions | Pass, pending review: 0 misreadings (1 ambiguous sentence, decision unchanged); v6 differed from the control on 2/22 (Sonnet) and 4/22 (Haiku) probes, none worse on the facts; one Haiku difference is a reading of the question (FINDINGS round 5) |
+
+### Questions the 2026-11-05 bar amendments resolved
+
+1. **Gate S table vs rule.** The rule checks `index.html` in the workspace directory only. The
+   static Preact site keeps its `index.html` in `app/` (Vite `root`), so the rule gives `preact`
+   where the table says `preact, index.html`. The Electron app with a React renderer has
+   `index.html` in its workspace directory, so the rule gives `react-dom, index.html` where the
+   table says `react-dom`. The detector follows the rule; the table rows look like the error, but
+   that is a bar change. The exact workspaces were not recorded with the probes, so they were mapped
+   from the table's stack descriptions on 2026-11-04 before any detector code was written
+   (`eval/signals.json`, local). Resolved by amendment 1: the two rows now follow the rule.
+2. **Gate B (single) and C on honest nulls.** The reference set is chosen by the rule (first 20
+   wild packages with at least 10 rollup exports) and includes two Node-only CLI libraries
+   (@inquirer/core and @inquirer/prompts), whose every export imports Node built-ins
+   (`UNRESOLVED_IMPORT`). It also includes react-router and react-router-dom, where 6 exports keep a
+   computed `import()` in Vite's output (`IMPORT_OUTSIDE_BUNDLE import(…)`); rollup and webpack
+   build them. Each of these 16 nulls carries its code, which is what gate A asks for, but B and C as
+   written count them as failures. The one number out of band is react-hook-form `FormProvider` (592 B gzip vs 430-433 B): depfit equals
+   stock Vite exactly, and the extra bytes are top-level constants and member reads (`r.required,
+   r.min, ...`) that rolldown keeps and rollup + terser drop. It would need a reviewed exception.
+   Resolved by amendment 2: the listed nulls with their expected reasons (`single-nulls.json`) count
+   under A, and FormProvider has a reviewed
+   exception with its demonstrated cause (395 B of Vite-only unused code; without it the output is
+   924 / 425 B, inside the band; `evidence/react-hook-form-FormProvider.md`).
+3. **server-only's reviewed exception** (gate W, reused by B) records Bun's gzip (117 B); depfit
+   now reports Node's (115 B). Re-recording it is a review, not a lead's edit. Resolved by
+   amendment 3.
+4. **Stop condition 5 or contract?** A package whose every build imports a Node built-in gets two
+   entries for one cause: the whole build's `bundle: UNRESOLVED_IMPORT ...` and `bundle: <n> exports
+   unmeasurable (UNRESOLVED_IMPORT)`. The contract prescribes both entries; stop condition 5 forbids
+   more than one per cause. Resolved by amendment 4: the code now gives one entry per cause (the
+   whole build's), the per-export summary lists only other causes, and stop condition 5 is
+   unchanged.
+
+### Amendment 5: `external_packages` lists only the peers the output imports (2026-11-05)
+
+User-approved after seeing the round-5 reports. The field listed every declared peer, optional
+ones included, so valibot showed `typescript`, an optional types-only peer its JS never imports.
+It now lists the peers a measured build (whole or one export) still imports, by package name, and
+is null when no build was measured; peers stay external in every build. Schema 6 is unreleased,
+so this is a meaning change inside schema 6, with no version bump. Gates A, D, E, R and H0 were
+rerun on this code.
+
+The reports the round-5 decision evaluators read would now differ for 10 of 65 packages:
+valibot (`typescript` to none), zustand (`immer, react, use-sync-external-store` to `react`), motion
+in two probes (`react, react-dom, remix` to none: the root never imports React, `motion/react`
+does), @tanstack/react-form (`@tanstack/react-start, react` to `react`), markdown-to-jsx
+(`react, react-native, solid-js, vue` to `react`), and recharts, react-hot-toast, react-toastify and
+react-window (`react, react-dom` to `react`). zustand still shows `react`. Evaluators cited the
+field in two places: on Preact shared state, zustand's listed peers as code its bytes leave out
+(still true for `react`), and on exercise forms, Haiku flagged `@tanstack/react-start` as absent
+from `peer_dependencies` (no longer listed). No decision rested on a listed peer the output does not
+import. The evaluators were not rerun.
+
+Independent review (Codex gpt-6.1-sol, high effort, read-only): agree with changes. It found that
+`importedPeers` also matched the build's own chunk paths, so an unused peer named like a chunk
+directory (`assets`) would have been listed; chunk file names are now excluded, with a regression
+test, and a CommonJS `require()` of a peer is now checked to be listed. It also asked to reword a
+SPEC line that still said every peer is listed. Both are fixed. No reported peer in the rerun was
+a chunk name, so the rerun results stand.
+
+### Independent review of the bar amendments (Codex gpt-6.1-sol, high effort, 2026-11-05)
+
+Two read-only rounds, briefed with the diff and the gate results, and no expected verdict.
+
+- In round 1 the reviewer agreed with amendments 1, 3 (126 / 115 B confirmed from the saved run)
+  and 4 (a cause is a reason code; different specifiers sharing a code collapse by design; the
+  field docs match). For amendment 2 it said "agree with changes": any reason code could have let a
+  regression pass (every single export null with `BUILD_ERROR` would pass A and leave B at 0/0);
+  FormProvider's cause was not shown by any artifact; a pending exception already waived; the C row
+  was not scoped to single exports; the band arithmetic was wrong (the band maximum is 1146.1 B,
+  not webpack's 951 B); a failed export with no recorded problem would vanish from the summary.
+- In response, the 16 nulls are listed in `single-nulls.json` with an expected code and
+  specifier rule, and any other null fails A; `reference.ts --emit` rebuilt FormProvider three ways
+  and `evidence/react-hook-form-FormProvider.md` keeps the emitted code. That corrected the lead's
+  first cause: the `isWeb` check and the effect expression are in all three builds, and only 395 B
+  is Vite-only. Exceptions and the null list waive nothing while their review is pending (a run in
+  that state failed A 16 times and B 83/84). The B and C rows are scoped; the arithmetic and the
+  empty-problems case (now `BUILD_ERROR`) are fixed.
+- In round 2 the reviewer agreed with amendment 2 and approved the FormProvider exception: the reviewer recounted 286 + 109
+  = 395 B and 924 / 425 B without it. `single-nulls.json` approved: the saved per-export failures
+  match all 16 entries. No new must-fix issue. Both approvals are recorded in their `reviewed`
+  fields; gates A, B and C were then rerun and pass.
+
+### Codex review (gpt-6.1-sol, high effort, read-only, 2026-11-04)
+
+Not passing at first; fixed and rerun:
+
+- A write to a Vite child that had exited could raise an unhandled stream error. stdin errors and
+  write callbacks now fail the build (`BUNDLER_ERROR`). The race did not reproduce here (Node
+  reports the exit first); two tests cover a child that exits early.
+- Missing or short inputs could pass gates (an empty probe directory, a missing
+  reference file, fewer than 10 whole Vite references, an empty or unloadable signals list). Every
+  gate group now checks its coverage first (probe count and the holdout sha256; 20 packages x 5
+  exports and 10 whole references; 22 loadable workspaces) and fails while coverage fails.
+- Gate F counted each distinct package once; it now counts every probe candidate (65, 59
+  distinct). Median 318 ms.
+- Gate D on the reference set compared only the number of listing problems; it now compares them all.
+- Two installs of the same name@version could overwrite each other's frozen lock. A frozen lock
+  is now published atomically (temp file, then a hard link that fails if one already exists).
+- Not done: drifted wild packages are still not compared (gate W treats drift as information).
+  Replaying the frozen wild trees would need their peers; 39 numbers were not compared this run.
+
+The reviewer's opinions on the open questions (not acted on; bar changes need the user):
+
+- Gate S (question 1): agrees both table rows are wrong against the written rule; correct the table,
+  do not widen the rule to fit it.
+- Gate B and C nulls (question 2): as written the 16 nulls fail B and C. The reviewer would support a
+  narrow correction that keeps every case and judges nulls for honesty rather than accuracy, and
+  would not support dropping them from the count. FormProvider is a reasonable candidate for a specific reviewed exception (pinned
+  package, tree, import, exact bytes, the cause shown), not a blanket stock-Vite exemption.
+- Stop condition 5 (question 4): the two entries literally trip it; the contract also requires both entries. Would
+  support clarifying the stop condition to allow the two summaries; until then it is not satisfied.
+- Moving gzip into the Node child: a legitimate general fix, not a bar move. (Question 3, the
+  server-only exception, was not asked separately; it follows from that change.)
+
+### Decisions made while building (for review)
+
+- **Ground-truth rules**, written before any iteration-1 measurement: side-effect `.css` imports
+  are removed from snippets (6 holdout snippets had one); a candidate whose ground truth is null is
+  listed and left out of gate R (auto-animate). Holdout snippets live in `eval/snippets.json`
+  (local) so `probes.json`'s frozen holdout entries keep their sha256.
+- **Gate R miss classes** are assigned from the snippet's shape (README); no miss needed judgment.
+- **Gate C's "10 whole-package cases"** are the first 10 packages of the single-export reference
+  set, built whole with stock Vite (the SPEC does not name them).
+- **Gate F's added time** is the bundle step alone per probe candidate, timed sequentially on the
+  frozen installs; CLI wall time with bundling on and off is reported as advisory.
+- **Gate H's control** is the `DEPFIT_BUNDLE=0` report with its `bundle:` entries removed, as round
+  4's control had none. Evaluators read the reports from before the gzip change below (gzip values
+  differ by at most 2%).
+- **`exports` over the cap** stays the count; `exports_measured` and the median are null.
+- **Median** of an even count is the mean of the middle two, rounded.
+- **Builtins and failed packages** get no `bundle: skipped` entry (their sections are null by their
+  own rule).
+
+### Changes made after seeing results (each a general rule, recorded here)
+
+- **gzip is computed in the Node child that runs Vite** (found by gate C). depfit ran gzip in
+  Bun, whose zlib gives up to 2% fewer bytes than Node's on small chunks; the bar's 1% tolerance
+  existed for that difference. Now every byte comes from the Node process that ran Vite, and gate C
+  matches stock Vite exactly. All gzip numbers moved by up to 2%; the probe runs were redone.
+  Known caveat for a later re-run: the gate H and H0 evaluators read reports made before this
+  change (gzip values shifted by 2% or less). Their results are kept. H0 was later rerun on the
+  final code (3/3); gate H's 27 evaluators were not.
+- **Export names count only from a listing build in which the candidate resolved** (found by gate
+  A's output). For a package with no root entry (biome), Vite left the import unresolved and the
+  `export { default }` listing "succeeded", giving `exports: 1` and an extra entry. Now `exports` is
+  null and the only entry is the whole build's `NO_ENTRY`.
+- **D on the reference set compares the reported facts** (bytes and the set of problems), not the
+  order in which Vite resolved imports.
 
 ## Iteration 0: remove the snippet API (2026-11-04)
 
@@ -43,8 +222,18 @@ The two misses are at the same package version, with newer dependencies installe
   instead of 18.1.1; marked 18.1.3 alone is 5.7% larger than 18.1.1.
 
 The A/B shows the engine is unchanged. The misses come from the registry, which round 4 did not
-freeze. Whether this meets the bar ("reproduces within 1% per candidate") is the user's call; the
-bar is unchanged.
+freeze.
+
+**Decision (user, 2026-11-04): iteration 0 passes.** 33 of 35 round-4 candidates reproduced within
+1%. recharts (+3.2%) and streamdown (+2.1%) missed only because their dependencies were republished
+after round 4, and the A/B against the v5 CLI was 35/35 identical, so the user accepted the result as
+meeting the bar's intent. The bar text is unchanged.
+
+**Open item (kept for later):** the round-4 ground truth was never frozen, so reproducing it drifts
+with the registry. This may need revisiting. From iteration 1 on, `eval/run.ts` freezes every
+install: each candidate's resolved tree is saved as an npm lockfile next to the results
+(`<out>/locks/`, gitignored), and a re-run with `--locks <dir>` reinstalls the same tree with
+`npm ci`.
 
 The rest of this file is the v1 history.
 

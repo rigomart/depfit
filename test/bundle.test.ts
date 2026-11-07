@@ -2,7 +2,6 @@ import { cp, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { gzipSync } from "node:zlib";
 import { parseAst } from "rolldown/parseAst";
 import { describe, expect, it } from "vitest";
 import { prepareBundleEntries } from "../src/collect/bundle-entry.ts";
@@ -11,11 +10,13 @@ import {
   bundleReasons,
   type ChunkInfo,
   chunkBytes,
+  importedPeers,
   externalPackages,
   importsOutsideBundle,
   moduleLabel,
   problemsFromBuild,
   splitChunks,
+  startViteRunner,
   unresolvedProblem,
   type ViteBuildResult,
 } from "../src/collect/bundle.ts";
@@ -26,6 +27,7 @@ const chunk = (fileName: string, rest: Partial<ChunkInfo> = {}): ChunkInfo => ({
   imports: [],
   dynamicImports: [],
   code: `/*${fileName}*/`,
+  gzip9Bytes: 0,
   ...rest,
 });
 
@@ -59,17 +61,32 @@ describe("splitChunks", () => {
   });
 
   it("sums minified bytes and per-chunk gzip -9 bytes", () => {
-    const entry = chunk("entry.js", { isEntry: true, code: "export const a = 1;" });
-    const lazy = chunk("lazy.js", { code: "export const b = 'é';" });
+    const entry = chunk("entry.js", { isEntry: true, code: "export const a = 1;", gzip9Bytes: 39 });
+    const lazy = chunk("lazy.js", { code: "export const b = 'é';", gzip9Bytes: 42 });
     entry.dynamicImports = ["lazy.js"];
-    const gz = (code: string) => gzipSync(code, { level: 9 }).byteLength;
     expect(chunkBytes([entry, lazy])).toEqual({
       eager_js_min_bytes: 19,
-      eager_js_gzip9_bytes: gz(entry.code),
+      eager_js_gzip9_bytes: 39,
       lazy_js_min_bytes: 22,
-      lazy_js_gzip9_bytes: gz(lazy.code),
+      lazy_js_gzip9_bytes: 42,
     });
     expect(chunkBytes([{ ...entry, dynamicImports: [] }]).lazy_js_min_bytes).toBe(0);
+  });
+});
+
+describe("importedPeers", () => {
+  it("lists peers the chunks import, by package name, and never the build's own chunks", () => {
+    const chunks = [
+      chunk("entry.js", {
+        isEntry: true,
+        imports: ["assets/shared-1.js", "react/jsx-runtime"],
+        dynamicImports: ["assets/later-ABC.js"],
+      }),
+      chunk("assets/shared-1.js"),
+      chunk("assets/later-ABC.js", { dynamicImports: ["vue"] }),
+    ];
+    const peers = ["assets", "react", "react-dom", "typescript", "vue"];
+    expect(importedPeers(chunks, peers)).toEqual(["react", "vue"]);
   });
 });
 
@@ -299,6 +316,8 @@ describe("bundleEntry on fixture packages", () => {
   it("turns a CommonJS require() of a peer into an import, with no runtime require helper", async () => {
     const outcome = await build('import { make } from "cjs-peer"', ["cjs-peer", "peer"], ["peer"]);
     expect(outcome.problems).toEqual([]);
+    // The CommonJS require() of the peer becomes an import, so the peer is listed as left out.
+    expect(outcome.bytes && outcome.externals).toEqual(["peer"]);
     // With plain `external`, Vite's runtime `require` shim makes this 536 bytes.
     expect(outcome.bytes?.eager_js_min_bytes).toBeLessThan(400);
   });
@@ -320,6 +339,7 @@ describe("problemsFromBuild", () => {
     chunks: [],
     assets: [],
     workers: [],
+    exports: null,
     errors: null,
     ...rest,
   });
@@ -358,6 +378,7 @@ describe("problemsFromBuild", () => {
       dynamicImports: [],
       moduleIds,
       code: "export{};",
+      gzip9Bytes: 29,
     });
     const codes = (moduleIds: string[]) =>
       problemsFromBuild(result({ chunks: [chunk(moduleIds)] }), ["peer", "@scope/p"], "x", parse);
@@ -443,5 +464,25 @@ describe("bundle reasons and labels", () => {
       }),
     ).toEqual(["react", "react-dom", "vue"]);
     expect(externalPackages({})).toEqual([]);
+  });
+});
+
+describe("startViteRunner", () => {
+  it("rejects the next build when the child has exited, instead of crashing", async () => {
+    const script = fileURLToPath(new URL("./fixtures/runner/answer-once.mjs", import.meta.url));
+    const runner = startViteRunner(tmpdir(), script);
+    const request = { root: tmpdir(), entry: "x.mjs", peers: [] };
+    await expect(runner.build(request)).resolves.toMatchObject({ errors: null });
+    await expect(runner.build(request)).rejects.toThrow();
+    runner.close();
+  });
+
+  it("rejects a build whose request cannot be written to the child", async () => {
+    const script = fileURLToPath(new URL("./fixtures/runner/exit-now.mjs", import.meta.url));
+    const runner = startViteRunner(tmpdir(), script);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const big = { root: tmpdir(), entry: "x".repeat(1 << 20), peers: [] };
+    await expect(runner.build(big)).rejects.toThrow();
+    runner.close();
   });
 });

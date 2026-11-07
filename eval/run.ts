@@ -1,15 +1,21 @@
 /**
  * Runs the probes in eval/probes.json (local, gitignored; see probes.example.json) through the CLI
- * and saves JSON + table output to eval/results/. A probe with `bundle_entries` also gets
+ * and saves JSON + table output under `--out` (default eval/results/). A probe with snippets
+ * (`bundle_entries`, or its entry in the local eval/snippets.json) also gets
  * `<base>.snippets.json`: each snippet measured through the eval-only snippet engine
  * (`snippet-bundle.ts`) at the version the report chose. That is real usage, the ground truth
  * for eval/bundle/SPEC.md; the CLI itself takes no snippets.
- *   bun eval/run.ts [--set <name>] [project...]
+ *
+ * Every install is frozen: the CLI and the snippet engine run with `DEPFIT_LOCK_DIR` set to
+ * `--locks` (default `<out>/locks`), so each candidate's resolved tree is saved there as an npm
+ * lockfile the first time, and replayed with `npm ci` by every later run that names the same
+ * directory. Set `DEPFIT_BUNDLE=0` to collect with bundling off (gate E).
+ *   bun eval/run.ts [--set <name>] [--out <dir>] [--locks <dir>] [--no-snippets] [project...]
  */
 import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
 import { parseSpec } from "../src/collect/registry.ts";
 import { errorMessage } from "../src/collect/util.ts";
@@ -54,9 +60,35 @@ async function measureSnippets(report: Report, snippets: string[]): Promise<Snip
 
 const { values, positionals: only } = parseArgs({
   allowPositionals: true,
-  options: { set: { type: "string" } },
+  options: {
+    set: { type: "string" },
+    out: { type: "string", default: "eval/results" },
+    locks: { type: "string" },
+    "no-snippets": { type: "boolean", default: false },
+  },
 });
+const OUT = values.out;
+const LOCKS = resolve(values.locks ?? join(OUT, "locks"));
+process.env.DEPFIT_LOCK_DIR = LOCKS;
 const all = JSON.parse(await readFile("eval/probes.json", "utf8")) as Probe[];
+
+/**
+ * Snippets kept apart from probes.json (so the frozen holdout entries keep their sha256), keyed
+ * by "<project> <packages...>". Optional.
+ */
+const extraSnippets = await readFile("eval/snippets.json", "utf8").then(
+  (text) => (JSON.parse(text) as { snippets: Record<string, string[]> }).snippets,
+  () => ({}) as Record<string, string[]>,
+);
+
+/** Side-effect imports of .css files are removed from ground-truth snippets: non-JS output is out of scope. */
+const withoutCss = (snippet: string) =>
+  snippet.replace(/import\s+["'][^"']+\.css["'];?\s*/g, "").trim();
+
+const snippetsOf = (probe: Probe) =>
+  (probe.bundle_entries ?? extraSnippets[[probe.project, ...probe.packages].join(" ")] ?? []).map(
+    withoutCss,
+  );
 // Numbered per project over the whole file, so a filtered run writes the same file names.
 const counters = new Map<string, number>();
 const probes = all
@@ -71,16 +103,19 @@ const probes = all
       (values.set === undefined || probe.set === values.set),
   );
 const cli = join(import.meta.dirname, "../src/cli.ts");
+const timings: Array<{ project: string; n: number; packages: string[]; cli_ms: number }> = [];
 
 for (const { probe, n } of probes) {
-  const snippets = probe.bundle_entries ?? [];
+  const snippets = values["no-snippets"] ? [] : snippetsOf(probe);
   // Fail on an invalid snippet before spending a CLI run on the probe.
   await parseSnippets(snippets, [...new Set(probe.packages.map((spec) => parseSpec(spec).name))]);
   const cwd = probe.cwd.replace(/^~/, homedir());
-  const dir = join("eval/results", probe.project);
+  const dir = join(OUT, probe.project);
   await mkdir(dir, { recursive: true });
   const started = performance.now();
   const json = await run("bun", [cli, ...probe.packages, "--json"], { cwd, maxBuffer: 1 << 26 });
+  const cliMs = Math.round(performance.now() - started);
+  timings.push({ project: probe.project, n, packages: probe.packages, cli_ms: cliMs });
   const report = JSON.parse(json.stdout) as Report;
   const base = join(dir, `${n}-${probe.packages.join("-vs-").replaceAll("/", "_")}`);
   await writeFile(`${base}.json`, json.stdout);
@@ -97,3 +132,4 @@ for (const { probe, n } of probes) {
   // npm's downloads API rate-limits bursts; one-off CLI runs never hit this.
   await new Promise((resolve) => setTimeout(resolve, 3000));
 }
+await writeFile(join(OUT, "timings.json"), `${JSON.stringify(timings, null, 2)}\n`);

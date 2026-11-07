@@ -1,5 +1,6 @@
 import { relative, sep } from "node:path";
 import type {
+  Bundle,
   Compatibility,
   Cost,
   InRepo,
@@ -35,12 +36,14 @@ type Group = { title: string | null; rows: Row[] };
 
 /**
  * `showLatest`: some package resolved to a version other than npm latest.
+ * `showBundle`: some package has bundle facts (a browser workspace).
  * `workspaces`: see knownWorkspaces.
  */
 type Context = {
   project: ProjectInfo | null;
   now: string;
   showLatest: boolean;
+  showBundle: boolean;
   workspaces: string[];
 };
 
@@ -265,6 +268,39 @@ function securityRows(): Row[] {
   ];
 }
 
+/** "78.6 KB / 22.5 KB": minified, then gzip -9; "-" when unmeasurable. */
+function minAndGzip(min: number | null, gzip: number | null): string {
+  return min === null || gzip === null ? NONE : `${formatBytes(min)} / ${formatBytes(gzip)}`;
+}
+
+/** "258 of 260"; "-" when the exports could not be listed. */
+function exportsMeasured(b: Bundle): string {
+  if (b.exports === null) return NONE;
+  return `${b.exports_measured === null ? NONE : b.exports_measured} of ${b.exports}`;
+}
+
+function bundleRows(): Row[] {
+  const row = (label: string, render: (b: Bundle) => Cell): Row => ({
+    label,
+    value: (p) => section(p.bundle, render),
+  });
+  const bytes = (value: number | null) => (value === null ? NONE : formatBytes(value));
+  return [
+    row("Whole eager JS min / gzip", (b) =>
+      minAndGzip(b.whole_eager_js_min_bytes, b.whole_eager_js_gzip9_bytes),
+    ),
+    row("Whole lazy JS min / gzip", (b) =>
+      minAndGzip(b.whole_lazy_js_min_bytes, b.whole_lazy_js_gzip9_bytes),
+    ),
+    row("Exports measured alone", exportsMeasured),
+    row("Median one export, gzip", (b) => bytes(b.single_export_median_eager_js_gzip9_bytes)),
+    row("External (peers)", (b) =>
+      b.external_packages === null ? NONE : listOrNone(b.external_packages),
+    ),
+    row("Bundler", (b) => `${b.bundler}, ${b.target}`),
+  ];
+}
+
 function groups(ctx: Context): Group[] {
   const description: Row = {
     label: "Description",
@@ -278,6 +314,7 @@ function groups(ctx: Context): Group[] {
     { title: "Compatibility", rows: compatibilityRows(ctx) },
     { title: "Maintenance", rows: maintenanceRows(ctx) },
     { title: "Security", rows: securityRows() },
+    ...(ctx.showBundle ? [{ title: "Bundle (root entry point)", rows: bundleRows() }] : []),
   ];
 }
 
@@ -429,6 +466,12 @@ function runtimeText(project: ProjectInfo): string {
   return `${project.runtime} ${project.runtime_range}`;
 }
 
+/** ", browser signals react-dom, index.html"; empty when there are none. */
+function browserText(project: ProjectInfo): string {
+  const signals = project.browser_signals;
+  return signals.length ? `, browser signals ${signals.join(", ")}` : "";
+}
+
 function projectLines(report: Report): string[] {
   const { project } = report;
   const measured = `Measured on ${report.measured_on_platform}`;
@@ -440,7 +483,7 @@ function projectLines(report: Report): string[] {
   return [
     `Project ${project.root}`,
     ...(project.workspace === project.root ? [] : [`Workspace ${project.workspace}`]),
-    `${lockfile}, type ${project.module_type}, ${runtimeText(project)}`,
+    `${lockfile}, type ${project.module_type}, ${runtimeText(project)}${browserText(project)}`,
     measured,
   ];
 }
@@ -464,6 +507,7 @@ export function renderTable(report: Report, options: TableOptions): string {
     showLatest: report.packages.some(
       (p) => p.error === null && p.latest_version !== null && p.latest_version !== p.version,
     ),
+    showBundle: report.packages.some((p) => p.bundle !== null),
     workspaces: knownWorkspaces(report),
   };
   const table = groups(ctx);

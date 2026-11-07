@@ -13,3 +13,8 @@ dependents, and repo facts.
   `examples/demo`, which has a package.json but is not a workspace.
 - `pnpm-workspace`: the same monorepo for pnpm, with default and named catalogs, a `!`
   workspace exclusion, wrangler.jsonc, and `node:sqlite`.
+- `browser-app`: a Vite + Preact workspace with an `index.html`, whose `react-dom` is only a peer
+  dependency (browser signals come from dependencies and devDependencies).
+- `bundle/*`: one tiny package each for the bundle engine's checks; `bundle/root-mixed` has a
+  default export and three named ones, one of which loads code from a URL; `bundle/no-entry` has
+  only a bin.
