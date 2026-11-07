@@ -573,3 +573,82 @@ rerun.
    (iterations 2 and 3).
 3. **Standalone is still not marginal**, but in this round in-repo facts won where they applied
    (shiki, recharts, streamdown, date-fns, react-markdown).
+
+## Round 5 follow-up: subpaths (evidence for the iteration-2 bar, 2026-11-06)
+
+Small experiments made before any iteration-2 code, using the existing engine (`vite build` of
+`import * as m from "<name>/<subpath>"`, kept whole) on round 5's frozen install trees. They
+decide what the iteration-2 bar in SPEC.md measures and how strict its thresholds are.
+
+**What `exports` maps contain.** The census covered 259 manifests: the 59 probe packages at their
+frozen versions and the 200 packages of the wild corpus. 167 have an `exports` field. 71 list at
+least one key that resolves to a JS file under Vite's browser conditions. This classification
+used a hand-written resolver with Vite's conditions; gate L later checks the real listing against
+`resolve.exports`. Of the 1,365 keys other than `"."`:
+
+- 1,192 resolve to JS;
+- 109 are `./package.json`;
+- 44 are patterns;
+- 20 are other non-JS targets: 9 CSS, 6 JSON, 3 with no JS target for these conditions (2 keys
+  with only a `types` condition, 1 `.d.ts` target), 1 wasm and 1 other.
+
+Per package, the count of JS subpaths is small. In the wild corpus the maximum is 78
+(@base-ui/react), then 62 and 49. Among the probe packages it is 10, except date-fns at 739, one
+module per function. Pattern keys match many modules, counted per package from the published
+file lists: highlight.js 386, shiki 440, gsap 117, zod's locales 128, underscore 492. A single
+pattern matches between 0 and 451.
+gsap 3.15.1 has an `exports` map made only of patterns. Round 4's follow-up recorded it as having
+none.
+
+**Cost.** Once the child is warm, a whole subpath build takes 4–544 ms; most take under 40 ms.
+Some subpath totals, not counting the root's build:
+
+| Package | Subpaths built | Subpath build time |
+|---|---|---|
+| date-fns | 739 | 4.9 s |
+| @base-ui/react | 78 | 1.2 s |
+| storybook (mostly Node code) | 49 | 6.3 s |
+| shiki | 10 | 0.95 s |
+
+Of round 5's 65 probe candidates (each counted per probe), 26 have a JS subpath. 25 of them would
+build subpaths under the cap; date-fns would not. Those builds add a median of 0 ms, a p90 of 58 ms
+and a max of 0.95 s per candidate. This counts build time only, not listing. Round 4's follow-up gave 0.5–4.5 s
+per package, but that included 40 export builds per package as well as the entry points.
+
+**Per-export numbers for subpaths** would add 766 builds for motion and 1,579 for zod, against 350
+and 259 for their roots.
+
+**Real usage.** Round 5's ground truth was scored on the entry points each snippet imports. The
+root gives [single-export median, whole], and an explicit subpath gives its whole for both its
+lower and upper number. A candidate importing several entry points takes the largest lower number
+and the sum of the whole numbers.
+
+| | Root numbers (iteration 1) | Imported entry points |
+|---|---|---|
+| In `[0.9 × lower, 1.1 × upper]` | 59/64 | 58/64 |
+| Pairs pointing the same way that real usage agrees with | 43/44 | 48/48 |
+
+- **photoswipe** moves into range: `lightbox` (4.5 KB) plus the root (16.9 KB), against real
+  usage of 20.0 KB.
+- **shiki** stays in range: `core` (35.9 KB) plus `engine/javascript` (20.2 KB), against 53.3 KB.
+- **The highlight.js vs shiki pair**, the one pair that disagreed, now agrees. `lib/core` is 8.3
+  KB, against 306 KB for the root.
+- **Both motion probes** move out of range. `motion/react` is 73.2 KB whole and real usage is
+  43–45 KB. This is a framework subpath (iteration 3), and the root's wide range had covered it.
+- **Still out of range:** highlight.js and gsap, whose languages and Flip are reached only through
+  patterns, and dayjs and pragmatic-drag-and-drop, which have no `exports` map.
+
+**Nulls.** Every probe-package subpath that failed did so with a code:
+
+- @formkit/auto-animate's 6 framework subpaths: `UNRESOLVED_IMPORT` of a framework the package
+  does not declare.
+- fuse.js `./worker`: `NON_JS_IMPORT`, a worker.
+- micromark `./stream` and marked `./bin/marked`: `UNRESOLVED_IMPORT` of Node built-ins.
+
+The gate B reference set the bar's rule picks has 51 cases in 20 packages. 8 of them are null, each with a code:
+Node built-ins, computed `import()` (react-router, as in iteration 1), and an undeclared
+`@jest/globals`.
+
+**Resolution.** Vite 8.3.4 resolves `exports` with a bundled `resolve.exports` 2.0.3
+(`unsafe: true`, conditions `module`, `browser`, `production`, `import`, plus `default`). The
+listing rule and gate L use the same resolver.

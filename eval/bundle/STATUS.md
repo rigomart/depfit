@@ -14,10 +14,56 @@ SPEC-snippets-v1.md. Evidence: `eval/FINDINGS.md`, round 4 and its follow-up.
 |---|---|
 | 0. Remove the snippet API | Passes (user decision, 2026-11-04; below) |
 | 1. Root entry point, two ways, browser workspaces only | Built; scorecard below |
+| 2. Each subpath in the `exports` map, measured whole | Bar drafted 2026-11-06 (SPEC.md), awaiting the user's approval; no code |
 
 Holdout probes `holdout-1`, frozen 2026-10-19 before any iteration-1 code: 10 questions, sha256
 `f792fac58becfaed39b978a33e2e118526652b9cb6c9214b424d9cf2461f8466` of `JSON.stringify` of the
 `holdout-1` entries of `eval/probes.json` in file order.
+
+Holdout probes `holdout-2`, frozen 2026-11-06 before any iteration-2 code: 10 questions, 29
+candidates, sha256 `c39c0792cdc4fc44b13b7e34b8202fe06307d6c64d468463903a0b73e34a3dde` of
+`JSON.stringify` of the `holdout-2` entries of `eval/probes.json` in file order (appended after
+every earlier probe, so the files `eval/run.ts` writes for earlier probes keep their numbers). Their
+ground-truth snippets get their own sha256 here when they are frozen.
+
+## Iteration 2: subpaths, measured whole (bar drafted 2026-11-06)
+
+The bar is in SPEC.md, "Iteration 2", and its evidence is in FINDINGS.md, "Round 5 follow-up:
+subpaths". It awaits the user's approval. No iteration-2 code exists yet. The holdout-2 questions
+are frozen (hash above). Their snippets, resolved versions, install trees and project revisions are
+frozen in a preparation step before the first iteration-2 measurement (SPEC.md, holdout section),
+and their hashes are added here.
+
+Independent review (Codex gpt-6.1-sol, high effort, read-only, two rounds, briefed with the draft
+and the evidence and no expected verdict):
+
+- **Round 1: do not approve.** Six must-fix findings:
+  1. Gate R's coverage check required bytes, which conflicts with the cap and with honest nulls.
+  2. Gate R's arithmetic and inputs were unspecified, and it was unclear which iteration-1 gates
+     are replaced.
+  3. There was no contract for failure states, and a crash could erase the root's numbers.
+  4. A reader could not tie a null subpath to its cause.
+  5. Gate H's control leaked iteration-2 information.
+  6. The B reference set has 51 cases, not 54.
+
+  There were also five should-fix findings: holdout inputs beyond the questions were not frozen;
+  cost counts and timing boundaries were wrong (26 of 65 candidates have a subpath, not 25;
+  @base-ui/react takes 1.2 s without its root build); an H0 question claimed "in no number"; there
+  were no fixed listing cases and `exports: null` was undefined; and a line-count estimate was wrong.
+
+  All were fixed. Gate R now has a written algorithm, its coverage check is about listing only, and
+  over-cap packages are reported separately. A state table was added, along with
+  `subpaths[].unmeasurable_codes` and two codes, `SUBPATH_LIMIT` and `SUBPATH_LIST_FAILED`. Gate H's
+  control is now the iteration-1 CLI. The 51 cases are listed. A preparation step freezes the
+  holdout inputs. Gate L has fixed manifests. The numbers in FINDINGS were corrected.
+- **Round 2: approve with changes.** The reviewer confirmed that all 11 findings were resolved. It
+  reproduced the 51 cases with 8 nulls, the 58/64 and 48/48 scores, the cost figures and the
+  holdout-2 hash. It raised four smaller points, all now fixed:
+  1. Gate A asked `unmeasurable_codes` for a kind of specifier, but that field holds codes only.
+     The kind is now checked against the build problems the eval keeps.
+  2. Gate F's timer had no end when nothing is built.
+  3. The percentile was misnamed.
+  4. The table had no display for unknown and failed states.
 
 ## Iteration 1: root entry point, two ways (2026-11-04)
 
