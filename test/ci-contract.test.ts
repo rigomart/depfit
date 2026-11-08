@@ -4,9 +4,7 @@ import type { PackageReport } from "../src/report.ts";
 import { FIELD_DESCRIPTIONS } from "../src/schema-docs.ts";
 import { browserProject, report, sonnerInBrowser, yupWithoutGithub, zod } from "./reports.ts";
 
-// CI's end-to-end contract check (ci/e2e.ts) on hand-written reports, so a break it should catch
-// is known to fail it.
-// The live CLI lists the skipped bundle outside a browser workspace; the fixtures leave it out.
+// Live CLI output lists the skipped bundle outside a browser workspace; the fixtures omit it.
 const skipped = (pkg: PackageReport) => ({
   ...pkg,
   unavailable: [...pkg.unavailable, BUNDLE_SKIPPED],
@@ -19,7 +17,7 @@ const kinds = kindsOf(
 const structure = (value: unknown) => structureProblems(value, FIELD_DESCRIPTIONS, kinds);
 const nulls = (value: unknown) => unavailableProblems(value, FIELD_DESCRIPTIONS);
 
-describe("CI contract check", () => {
+describe("CI contract check (ci/e2e.ts)", () => {
   it("passes a complete report", () => {
     expect(structure(fresh())).toEqual([]);
     expect(nulls(fresh())).toEqual([]);
@@ -47,10 +45,15 @@ describe("CI contract check", () => {
     ]);
   });
 
-  it("accepts null for any field", () => {
+  it("accepts null only where --schema allows it", () => {
     const changed = fresh();
     Object.assign(changed.packages[0]?.maintenance ?? {}, { weekly_downloads: null });
     expect(structure(changed)).toEqual([]);
+    Object.assign(changed.packages[0] ?? {}, { requested: null, keywords: null });
+    expect(structure(changed)).toEqual([
+      "packages[0].requested is null, which --schema does not allow",
+      "packages[0].keywords is null, which --schema does not allow",
+    ]);
   });
 
   it("wants a null from a failed source listed in unavailable", () => {

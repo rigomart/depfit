@@ -11,7 +11,7 @@
  * - cases.json, null cases that import the root: the CLI's whole build is null, and `unavailable`
  *   holds the case's `bundle: <code>` (and specifier).
  *
- *   bun ci/bundle-accuracy.ts [--timings file]   # timings: {"bundle.<step>.<name>": ms} for ci/perf.ts
+ *   bun ci/bundle-accuracy.ts [--timings file]   # {"bundle.<step>.<name>": ms} for ci/perf.ts
  */
 import { execFile } from "node:child_process";
 import { appendFile, copyFile, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -35,10 +35,6 @@ const REPO = join(import.meta.dirname, "..");
 const CLI = join(REPO, "src/cli.ts");
 const EVAL = join(REPO, "eval/bundle");
 
-/**
- * Every reference file in eval/bundle, and why it is or is not replayed here. A reference file
- * not listed fails the run, so a new reference set is never skipped without a reason.
- */
 const REFERENCE_FILES: Record<string, string> = {
   "single-reference.json": "replayed",
   "reference.json":
@@ -47,7 +43,6 @@ const REFERENCE_FILES: Record<string, string> = {
     "not replayed: gate W's corpus of about 200 packages, too slow for every pull request",
 };
 
-/** The reference files' byte keys, and depfit's field for each: in the report, and in an outcome. */
 const REF_KEYS = ["min_bytes", "gzip_bytes", "lazy_min_bytes", "lazy_gzip_bytes"] as const;
 type RefKey = (typeof REF_KEYS)[number];
 const WHOLE_FIELDS: Record<RefKey, string> = {
@@ -67,7 +62,6 @@ const readJson = async (path: string): Promise<unknown> => JSON.parse(await read
 const lockName = (name: string, version: string) =>
   `${name.replace("/", "__")}@${version}.package-lock.json`;
 
-/** Differences between depfit's bytes and a reference, as "<field> <depfit> vs <reference>". */
 function byteDiffs(got: (key: RefKey) => unknown, ref: unknown): string[] {
   const reference = asRecord(ref);
   return REF_KEYS.flatMap((key) => {
@@ -89,7 +83,6 @@ const count = (set: string) => {
   counts[set] = (counts[set] ?? 0) + 1;
 };
 
-// Every reference file must be accounted for.
 for (const file of (await readdir(EVAL)).filter((f) => /reference.*\.json$/.test(f)).sort()) {
   if (!(file in REFERENCE_FILES)) {
     failures.push(
@@ -121,7 +114,6 @@ const nullCases = asArray(await readJson(join(EVAL, "cases.json")))
       asArray(c.imports).every((i) => asRecord(i).from === c.package),
   );
 
-// The frozen trees, named as DEPFIT_LOCK_DIR expects them.
 const lockDir = await mkdtemp(join(tmpdir(), "depfit-ci-locks-"));
 const scratch = await mkdtemp(join(tmpdir(), "depfit-ci-web-"));
 await writeFile(join(scratch, "package.json"), JSON.stringify({ name: "scratch", private: true }));
@@ -152,8 +144,8 @@ for (const c of nullCases) {
   );
 }
 process.env.DEPFIT_LOCK_DIR = lockDir;
-// The trees were frozen without peers (`npm ci --legacy-peer-deps`, as eval/bundle/reference.ts
-// installs them); peers are left out of every bundle, so they do not change a number.
+// The trees were frozen with `npm ci --legacy-peer-deps` (eval/bundle/reference.ts); no bundle
+// includes peers.
 process.env.npm_config_legacy_peer_deps = "true";
 
 function cli(spec: string): Promise<{ report: unknown; error: string | null; ms: number }> {
@@ -236,7 +228,6 @@ for (const c of cliCases) {
 }
 timings["bundle.cli.total"] = cliTotal;
 
-/** Why an export's null fails, or null when it is listed with exactly that code and specifiers. */
 function nullProblem(
   listed: ExportNull,
   problems: Array<{ code: string; specifier: string | null }>,

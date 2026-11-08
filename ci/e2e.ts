@@ -1,8 +1,8 @@
 /**
  * End-to-end check of the CLI on the small projects in test/fixtures, on the runtime that runs this
- * script (`bun ci/e2e.ts` or `node ci/e2e.ts`): each `--json` report must follow the output contract
- * (ci/contract.ts), plus a few structural expectations per project. Live facts are checked for
- * shape only. Needs network access and `npm` on PATH.
+ * script (`bun ci/e2e.ts` or `node ci/e2e.ts`): each `--json` report must follow the output
+ * contract (ci/contract.ts), plus a few structural expectations per project. Live facts are
+ * checked for shape only. Needs network access and `npm` on PATH.
  *
  *   bun ci/e2e.ts [--timings file]   # writes {"e2e.<runtime>.<run>": ms, ...} for ci/perf.ts
  */
@@ -42,10 +42,9 @@ type Scenario = {
   name: string;
   cwd: string;
   specs: string[];
-  /** Exit code the CLI must return (default 0): 1 when no spec could be resolved. */
+  /** Default 0; the CLI exits 1 only when no spec could be resolved. */
   exit?: number;
   env?: NodeJS.ProcessEnv;
-  /** Structural expectations beyond the contract; each returns a problem or null. */
   expect: Array<(report: Record<string, unknown>, pkgs: Package[]) => string | null>;
 };
 
@@ -57,8 +56,8 @@ const installedZod = (_: unknown, pkgs: Package[]) =>
     : "zod is not reported as installed (it is in the lockfile)";
 
 /**
- * An environment where depfit finds no GitHub token: no env token, and a `gh` first on PATH that
- * fails (a logged-in gh can read its token from the OS keyring whatever its config dir).
+ * No GitHub token: a failing `gh` goes first on PATH, since a logged-in gh reads its token from the
+ * OS keyring.
  */
 async function noTokenEnv(): Promise<{ env: NodeJS.ProcessEnv; dir: string }> {
   const dir = await mkdtemp(join(tmpdir(), "depfit-e2e-gh-"));
@@ -169,7 +168,6 @@ for (const [path, text] of Object.entries(asRecord(schema.fields))) {
 if (schemaRun.code !== 0 || !Object.keys(fields).length)
   fail("--schema", ["no field descriptions"]);
 
-// The JSON kind of every path, from the hand-written typed Report fixtures.
 const samples = Object.values(fixtures).flatMap((value): unknown[] => {
   if (!isRecord(value)) return [];
   if ("schema_version" in value) return [value];

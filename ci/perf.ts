@@ -69,8 +69,10 @@ if (command === "record" && dirs.length) {
       const isGated = base !== undefined && gated(metric, base);
       let status = isGated ? "gated" : "reported";
       if (base === undefined) status = "new, no baseline";
-      else if (now === undefined) status = "not measured";
-      else if (isGated && ratio !== null && ratio >= FAIL_RATIO) {
+      else if (now === undefined) {
+        status = isGated ? "**FAIL** (not measured)" : "not measured";
+        if (isGated) failures.push(`${metric}: not measured`);
+      } else if (isGated && ratio !== null && ratio >= FAIL_RATIO) {
         status = `**FAIL** (${FAIL_RATIO}x or more)`;
         failures.push(
           `${metric}: ${seconds(now)}, baseline ${seconds(base)} (${ratio.toFixed(2)}x)`,

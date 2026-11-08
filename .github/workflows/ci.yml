@@ -75,7 +75,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           node-version: 24
-      # The frozen install trees only change with eval/bundle/locks, so their tarballs cache well.
       - uses: actions/cache@v6
         with:
           path: ~/.npm

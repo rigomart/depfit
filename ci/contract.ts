@@ -20,7 +20,6 @@ export function kindOf(value: unknown): Kind {
 /** JSON paths as `--schema` writes them: "." between keys, "[]" for array items. */
 const childPath = (path: string, key: string) => (path ? `${path}.${key}` : key);
 
-/** Each documented container path to the keys documented directly under it. */
 function documentedKeys(fields: Record<string, string>): Map<string, Set<string>> {
   const keys = new Map<string, Set<string>>();
   for (const path of Object.keys(fields)) {
@@ -32,10 +31,7 @@ function documentedKeys(fields: Record<string, string>): Map<string, Set<string>
   return keys;
 }
 
-/**
- * The JSON kinds each path takes in a set of sample values (array items under "<path>[]").
- * A documented object with no documented keys (a map such as compatibility.engines) is a leaf.
- */
+/** JSON kinds seen per path in the samples; array items are under "<path>[]". */
 export function kindsOf(
   samples: unknown[],
   fields: Record<string, string>,
@@ -53,7 +49,6 @@ export function kindsOf(
   return kinds;
 }
 
-/** Problems with the report's structure, each naming the field and where it was found. */
 export function structureProblems(
   report: unknown,
   fields: Record<string, string>,
@@ -63,8 +58,13 @@ export function structureProblems(
   const problems: string[] = [];
   const visit = (value: unknown, path: string, where: string) => {
     const kind = kindOf(value);
-    const expected = [...(kinds.get(path) ?? [])].filter((k) => k !== "null");
-    if (path && kind !== "null" && expected.length && !expected.includes(kind)) {
+    const seen = kinds.get(path) ?? new Set<Kind>();
+    const expected = [...seen].filter((k) => k !== "null");
+    if (kind === "null") {
+      // Null is allowed where a fixture has it or `--schema` says when the field is null.
+      const nullable = seen.has("null") || /\bnull\b/.test(fields[path] ?? "");
+      if (path && !nullable) problems.push(`${where} is null, which --schema does not allow`);
+    } else if (path && expected.length && !expected.includes(kind)) {
       problems.push(`${where} is ${kind}, expected ${expected.join(" or ")}`);
     }
     if (Array.isArray(value)) {
@@ -86,7 +86,6 @@ export function structureProblems(
   return problems;
 }
 
-/** The maintenance fields GitHub feeds, as `--schema` describes them. */
 const githubFields = (fields: Record<string, string>) =>
   Object.entries(fields)
     .filter(
@@ -97,10 +96,7 @@ const githubFields = (fields: Record<string, string>) =>
 const SECTIONS = ["in_repo", "cost", "compatibility", "maintenance", "security", "bundle"];
 export const BUNDLE_SKIPPED = "bundle: skipped, no browser signal in workspace";
 
-/**
- * Problems with how nulls are explained, per package: a failed source is listed in `unavailable`,
- * and a listed source left its fields null (the rules in `--schema`'s descriptions).
- */
+/** Per package: failed sources are in `unavailable`, and a listed source left its fields null. */
 export function unavailableProblems(report: unknown, fields: Record<string, string>): string[] {
   const root = asRecord(report);
   const browser = asStringArray(asRecord(root.project).browser_signals).length > 0;
