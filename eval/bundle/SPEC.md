@@ -759,9 +759,10 @@ is no tolerance and no exception list for #7.
 
 ## Cache (#8): acceptance bar
 
-Drafted 2026-11-08 before any #8 code and revised after an independent review (verdict in
-`STATUS.md`). The user decided its open choices on 2026-11-08 (below); a second independent review
-follows. The measurements behind every target are in `STATUS.md` ("Cache (#8): measurements for the
+Drafted 2026-11-08 before any #8 code and **approved by the user on 2026-11-08**, who decided its
+open choices (below). Two independent reviews (Codex gpt-6.1-sol, high effort; verdicts in
+`STATUS.md`): the first, on the draft, not ready, eleven findings applied; the second, on the bar as
+decided, not ready, seven findings applied, none of which changed a decision or a threshold. The measurements behind every target are in `STATUS.md` ("Cache (#8): measurements for the
 bar"). #8 makes a repeat overview of a package version depfit has already measured, from any
 project, skip the npm install and every build. Live facts are fetched again on every call. No
 number, reason or existing field changes; one field is added.

@@ -873,7 +873,7 @@ fixes change only what happens to a worker that does not exit on its own, which 
 
 ## Cache (#8): measurements for the bar (2026-11-08)
 
-**Bar drafted, revised after review, then decided by the user (2026-11-08):** the tree is resolved
+**Bar approved by the user on 2026-11-08,** after two independent reviews (below). The user decided: the tree is resolved
 by npm (`--package-lock-only`) on every repeat, and the ETag fast path is deferred, since a
 validator that does not match what npm read would serve a stale tree. The conditional-request and
 recording-rule measurements below are kept as the basis for that deferred option. The user approved
