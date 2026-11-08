@@ -10,12 +10,19 @@
  * `--locks` (default `<out>/locks`), so each candidate's resolved tree is saved there as an npm
  * lockfile the first time, and replayed with `npm ci` by every later run that names the same
  * directory. Set `DEPFIT_BUNDLE=0` to collect with bundling off (gate E).
- *   bun eval/run.ts [--set <name>] [--out <dir>] [--locks <dir>] [--no-snippets] [project...]
+ *
+ * `--revisions <file>` (eval/bundle/SPEC.md, holdout-2 freeze) measures each project at the git
+ * revision recorded there (`[{ cwd, head, worktree_sha256 }]`, local). A project still at that
+ * revision with the same working tree runs in place. A project that was clean then and has moved
+ * since runs from a `git archive` of the recorded revision in a temp dir; the project itself is
+ * only read. Anything else stops the run.
+ *   bun eval/run.ts [--set <name>] [--out <dir>] [--locks <dir>] [--no-snippets] [--revisions <file>] [project...]
  */
 import { execFile } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
+import { join, relative, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
 import { parseSpec } from "../src/collect/registry.ts";
 import { errorMessage } from "../src/collect/util.ts";
@@ -65,6 +72,7 @@ const { values, positionals: only } = parseArgs({
     out: { type: "string", default: "eval/results" },
     locks: { type: "string" },
     "no-snippets": { type: "boolean", default: false },
+    revisions: { type: "string" },
   },
 });
 const OUT = values.out;
@@ -103,13 +111,71 @@ const probes = all
       (values.set === undefined || probe.set === values.set),
   );
 const cli = join(import.meta.dirname, "../src/cli.ts");
+
+/**
+ * sha256 of a project's uncommitted state as the holdout-2 freeze recorded it: its diff against
+ * HEAD, then the name of each untracked file (one per line). File contents of untracked files are
+ * not part of it.
+ */
+async function worktreeSha256(dir: string): Promise<string> {
+  const git = (args: string[]) => run("git", ["-C", dir, ...args], { maxBuffer: 1 << 28 });
+  const hash = createHash("sha256");
+  hash.update((await git(["diff", "HEAD"])).stdout);
+  const untracked = (await git(["ls-files", "--others", "--exclude-standard", "-z"])).stdout;
+  for (const file of untracked.split("\0").filter(Boolean)) hash.update(`${file}\n`);
+  return hash.digest("hex");
+}
+
+const EMPTY_SHA256 = createHash("sha256").update("").digest("hex");
+const exported = new Map<string, string>();
+const scratch: string[] = [];
+
+/**
+ * Where to run a probe: its own directory when the project is at its recorded revision with the
+ * same working tree; else, for a project that was clean when recorded, the same directory inside a
+ * `git archive` of that revision.
+ */
+async function frozenCwd(cwd: string): Promise<string> {
+  if (!values.revisions) return cwd;
+  const recorded = (
+    JSON.parse(await readFile(values.revisions, "utf8")) as Array<{
+      cwd: string;
+      head: string;
+      worktree_sha256: string;
+    }>
+  ).find((entry) => entry.cwd.replace(/^~/, homedir()) === cwd);
+  if (!recorded) throw new Error(`${cwd}: no recorded revision`);
+  const top = (await run("git", ["-C", cwd, "rev-parse", "--show-toplevel"])).stdout.trim();
+  const head = (await run("git", ["-C", cwd, "rev-parse", "HEAD"])).stdout.trim();
+  if (head === recorded.head && (await worktreeSha256(cwd)) === recorded.worktree_sha256)
+    return cwd;
+  if (recorded.worktree_sha256 !== EMPTY_SHA256) {
+    throw new Error(`${cwd}: moved since it was recorded, with uncommitted changes then`);
+  }
+  let root = exported.get(`${top} ${recorded.head}`);
+  if (!root) {
+    root = await mkdtemp(join(tmpdir(), "depfit-frozen-"));
+    scratch.push(root);
+    await run("sh", [
+      "-c",
+      'git -C "$1" archive "$2" | tar -x -C "$3"',
+      "sh",
+      top,
+      recorded.head,
+      root,
+    ]);
+    exported.set(`${top} ${recorded.head}`, root);
+    console.log(`${top}: measured at ${recorded.head} (exported; the project moved since)`);
+  }
+  return join(root, relative(top, cwd));
+}
 const timings: Array<{ project: string; n: number; packages: string[]; cli_ms: number }> = [];
 
 for (const { probe, n } of probes) {
   const snippets = values["no-snippets"] ? [] : snippetsOf(probe);
   // Fail on an invalid snippet before spending a CLI run on the probe.
   await parseSnippets(snippets, [...new Set(probe.packages.map((spec) => parseSpec(spec).name))]);
-  const cwd = probe.cwd.replace(/^~/, homedir());
+  const cwd = await frozenCwd(probe.cwd.replace(/^~/, homedir()));
   const dir = join(OUT, probe.project);
   await mkdir(dir, { recursive: true });
   const started = performance.now();
@@ -133,3 +199,4 @@ for (const { probe, n } of probes) {
   await new Promise((resolve) => setTimeout(resolve, 3000));
 }
 await writeFile(join(OUT, "timings.json"), `${JSON.stringify(timings, null, 2)}\n`);
+for (const dir of scratch) await rm(dir, { recursive: true, force: true });
