@@ -78,6 +78,17 @@ export function listSubpaths(manifest: Record<string, unknown>): SubpathListing 
   return { exportsMap: true, subpaths, patterns };
 }
 
+/** Orders strings by Unicode code point (UTF-16 order differs above U+FFFF), the report's key order. */
+export function byCodePoint(a: string, b: string): number {
+  const x = [...a];
+  const y = [...b];
+  for (let i = 0; i < Math.min(x.length, y.length); i++) {
+    const diff = (x[i]?.codePointAt(0) ?? 0) - (y[i]?.codePointAt(0) ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return x.length - y.length;
+}
+
 /** The import specifier of a subpath key: "highlight.js/lib/core" for "./lib/core". */
 export function subpathSpecifier(name: string, key: string): string {
   return `${name}/${key.slice(2)}`;

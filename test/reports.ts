@@ -838,9 +838,9 @@ export const sonnerInBrowser: PackageReport = {
 export const hugeInBrowser: PackageReport = {
   ...zod,
   unavailable: [
-    "bundle: UNRESOLVED_IMPORT node:fs; UNRESOLVED_IMPORT in subpaths ./node",
+    'bundle: UNRESOLVED_IMPORT node:fs; UNRESOLVED_IMPORT in subpaths ["./node"]',
     "bundle: EXPORT_LIMIT 1204",
-    "bundle: NON_JS_IMPORT in subpaths ./worker",
+    'bundle: NON_JS_IMPORT in subpaths ["./worker"]',
   ],
   bundle: {
     bundler: "vite@8.3.4 (rolldown@1.2.14)",

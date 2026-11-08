@@ -14,8 +14,10 @@ import {
   type RootEntryMeasurement,
   rootEntryFacts,
   REPORT_SUBPATH_LIMIT,
+  type ListingResult,
   type SubpathMeasurement,
   subpathDetail,
+  unbuiltSubpaths,
 } from "../src/collect/root-entry.ts";
 import { SUBPATH_LIMIT } from "../src/collect/subpaths.ts";
 import { browserProject } from "./reports.ts";
@@ -306,8 +308,8 @@ describe("rootEntryFacts", () => {
       "./tty",
     ]);
     expect(facts.reasons).toEqual([
-      "bundle: BUILD_ERROR in subpaths ./silent",
-      "bundle: UNRESOLVED_IMPORT in subpaths ./node, ./tty",
+      "bundle: BUILD_ERROR in subpaths [\"./silent\"]",
+      'bundle: UNRESOLVED_IMPORT in subpaths ["./node","./tty"]',
     ]);
     expect(subpathDetail(measured)).toEqual([
       {
@@ -364,9 +366,9 @@ describe("rootEntryFacts", () => {
       BUNDLER,
     );
     expect(facts.reasons).toEqual([
-      "bundle: UNRESOLVED_IMPORT node:path; UNRESOLVED_IMPORT in subpaths ./a",
-      "bundle: 1 exports unmeasurable (MISSING_EXPORT); MISSING_EXPORT in subpaths ./c",
-      "bundle: NON_JS_IMPORT in subpaths ./b",
+      'bundle: UNRESOLVED_IMPORT node:path; UNRESOLVED_IMPORT in subpaths ["./a"]',
+      'bundle: 1 exports unmeasurable (MISSING_EXPORT); MISSING_EXPORT in subpaths ["./c"]',
+      'bundle: NON_JS_IMPORT in subpaths ["./b"]',
     ]);
     for (const code of ["UNRESOLVED_IMPORT", "MISSING_EXPORT", "NON_JS_IMPORT"]) {
       expect(facts.reasons.filter((reason) => reason.includes(code))).toHaveLength(1);
@@ -418,6 +420,32 @@ describe("rootEntryFacts", () => {
     });
   });
 
+  it("names a subpath that fails for two codes once per code, and escapes keys as JSON", () => {
+    const both: BundleOutcome = {
+      bytes: null,
+      problems: [
+        { code: "UNRESOLVED_IMPORT", specifier: "node:fs" },
+        { code: "NON_JS_IMPORT", specifier: "a.css" },
+      ],
+    };
+    const facts = rootEntryFacts(
+      withSubpaths(
+        {
+          subpaths: [
+            { key: "./a,./b", outcome: both },
+            { key: './q"uote', outcome: failed("UNRESOLVED_IMPORT", "node:path") },
+          ],
+        },
+        { whole: failed("NON_JS_IMPORT", "x.css") },
+      ),
+      BUNDLER,
+    );
+    expect(facts.reasons).toEqual([
+      'bundle: NON_JS_IMPORT x.css; NON_JS_IMPORT in subpaths ["./a,./b"]',
+      'bundle: UNRESOLVED_IMPORT in subpaths ["./a,./b","./q\\"uote"]',
+    ]);
+  });
+
   it("gives null subpath fields when the subpaths were not measured at all", () => {
     const { bundle } = rootEntryFacts(measurement({ subpaths: null }), BUNDLER);
     expect(bundle).toMatchObject({
@@ -433,6 +461,48 @@ describe("rootEntryFacts", () => {
     expect(medianBytes([5])).toBe(5);
     expect(medianBytes([4, 1, 2, 3])).toBe(3);
     expect(medianBytes([10, 1, 4])).toBe(4);
+  });
+});
+
+describe("unbuiltSubpaths", () => {
+  const listing = (count: number, exportsMap = true): ListingResult => ({
+    ok: true,
+    listing: {
+      exportsMap,
+      subpaths: Array.from({ length: count }, (_, i) => ({ key: `./m${i}`, target: `./m${i}.js` })),
+      patterns: ["./x/*"],
+    },
+  });
+  const crash = "bundle: BUNDLER_ERROR vite build exited 1";
+
+  it("follows the states' order: unknown listing, no map, empty map, over the cap, else the cause", () => {
+    const unread: ListingResult = { ok: false, reason: "bundle: SUBPATH_LIST_FAILED x ENOENT" };
+    expect(unbuiltSubpaths(unread, 30, crash)).toEqual({
+      exportsMap: null,
+      listed: null,
+      patterns: null,
+      subpaths: null,
+      reason: "bundle: SUBPATH_LIST_FAILED x ENOENT",
+    });
+    expect(unbuiltSubpaths(listing(0, false), 30, crash)).toMatchObject({
+      exportsMap: false,
+      subpaths: null,
+      reason: null,
+    });
+    expect(unbuiltSubpaths(listing(0), 30, crash)).toMatchObject({ listed: 0, subpaths: [], reason: null });
+    expect(unbuiltSubpaths(listing(31), 30, crash)).toMatchObject({
+      listed: 31,
+      subpaths: null,
+      reason: "bundle: SUBPATH_LIMIT 31",
+    });
+    expect(unbuiltSubpaths(listing(5), 30, crash)).toMatchObject({ listed: 5, reason: crash });
+    // A root failure: its own entry explains the null map.
+    expect(unbuiltSubpaths(listing(5), 30)).toMatchObject({
+      listed: 5,
+      patterns: ["./x/*"],
+      subpaths: null,
+      reason: null,
+    });
   });
 });
 
@@ -514,7 +584,7 @@ describe("measureRootEntry on fixture packages", () => {
     expect(byKey["./core.js"]).toBe(byKey["./core"]);
     expect(byKey["./node"]).toEqual(failed("UNRESOLVED_IMPORT", "node:fs"));
     expect(rootEntryFacts(result, "vite").reasons).toEqual([
-      "bundle: UNRESOLVED_IMPORT in subpaths ./node",
+      'bundle: UNRESOLVED_IMPORT in subpaths ["./node"]',
     ]);
   });
 

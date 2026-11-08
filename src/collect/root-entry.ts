@@ -3,9 +3,9 @@
  * 1): the whole entry point (`import * as m`, kept whole), and each export alone, one build per
  * export; and each subpath of its `exports` map, measured whole (iteration 2). The report gets a
  * compact map of the subpaths (at most REPORT_SUBPATH_LIMIT); the full detail per subpath
- * (`subpathDetail`) is kept for a later `inspect` command. All builds run in one Vite child
- * process. collect/index.ts imports this only for a browser workspace, so Vite and rolldown are
- * never loaded otherwise.
+ * (`subpathDetail`) is kept for the follow-up flags (`--entries`, #10). All builds run in one
+ * Vite child process. collect/index.ts imports this only for a browser workspace, so Vite and
+ * rolldown are never loaded otherwise.
  */
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -25,7 +25,13 @@ import {
   type ViteBuildResult,
   type ViteLog,
 } from "./bundle.ts";
-import { listSubpaths, SUBPATH_LIMIT, type SubpathListing, subpathSpecifier } from "./subpaths.ts";
+import {
+  byCodePoint,
+  listSubpaths,
+  SUBPATH_LIMIT,
+  type SubpathListing,
+  subpathSpecifier,
+} from "./subpaths.ts";
 import { errorMessage, isRecord } from "./util.ts";
 
 /** More exports than this are not built one by one: `bundle: EXPORT_LIMIT <count>`. */
@@ -110,22 +116,28 @@ export async function readListing(dir: string, candidate: string): Promise<Listi
   }
 }
 
-/** The subpath state when none of them is built: from the listing alone, with no new reason. */
+/**
+ * The subpath state when they are not built (SPEC.md iteration 2, states in order): an unknown
+ * listing (its own reason), no map, an empty map (`[]`, nothing to build), more than `limit`
+ * (`bundle: SUBPATH_LIMIT <n>`), else not built for `reason` (a crash in the subpath phase), or for
+ * a root failure, whose own entry explains it (`reason` null).
+ */
 export function unbuiltSubpaths(
   listed: ListingResult,
+  limit: number,
   reason: string | null = null,
 ): SubpathMeasurement {
   if (!listed.ok) {
-    return {
-      exportsMap: null,
-      listed: null,
-      patterns: null,
-      subpaths: null,
-      reason: listed.reason,
-    };
+    return { exportsMap: null, listed: null, patterns: null, subpaths: null, reason: listed.reason };
   }
   const { exportsMap, patterns, subpaths } = listed.listing;
-  return { exportsMap, listed: subpaths.length, patterns, subpaths: null, reason };
+  const state = { exportsMap, listed: subpaths.length, patterns };
+  if (!exportsMap) return { ...state, subpaths: null, reason: null };
+  if (subpaths.length === 0) return { ...state, subpaths: [], reason: null };
+  if (subpaths.length > limit) {
+    return { ...state, subpaths: null, reason: `bundle: SUBPATH_LIMIT ${subpaths.length}` };
+  }
+  return { ...state, subpaths: null, reason };
 }
 
 /**
@@ -140,13 +152,12 @@ async function measureSubpaths(
   toolchainFailed: boolean,
   limit: number,
 ): Promise<SubpathMeasurement> {
-  if (!listed.ok || !listed.listing.exportsMap || toolchainFailed) return unbuiltSubpaths(listed);
-  const { subpaths, patterns } = listed.listing;
-  if (subpaths.length > limit) {
-    return unbuiltSubpaths(listed, `bundle: SUBPATH_LIMIT ${subpaths.length}`);
-  }
+  if (!listed.ok) return unbuiltSubpaths(listed, limit);
+  const { exportsMap, subpaths, patterns } = listed.listing;
+  const nothingToBuild = !exportsMap || subpaths.length === 0 || subpaths.length > limit;
+  if (nothingToBuild || toolchainFailed) return unbuiltSubpaths(listed, limit);
   const byTarget = new Map<string, BundleOutcome>();
-  const sorted = [...subpaths].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const sorted = [...subpaths].sort((a, b) => byCodePoint(a.key, b.key));
   const outcomes: SubpathOutcome[] = [];
   for (const { key, target } of sorted) {
     let outcome = byTarget.get(target);
@@ -244,14 +255,15 @@ export async function measureRootEntry(
     const root = await measureRoot(build, measure, externals, candidate);
     if (listing === null) return { ...root, subpaths: null };
     const started = performance.now();
+    const limit = Math.min(options.subpathLimit ?? SUBPATH_LIMIT, SUBPATH_LIMIT);
     const subpaths = await measureSubpaths(
       (source) => measureEntry(entryFor(candidate, null, source)),
       candidate,
       listing,
       isToolchainMismatch(root.whole),
-      Math.min(options.subpathLimit ?? SUBPATH_LIMIT, SUBPATH_LIMIT),
+      limit,
     ).catch((error: unknown) =>
-      unbuiltSubpaths(listing, `bundle: BUNDLER_ERROR ${errorMessage(error)}`),
+      unbuiltSubpaths(listing, limit, `bundle: BUNDLER_ERROR ${errorMessage(error)}`),
     );
     options.onSubpathPhase?.(listMs + performance.now() - started);
     return { ...root, subpaths };
@@ -301,7 +313,7 @@ export function medianBytes(values: number[]): number | null {
   return middle === undefined ? null : Math.round(middle);
 }
 
-/** One subpath in full, the detail kept for `inspect` (not in the default report). */
+/** One subpath in full, the detail kept for `--entries` (#10), not in the default report. */
 export type SubpathDetail = {
   entry_point: string;
   whole_eager_js_gzip9_bytes: number | null;
@@ -338,8 +350,9 @@ const perCode = (problems: BundleProblem[]): Reason[] =>
 
 /**
  * The subpaths' `unavailable` entries, one per cause: the reason none were built, and for each
- * code of a null subpath, its keys. A code a root entry already reports is appended to that entry
- * (`; <CODE> in subpaths <keys>`); any other gets `bundle: <CODE> in subpaths <keys>`.
+ * code of a null subpath one group `<CODE> in subpaths <keys>`, `<keys>` a compact JSON array in
+ * code-point order. A code a root entry already reports gets its group appended to that entry
+ * (`; <group>`); any other gets its own entry, `bundle: <group>`. Codes go in code-point order.
  */
 function addSubpathReasons(reasons: Reason[], subpaths: SubpathMeasurement): void {
   if (subpaths.reason) reasons.push({ text: subpaths.reason, codes: [] });
@@ -349,8 +362,8 @@ function addSubpathReasons(reasons: Reason[], subpaths: SubpathMeasurement): voi
     for (const code of failureCodes(outcome))
       keysByCode.set(code, [...(keysByCode.get(code) ?? []), key]);
   }
-  for (const code of [...keysByCode.keys()].sort()) {
-    const keys = (keysByCode.get(code) ?? []).join(", ");
+  for (const code of [...keysByCode.keys()].sort(byCodePoint)) {
+    const keys = JSON.stringify(keysByCode.get(code) ?? []);
     const covering = reasons.find((reason) => reason.codes.includes(code));
     if (covering) covering.text += `; ${code} in subpaths ${keys}`;
     else reasons.push({ text: `bundle: ${code} in subpaths ${keys}`, codes: [code] });
@@ -459,7 +472,7 @@ export async function rootEntryBundle(
       names: null,
       listProblems: [],
       singles: null,
-      subpaths: unbuiltSubpaths(listed),
+      subpaths: unbuiltSubpaths(listed, REPORT_SUBPATH_LIMIT),
     };
     const { bundle, reasons } = rootEntryFacts(crashed, bundler);
     return { bundle, reasons: [`bundle: BUNDLER_ERROR ${errorMessage(error)}`, ...reasons] };

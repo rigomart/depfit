@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listSubpaths, subpathSpecifier } from "../src/collect/subpaths.ts";
+import { byCodePoint, listSubpaths, subpathSpecifier } from "../src/collect/subpaths.ts";
 
 const keys = (exports: unknown) => listSubpaths({ exports }).subpaths.map((s) => s.key);
 
@@ -107,5 +107,17 @@ describe("subpathSpecifier", () => {
   it("joins the package name and the key without its ./", () => {
     expect(subpathSpecifier("highlight.js", "./lib/core")).toBe("highlight.js/lib/core");
     expect(subpathSpecifier("@scope/pkg", "./a.js")).toBe("@scope/pkg/a.js");
+  });
+});
+
+describe("byCodePoint", () => {
+  it("orders by code point, not UTF-16 unit, and shorter prefixes first", () => {
+    // U+FF5E sorts before U+1F600 by code point, after it by UTF-16 unit.
+    expect(["./\u{1F600}", "./\uFF5E", "./a", "./"].sort(byCodePoint)).toEqual([
+      "./",
+      "./a",
+      "./\uFF5E",
+      "./\u{1F600}",
+    ]);
   });
 });

@@ -497,7 +497,7 @@ describe("renderTable", () => {
     expect(rowBlock(out, "Median one export, gzip")[0]).toMatch(/550 B\s+5\.1 KB$/);
     expect(out).toContain("- of 1204");
     expect(out).toContain(
-      "zod: bundle: UNRESOLVED_IMPORT node:fs; UNRESOLVED_IMPORT in subpaths ./node; bundle: EXPORT_LIMIT 1204; bundle: NON_JS_IMPORT in subpaths ./worker",
+      'zod: bundle: UNRESOLVED_IMPORT node:fs; UNRESOLVED_IMPORT in subpaths ["./node"]; bundle: EXPORT_LIMIT 1204; bundle: NON_JS_IMPORT in subpaths ["./worker"]',
     );
     expect(out).toContain("Bundle (subpaths)");
     const wide = renderTable(

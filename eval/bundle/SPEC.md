@@ -38,11 +38,11 @@ Each iteration is its own PR. Its acceptance bar is written into this file befor
 the next iteration starts only after the current one passes and its scorecard is in `STATUS.md`.
 
 **Superseded after iteration 2 (2026-11-07).** Everything after iteration 2 follows the spec
-"Overview + inspect: a compact default, drill-down on demand"
+"Overview + follow-ups: a compact default with drill-down on demand"
 ([#6](https://github.com/rigomart/depfit/issues/6)), not rows 3–6 of this table. Iteration 2
 ships as that spec's first slice ([#9](https://github.com/rigomart/depfit/issues/9)). Rows 3–6 are
 kept for history; no iteration is built from them. Framework-specific entry points (row 3) are
-folded into #6's `inspect` command.
+folded into the follow-up flags ([#10](https://github.com/rigomart/depfit/issues/10)).
 
 | # | Ships | Bar |
 |---|---|---|
@@ -282,14 +282,15 @@ field that is null or absent as no map (`if (data.exports)`), and depfit does th
   root came to 1.07x real usage, and shiki `core` with `engine/javascript` to 1.05x. Measuring
   each export of every subpath would multiply the builds: 766 more for motion and 1,579 more for
   zod, against 350 and 259 for their roots. The framework subpath that overstates (`motion/react`,
-  1.6x) is iteration 3's target. Add per-export numbers for subpaths in a later iteration only if
+  1.6x) is the target of the follow-up flags (#10). Add per-export numbers for subpaths in a later iteration only if
   gate R's class 4 or gate H shows readers need them.
 
 ### Contract (schema 6, unreleased; fields added, none changed, no version bump; amended 2026-11-07)
 
 The default report shows the subpaths compactly (bar amendment 6, below). The full detail per
 subpath (its lazy bytes, peers and codes, and lists of more than 30) is kept by the measurement
-code for a later `depfit inspect` command. That command is a separate slice, not built here.
+code for the follow-up flags (#10: `--entries`, `--exports`, `--import`). They are a separate
+slice, not built here.
 
 Added to `packages[].bundle`:
 
@@ -297,41 +298,62 @@ Added to `packages[].bundle`:
 |---|---|
 | `exports_map` | true when the measured version's package.json has a non-null `exports` field, false when it has none; null when the manifest could not be read |
 | `subpaths_listed` | How many keys the listing rule admits; 0 when there is no map or the map lists none; null when the manifest could not be read |
-| `subpaths_whole_eager_js_gzip9_bytes` | A map from each listed key (e.g. `"./lib/core"`, imported as `highlight.js/lib/core`), in code-point order, to the eager gzip -9 bytes of that subpath alone, every export kept: the root's `whole_eager_js_gzip9_bytes` for this entry point instead of `"."`. A value is null when that subpath's build is unmeasurable; `unavailable` names the key. The map is `{}` when the map lists no key, and null otherwise (see the states below) |
+| `subpaths_whole_eager_js_gzip9_bytes` | A map from each listed key (e.g. `"./lib/core"`, imported as `highlight.js/lib/core`) to the eager gzip -9 bytes of that subpath alone, every export kept: the root's `whole_eager_js_gzip9_bytes` for this entry point instead of `"."`. The CLI serializes its members in code-point order of the keys; a reader finds an entry by its key, never by its position. A value is null when that subpath's build is unmeasurable, and `unavailable` names the key with its codes (below). The field is: a populated map when 1 to 30 keys are listed and were built; `{}` when the listing is known and lists no key; null when there is no map, more than 30 are listed, the listing is unknown, or the keys could not be built (see the states below) |
 | `subpath_patterns_unmeasured` | Every key of the map that contains `*`, verbatim and in map order; `[]` when there are none or there is no map; null when the manifest could not be read |
 
 **The pattern list stays a list.** The 288 manifests have at most 6 pattern keys per package
 (react-native), so no count is needed. Long pattern lists are a known limit (below).
 
-**States** (whenever `bundle` itself is non-null):
+**States** (whenever `bundle` itself is non-null; revised 2026-11-07 after the amendment's review).
+The listing and the builds are separate steps, and the first decides the metadata. depfit reads
+the installed package.json before any build, in its own process, not in the Vite child. So
+`exports_map`, `subpaths_listed` and `subpath_patterns_unmeasured` come from the listing alone,
+whatever happens to the builds: the listing's values when it was read, and all three null when it
+was not. The map follows the first row that applies, in this order:
 
-| State | `exports_map` | `subpaths_listed` | `subpaths_whole_eager_js_gzip9_bytes` | `subpath_patterns_unmeasured` | `unavailable` |
-|---|---|---|---|---|---|
-| Map with listed keys, at most 30 | true | n | the map | list | one entry per code, naming the keys (below) |
-| Map that lists no key | true | 0 | `{}` | list | none added |
-| No map | false | 0 | null | `[]` | none added |
-| More than 30 listed keys | true | n | null | list | `bundle: SUBPATH_LIMIT <n>` |
-| `TOOLCHAIN_MISMATCH` on the root | true or false | n | null | list or `[]` | the root's entry only |
-| Manifest unreadable | null | null | null | null | `bundle: SUBPATH_LIST_FAILED <message>` |
-| Child crashed during the subpath builds | true | n | null | list | `bundle: BUNDLER_ERROR <message>`; root fields keep what was measured before the crash |
-| Child crashed during the root's builds | true or false | n | null | list or `[]` | the root's `bundle: BUNDLER_ERROR <message>` only |
+| # | Condition | `subpaths_whole_eager_js_gzip9_bytes` | Entry it adds to `unavailable` |
+|---|---|---|---|
+| 1 | Listing unknown (manifest unreadable) | null | `bundle: SUBPATH_LIST_FAILED <file> <error code>` |
+| 2 | No map (`exports_map` false) | null | none |
+| 3 | The map lists no key (`subpaths_listed` 0) | `{}` | none |
+| 4 | More than 30 listed keys | null | `bundle: SUBPATH_LIMIT <n>` |
+| 5 | The root's builds failed: `TOOLCHAIN_MISMATCH`, or the child crashed during them | null | none of its own; the root's entry explains it |
+| 6 | The child crashed during the subpath builds | null | `bundle: BUNDLER_ERROR <message>`; root fields keep what was measured before the crash |
+| 7 | Otherwise | the map | one group per code of a null value (below) |
+
+Every distinct cause keeps exactly one entry. An unreadable manifest together with a root crash
+gives two entries: `SUBPATH_LIST_FAILED` and the root's `BUNDLER_ERROR`. More than 30 keys together
+with a root crash gives two as well: `SUBPATH_LIMIT` and the root's `BUNDLER_ERROR`. In both cases
+the codes differ.
 
 - **Cap in the default report: 30 listed keys.** Over 30, nothing is built for the default report
-  and the map is null. The measurement code keeps its cap of 100 for `inspect`, so gates L, B, C
-  and F, which use the measurement code, are unchanged. In the 288 manifests, these packages have
+  and the map is null. The measurement code keeps its cap of 100 for `--entries`, so gates L, B and
+  C, which use it, are unchanged. Each gate names the call it reads (gates, below). In the 288 manifests, these packages have
   more than 30: date-fns (739), echarts (100), @base-ui/react (78), @mui/utils (62) and storybook
   (49).
-- **Each null value is explained in `unavailable`, one entry per code, naming the keys.** When no
-  root entry reports the code, the subpaths add `bundle: <CODE> in subpaths <keys>`. When a root
-  entry already reports the code, that entry gets `; <CODE> in subpaths <keys>` appended instead.
-  That covers the whole build's `bundle: <CODE> ...`, a listing entry, or the
-  `bundle: <n> exports unmeasurable (<codes>)` summary. So one cause still gives one entry per
-  package (amendment 4). `<keys>` names every key with that code, comma-separated, in key order. At
-  most 30 keys can be named. A null value whose build recorded no code counts as `BUILD_ERROR`.
+- **Each null value is explained in `unavailable`, one entry per code, naming the keys** (format
+  revised 2026-11-07 after the amendment's review).
+  - **The group.** For each code of a null value, `unavailable` holds one group,
+    `<CODE> in subpaths <keys>`. `<CODE>` is the reason code (`[A-Z][A-Z_]*`). `<keys>` is a
+    compact JSON array of every key that failed with that code, in code-point order, e.g.
+    `UNRESOLVED_IMPORT in subpaths ["./node","./tty"]`. JSON escaping keeps any key unambiguous.
+  - **Where the group goes.** When no root entry reports the code, the group is a new entry,
+    `bundle: <group>`. When a root entry already reports it, the group is appended to that entry
+    as `; <group>`. A root entry is the whole build's `bundle: <CODE> ...` entry, a listing entry,
+    or the `bundle: <n> exports unmeasurable (<codes>)` summary, which reports every code in its
+    parentheses. A code belongs to an entry when it is that entry's leading code or one of the
+    summary's listed codes. Matching is on whole codes, never on substrings.
+  - **Parsing.** Groups appended to one entry come in code-point order of their codes. A reader
+    finds each group by the text `bundle: <CODE> in subpaths [` or `; <CODE> in subpaths [`, then
+    parses the JSON array that starts at the `[`.
+  - **What each null value gets.** It appears once per code it failed with: one group per
+    `(key, code)` pair. Each code appears in only one entry per package, so one cause still gives
+    one entry (amendment 4). A value whose build recorded no code counts as `BUILD_ERROR`. At most
+    30 keys can be named.
 - **The package-level `external_packages`** keeps its meaning: the peers of the root's builds.
   `schema-docs` says "root" explicitly, and the description of `entry_point` no longer says that
-  every number in the section measures `"."`. The peers each subpath leaves out are `inspect`
-  detail.
+  every number in the section measures `"."`. The peers each subpath leaves out are detail
+  for the follow-up flags (#10).
 - **`schema-docs`** replaces "subpaths ... are not measured" with what is listed and what is not.
   It also says that each value is a build of that subpath alone, not added to the root's; that two
   values can share code; and that a subpath's lazy chunks and peers are not in the default report.
@@ -347,15 +369,15 @@ Added to `packages[].bundle`:
 
 | Gate | Pass condition |
 |---|---|
-| **A. Honesty** | The iteration-1 null cases and `single-nulls.json` still return their codes. Every listed subpath that is null in the B set or the probe packages gives exactly the code listed below. The gate checks it in the measurement code's per-subpath result (the detail kept for `inspect`) and in the report's `unavailable` entry naming that key (amended 2026-11-07). The kind of specifier is checked against the build's problems, which the eval keeps with its results. Any other null fails A until it is reviewed and listed, and the list waives nothing while its review is pending (amendment 2's rule, written here in advance). Subpath numbers in the B set have 0 gross errors. Every null subpath is covered by one `unavailable` entry per cause. |
+| **A. Honesty** | The iteration-1 null cases and `single-nulls.json` still return their codes. **Two calls** (amended 2026-11-07). (i) The measurement call with its cap of 100, `measureRootEntry(..., { subpaths: true })`, which keeps per-subpath results for the follow-up flags (#10), run over the B set and over every probe package on its frozen tree: every listed subpath that is null gives exactly the code listed below, and its kind of specifier is checked against the build's problems, which the eval keeps. (ii) The default report, where its map has values: every null value's key is named, with each of its codes, in the `unavailable` group format above. Any other null fails A until it is reviewed and listed, and the list waives nothing while its review is pending (amendment 2's rule, written here in advance). Subpath numbers in the B set have 0 gross errors. Every distinct cause has exactly one `unavailable` entry. |
 | **B. Accuracy** | **Reference set** (frozen here, chosen by rule): the first 20 packages in `wild.json` order whose map lists at least one subpath. Each contributes up to 3 subpaths: all of them when there are 3 or fewer, otherwise the first, the middle (index ⌊(n−1)/2⌋) and the last of the sorted keys. That gives the 51 cases in 20 packages listed below; 8 are listed nulls and 43 are measured. The coverage check asserts these exact package, version and key tuples. Gate L's listing must give the same 51; any difference stops the gate for review rather than changing the set. Each case is built whole with rollup + terser and webpack (`reference.ts`) from one tree per package, frozen as an npm lockfile on its first reference build, and depfit measures the same lockfile. Every measured case is in band on both gzip fields (iteration 1's band) or covered by a reviewed exception, with 0 gross errors. Listed nulls count under A. |
 | **C. Vite conformance** | B's 43 measured cases equal a stock `vite build` of the same import, made by `reference.ts` without depfit's code from the same lockfile: gzip within 1%, and min bytes identical. The gate reads min bytes from the build even though the report omits them. |
-| **D. Determinism** | Two runs on the same frozen installs, over every probe and the B set, give identical `exports_map`, `subpaths_listed`, `subpaths_whole_eager_js_gzip9_bytes` (keys, order and bytes), `subpath_patterns_unmeasured` and reasons. They also give identical per-subpath results in the measurement code (bytes, peers and codes), which `inspect` will serve (amended 2026-11-07). |
-| **E. Contract** | Every package has every bundle field, the new ones included, in every state of the table above. In `subpaths_whole_eager_js_gzip9_bytes`, keys are in code-point order. The map has `subpaths_listed` keys whenever it is non-null. Every null value's key is named, with a code, in exactly one `unavailable` entry (amended 2026-11-07). Every new path is in `schema-docs`. Every non-bundle field is identical with `DEPFIT_BUNDLE=0`. Unit tests cover each state, including a crash in the subpath phase that leaves the root's fields as measured. |
+| **D. Determinism** | Two runs on the same frozen installs give identical results (amended 2026-11-07). The default report is compared over every probe: `exports_map`, `subpaths_listed`, `subpaths_whole_eager_js_gzip9_bytes` (its serialized member order and bytes), `subpath_patterns_unmeasured`, and reasons. The measurement call with its cap of 100 is compared over every probe package and the B set: the per-subpath bytes, peers and codes. |
+| **E. Contract** (amended 2026-11-07) | (i) Fields: every package has every bundle field, the new ones included, in every state of the table above, and the states' precedence holds. (ii) Order: the map's members are checked on the CLI's serialized JSON text; they are in code-point order of their keys and the keys are unique. (iii) Correspondence: for every probe package with 1 to 30 listed keys, the report's map has exactly the keys the listing rule admits. Each value equals that key's `whole_eager_js_gzip9_bytes` from the measurement call (cap 100) on the same frozen tree, null where that build is null. For each null value, the `(key, code)` pairs named in `unavailable` equal the codes of its failed build. (iv) Every `(key, code)` pair is named exactly once, and every code appears in only one entry per package. (v) Every new path is in `schema-docs`. (vi) Every non-bundle field is identical with `DEPFIT_BUNDLE=0`. (vii) Unit tests cover each state and their precedence, including a crash in the subpath phase that leaves the root's fields as measured. |
 | **L. Listing** | (i) Fixed manifests in unit tests: `exports` absent, null, a string, an array, root-only conditions; conditions in different orders; array targets; a null target; types-only and Node-only keys; CSS, JSON and wasm targets; a trailing-`/` key; `./package.json`; two keys aliasing one file; pattern keys with JS, non-JS and null targets; and 100 vs 101 listed keys. Each must give the listing, patterns and state this section defines. (ii) Corpus: depfit's listed keys and pattern keys, computed before the cap, equal an independent listing for each of the 288 manifests: the 59 probe packages and 200 wild packages at their frozen versions, and the 29 holdout-2 candidates at the versions frozen for them (holdout section). The gate makes that listing with `resolve.exports` 2.0.3, installed by the eval, under the rule above. 0 differences. |
-| **F. Cost** | In a workspace with no browser signal, Vite is never loaded (unchanged). In a browser workspace, the subpath phase is timed per package on frozen installs, from the end of the root's last build until the subpath phase returns its final state. That includes reading the manifest, listing and processing results, and it is timed even when no subpath is built (no map, an empty map, over the cap, or a listing failure). The population is every candidate of every probe at its frozen version, each counted per probe. The percentiles are taken on the sorted list, zero-based: the median at index ⌊n/2⌋, p90 at ⌊0.9n⌋. Budgets: median at most 250 ms and p90 at most 1 s; the max is reported. These are budgets, not measured limits. Round 5's 65 candidates measured a median of 0 ms (40 build no subpath), a p90 of 58 ms and a max of 0.95 s (shiki, 10 subpaths). The bundle step including subpaths stays within iteration 1's median of 1.5 s per package. No package builds more than 100 subpaths, and the default report builds at most 30 per package (amended 2026-11-07). |
+| **F. Cost** | In a workspace with no browser signal, Vite is never loaded (unchanged). In a browser workspace, the call timed is the default report's (amended 2026-11-07): it builds at most 30 subpaths per package, and none when more are listed. Its subpath phase is timed per package on frozen installs, from the end of the root's last build until the subpath phase returns its final state, plus reading the manifest. It is timed even when no subpath is built (no map, an empty map, over the cap, or a listing failure). The population is every candidate of every probe at its frozen version, each counted per probe. The percentiles are taken on the sorted list, zero-based: the median at index ⌊n/2⌋, p90 at ⌊0.9n⌋. Budgets: median at most 250 ms and p90 at most 1 s; the max is reported. These are budgets, not measured limits. Round 5's 65 candidates measured a median of 0 ms (40 build no subpath), a p90 of 58 ms and a max of 0.95 s (shiki, 10 subpaths). The bundle step including subpaths stays within iteration 1's median of 1.5 s per package. No call builds more than 100 subpaths, and the default report builds at most 30 per package. |
 | **S. Browser signal** | Unchanged; rerun. |
-| **R. Real usage** | Scored by the algorithm below, over the round-4, holdout-1 and holdout-2 probes. (a) Real usage lies in `[0.9 × L, 1.1 × U]` for at least 85% of candidates (85% as in iteration 1; the round-5 data under this algorithm gives 58/64). (b) Take the pairs in one probe where L and U point the same way and real usage differs by at least 10%: real usage agrees in at least 90% of them (round 5 under this algorithm: 48/48). (c) Listing coverage: every imported subpath that the listing rule admits, of a package with at most 30 listed keys, is a key of `subpaths_whole_eager_js_gzip9_bytes`, and a null one is a listed null under A. Imported subpaths of packages over 30 are counted and reported separately (amended 2026-11-07). This must hold for 100%. (d) Every miss falls into a class below, and any other miss fails the gate. The scores are reported for each set as well as overall. |
+| **R. Real usage** | Scored by the algorithm below on the default report, over the round-4, holdout-1 and holdout-2 probes. Fresh scores, and the pair denominator, are reported overall and for each set. The round-5 figures quoted here (58/64 in range, 48/48 pairs) came from the research simulation under the full-list contract with a cap of 100: they are history, not a prediction (amended 2026-11-07). (a) Real usage lies in `[0.9 × L, 1.1 × U]` for at least 85% of candidates (85% as in iteration 1). (b) Take the pairs in one probe where L and U point the same way and real usage differs by at least 10%: real usage agrees in at least 90% of them; when no pair qualifies, (b) is reported as 0/0 and does not fail. (c) Listing coverage: every imported subpath that the listing rule admits, of a package with at most 30 listed keys, is a key of `subpaths_whole_eager_js_gzip9_bytes`, and a null one is a listed null under A. Imported subpaths of packages over 30 are counted and reported separately. This must hold for 100%. (d) Every miss falls into a class below, and any other miss fails the gate. |
 | **H0. Comprehension** | A blind Haiku reader with only the JSON and `--schema` answers iteration 1's 5 questions and 6 new ones correctly in 3/3 runs (amended 2026-11-07). The new questions: (6) what a value of `subpaths_whole_eager_js_gzip9_bytes` includes, and that it is a build of that subpath alone, not added to the root's; (7) where the number for `highlight.js/lib/core` is, and that `highlight.js/lib/languages/typescript` has no number of its own, so its standalone size is unknown; (8) what `exports_map: false` means for importing `dayjs/plugin/relativeTime`; (9) why a value is null (`@formkit/auto-animate` `./react`, named in `unavailable`); (10) what adding two values gives: a figure that can count their shared code twice; (11) what a null map with `subpaths_listed: 739` means for date-fns: more than 30 subpaths, none measured in this report, not "no subpaths" (question 11 added 2026-11-07). The reports are iteration 1's three, plus a browser workspace with highlight.js, shiki, @formkit/auto-animate, dayjs and date-fns (over the cap). |
 | **H. Decisions** | A blind eval on all 32 probes. The control is the iteration-1 CLI (`7b30612`) run on the same frozen installs, with its own `--schema`. Sonnet reads the control; Sonnet and Haiku read the iteration-2 report and schema. There are 0 misreadings of what a number measures. Misreadings include: taking a subpath value as added to the root's; taking a pattern subpath or an add-on with no map as measured; and taking a null map over 30 as "no subpaths" (the last added 2026-11-07). Every decision that differs from the control is reviewed against real usage and the facts. None is worse unless its cause is a known limit below. |
 
@@ -426,7 +448,7 @@ ground-truth snippet's shape and the listing, checked in this order:
 
 - **Class 3:** real usage goes through a framework subpath (`motion/react`,
   `@formkit/auto-animate/react`), matched by iteration 1's regex. Subpaths are measured whole, so
-  these can miss, and an undeclared framework peer makes them null. Iteration 3.
+  these can miss, and an undeclared framework peer makes them null. Left to the follow-up flags (#10).
 - **Class 1a:** real usage imports a module other than the root from a package with no `exports`
   map (dayjs plugins, `prismjs/components/*`, `@atlaskit/pragmatic-drag-and-drop/*`, `ol/*`). Out
   of scope.
@@ -446,11 +468,11 @@ imported entry point gives numbers.
 
 **Known limits for gate H** (written before any iteration-2 run):
 
-- The numbers are standalone, not marginal (iteration 5).
+- The numbers are standalone, not marginal. Marginal bytes are parked in #6 as an idea.
 - Subpaths are measured whole only, so a subpath used for a few of its exports shows its whole
   size.
 - Framework subpaths are measured whole, and an undeclared framework peer makes them null
-  (iteration 3).
+  (left to the follow-up flags, #10).
 - Pattern keys are not expanded, and a package with no `exports` map lists no subpaths (gsap's
   Flip, highlight.js languages, dayjs plugins).
 - Each entry point is its own build, so the sum of two entry points' numbers can count their
@@ -458,7 +480,7 @@ imported entry point gives numbers.
 - A package with more than 30 listed subpaths shows none in the default report (date-fns, echarts;
   amended 2026-11-07).
 - The default report gives each subpath's eager bytes only. Its lazy chunks, its peers and the codes
-  of each null are `inspect` detail; `unavailable` names each null key with its code (added
+  of each null are detail for `--entries` (#10); `unavailable` names each null key with its code (added
   2026-11-07).
 - Pattern keys are listed in full; a package with many of them would show a long list (added
   2026-11-07).
@@ -468,34 +490,46 @@ imported entry point gives numbers.
 Decided by the user on 2026-11-07, after the product direction changed and before any
 iteration-2 result existed. No iteration-2 number had been computed for the probes, the B set or
 the holdout. The only runs were the holdout-2 freeze and the control run with the iteration-1 CLI.
-The direction is the spec "Overview + inspect" ([#6](https://github.com/rigomart/depfit/issues/6)):
-depfit's default report stays compact, and an agent gets detail through a follow-up `depfit
-inspect` call. Iteration 2 is that spec's first slice
+The direction is the spec "Overview + follow-ups" ([#6](https://github.com/rigomart/depfit/issues/6)):
+depfit's default report stays compact, and an agent gets detail through the follow-up flags
+([#10](https://github.com/rigomart/depfit/issues/10): `--entries`, `--exports`, `--import`).
+Iteration 2 is that spec's first slice
 ([#9](https://github.com/rigomart/depfit/issues/9)). An independent reviewer checked this
-amendment before any iteration-2 result (verdict in `STATUS.md`). The lines changed above say
+amendment before any iteration-2 result on the report gates (verdict in `STATUS.md`). Its first
+review found five must-fix gaps, and they were fixed the same day. Those fixes are part of this
+amendment: the states' precedence, the parseable `unavailable` format, correspondence in E, the
+call each gate reads, and fresh R scores. Between the first review and the fixes, gate L and gates
+A, B, C and D on the B set had been scored, and all passed. The fixes changed A's report-format
+check and named the call each gate reads, so those gates are rerun on the final code. No report
+gate (E, R, H0, H) had run. The lines changed above say
 "amended 2026-11-07"; the original text is in git history.
 
 1. **The default report gets a compact map instead of `subpaths[]`.** The map is
    `subpaths_whole_eager_js_gzip9_bytes`, from entry point to whole eager gzip bytes, together with
    `subpaths_listed`. `exports_map` and `subpath_patterns_unmeasured` stay. Above 30 listed keys the
    map is null and `subpaths_listed` still gives the number. That is the default report's cap. The
-   measurement code keeps its cap of 100, for `inspect`.
-2. **Each null value is explained in `unavailable`, one entry per code, naming the keys.** This
-   replaces the `bundle: <n> subpaths unmeasurable (<codes>)` summary. A code a root entry already
-   reports is appended to that entry, so amendment 4 (one entry per cause) still holds.
+   measurement code keeps its cap of 100, for `--entries`.
+2. **Each null value is explained in `unavailable`, one entry per code, naming the keys.** Each
+   group names the keys as a JSON array, and the parse rule is written down. This replaces the
+   `bundle: <n> subpaths unmeasurable (<codes>)` summary. A code a root entry already reports is
+   appended to that entry, so amendment 4 (one entry per cause) still holds.
 3. **What leaves the default report:** each subpath's lazy bytes, peers and codes, and any list
-   beyond 30. The measurement and listing code keep them for the `inspect` slice, which is not
+   beyond 30. The measurement and listing code keep them for the follow-up flags (#10), which are not
    built here.
 4. **Gates.**
    - Unchanged: L, B, C, F's budgets, S, and the frozen holdout-2.
-   - A and D now check the per-subpath detail in the measurement code's result rather than in the
-     report. A also checks the report's `unavailable` entry for each null key. Both are still
-     checkable as written; only the place they read changed.
-   - E checks the new fields and states.
-   - R reads the map, and its coverage and class 1c use the cap of 30.
+   - A and D keep their coverage through the measurement call with its cap of 100, which runs
+     over the B set and every probe package. They also check the default report wherever it has
+     values. Each gate names the call it reads.
+   - F times the default report's call, which builds at most 30 subpaths per package.
+   - E checks the new fields, the states and their precedence, and the serialized order. It also
+     checks that the report's map matches the measurement call exactly: its keys, its values, and
+     the codes of each null.
+   - R reads the map, and its coverage and class 1c use the cap of 30. Its round-5 figures are
+     marked as history, and fresh scores are reported for each set.
    - H0's subpath questions read the map, and question 11 asks about a null map over 30.
    - H adds one misreading: a null map over 30 taken as "no subpaths".
-   - Known limits gain the lazy bytes and peers that move to `inspect`, and long pattern lists.
+   - Known limits gain the lazy bytes and peers that move to the follow-up flags (#10), and long pattern lists.
    - No gate was dropped.
 5. **The iteration table is superseded after iteration 2** by #6 (note under the table).
 6. **The single-export median stays in the default report** until #6's three-way eval decides it.
