@@ -11,9 +11,11 @@ bun src/cli.ts --schema   # one sentence per JSON field
 bun run check-types
 bun run lint
 bun run test:once
+bun ci/e2e.ts              # CLI on test/fixtures against the output contract (CI runs it on Node too)
+bun ci/bundle-accuracy.ts  # the bundle eval's frozen reference cases, exact
 ```
 
-Collecting needs network access and `npm` on PATH. Two environment switches exist for the eval only:
+Collecting needs network access and `npm` on PATH. Two environment switches exist for the eval and CI only:
 `DEPFIT_BUNDLE=0` turns bundle facts off, and `DEPFIT_LOCK_DIR=<dir>` records each isolated install's
 lockfile there, or replays it with `npm ci` when one exists. GitHub facts need `GITHUB_TOKEN`, `GH_TOKEN`,
 or a logged-in `gh`; without one they are null and listed in `unavailable`.
@@ -32,6 +34,8 @@ or a logged-in `gh`; without one they are null and listed in `unavailable`.
   Acceptance bar: `eval/bundle/SPEC.md`.
 - `src/render/`: the human table, a view of the `Report`.
 - `test/fixtures/`: small projects for lockfile and workspace tests (see its README).
+- `ci/`: what `.github/workflows/ci.yml` runs on every pull request, and the performance baseline
+  (see its README).
 - `eval/`: the evaluation harness (see Evaluation).
 
 ## Output rules
