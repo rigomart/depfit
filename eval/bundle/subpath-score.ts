@@ -244,18 +244,22 @@ type ExpectedNull = { package: string; subpath: string; code: string; specifiers
 
 async function loadExpectedNulls(): Promise<ExpectedNull[]> {
   const raw = asRecord(await readJson(join(HERE, "subpath-nulls.json")));
-  const reviewed = asString(raw.reviewed) ?? "";
-  // An unreviewed list waives nothing.
-  if (!reviewed || reviewed.startsWith("pending")) return [];
-  return asArray(raw.nulls).map((item) => {
-    const entry = asRecord(item);
-    return {
-      package: asString(entry.package) ?? "",
-      subpath: asString(entry.subpath) ?? "",
-      code: asString(entry.code) ?? "",
-      specifiers: entry.specifiers,
-    };
-  });
+  // Each entry carries its own review; an unreviewed or pending entry waives nothing.
+  const isReviewed = (item: unknown) => {
+    const reviewed = asString(asRecord(item).reviewed) ?? "";
+    return reviewed !== "" && !reviewed.startsWith("pending");
+  };
+  return asArray(raw.nulls)
+    .filter(isReviewed)
+    .map((item) => {
+      const entry = asRecord(item);
+      return {
+        package: asString(entry.package) ?? "",
+        subpath: asString(entry.subpath) ?? "",
+        code: asString(entry.code) ?? "",
+        specifiers: entry.specifiers,
+      };
+    });
 }
 
 type Problem = { code: string; specifier: string | null };
@@ -526,6 +530,11 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
   const aFail: string[] = [];
   const honestNulls: string[] = [];
   const dFail: string[] = [];
+  const coverage: string[] = [];
+  const candidates = [...specs.values()].reduce((n, s) => n + s.count, 0);
+  if (specs.size !== 88 || candidates !== 94) {
+    coverage.push(`${specs.size} packages and ${candidates} candidates, not 88 and 94`);
+  }
   const times: Array<{ spec: string; ms: number; count: number; built: number }> = [];
   /** Per package, the measurement call's results (cap 100), for gate E's correspondence. */
   const measured: Record<string, unknown> = {};
@@ -547,7 +556,19 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
         listed: first.subpaths?.listed ?? null,
         reason: first.subpaths?.reason ?? null,
         subpaths: subpathDetail(first),
+        problems: Object.fromEntries(
+          (first.subpaths?.subpaths ?? []).map(({ key, outcome }) => [key, outcome.problems]),
+        ),
       };
+      // Coverage: every listed key is built when the measurement call can build them all.
+      const listedCount = first.subpaths?.listed ?? null;
+      const builtCount = first.subpaths?.subpaths?.length ?? 0;
+      const buildable =
+        first.subpaths?.exportsMap === true && listedCount !== null && listedCount <= 100;
+      const rootFailed = first.whole.problems.some((p) => p.code === "TOOLCHAIN_MISMATCH");
+      if (buildable && !rootFailed && builtCount !== listedCount) {
+        coverage.push(`${spec}: ${builtCount} of ${listedCount} listed subpaths built`);
+      }
       // The default report's call, the CLI's own (`rootEntryBundle`, cap 30): F's time, the
       // number of builds, and A (ii) on its reasons.
       let ms = 0;
@@ -580,14 +601,27 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
   const maxBuilt = Math.max(0, ...times.map((t) => t.built));
   const lines = [
     `Iteration 2, probe packages: ${specs.size} distinct packages, ${sorted.length} probe candidates`,
-    `  A (i) and (ii). ${honestNulls.length} nulls with their listed reason; ${aFail.length} other ${verdict(!aFail.length)}`,
+    `  coverage: ${coverage.length} problems ${verdict(!coverage.length)} (every gate below fails while this does)`,
+    ...coverage.map((c) => `    ${c}`),
+    `  A (i) and (ii). ${honestNulls.length} nulls with their listed reason; ${aFail.length} other ${verdict(!aFail.length && !coverage.length)}`,
     ...[...aFail, ...honestNulls].map((f) => `    ${f}`),
     `  D. measurement call twice per package: ${dFail.length} differences ${verdict(!dFail.length)}`,
     ...dFail.map((f) => `    ${f}`),
     `  F. default call's subpath phase per candidate: median ${median} ms (max 250) ${verdict(median <= 250)}, p90 ${p90} ms (max 1000) ${verdict(p90 <= 1000)}, max ${max} ms (${times.find((t) => t.ms === max)?.spec ?? "?"}); most subpaths built for one package ${maxBuilt} (max ${REPORT_SUBPATH_LIMIT}) ${verdict(maxBuilt <= REPORT_SUBPATH_LIMIT)}`,
   ];
   console.log(lines.join("\n"));
-  await save("probes", { aFail, honestNulls, dFail, times, median, p90, max, maxBuilt, measured });
+  await save("probes", {
+    coverage,
+    aFail,
+    honestNulls,
+    dFail,
+    times,
+    median,
+    p90,
+    max,
+    maxBuilt,
+    measured,
+  });
 }
 
 // --- E, D and R on the reports ----------------------------------------------------------------------
