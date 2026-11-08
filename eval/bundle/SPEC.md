@@ -1014,20 +1014,31 @@ in `STATUS.md`). The original text is in git history; the lines changed above sa
     lookups, and two medians of 6 calls differ by noise. The margin is not chosen by hand: it is
     measured by running today's CLI against itself under the same protocol, before #8's rerun.
   - **Commands and environment, frozen before the controls run:**
+    - **Workspaces:** `M_a` and K5 (a) run in `test/fixtures/browser-app`; `M_f` and K5 (f) in
+      `test/fixtures/lockfile-npm` (no browser signal), both from the branch's checkout, unchanged
+      between a control and its candidate run.
     - Today's CLI: `bun <checkout>/src/cli.ts <call> --cwd <workspace> --json`, where `<checkout>`
       is a separate checkout at 573991c with its own `bun install --frozen-lockfile`. #8's CLI: the
       same command on the branch's commit under test.
-    - Every invocation inherits the runner's environment unchanged, except: today's arms in the
+    - Every invocation inherits the runner's environment unchanged, with `DEPFIT_LOCK_DIR`,
+      `DEPFIT_BUNDLE_WORKERS` and `DEPFIT_BUNDLE` removed, and then: today's arms in the
       browser workspace get `DEPFIT_BUNDLE=0`; #8's arm in the browser workspace runs with bundle
       facts on (no `DEPFIT_BUNDLE`); every arm gets its own `XDG_CACHE_HOME`, a new empty directory
-      made for that experiment, never the user's own cache directory.
+      made for that experiment, never the user's own cache directory. Every arm also gets, first on
+      its `PATH`, a wrapper `npm` that appends its arguments to a log for that invocation and then
+      runs the real npm, so the arms stay identical and every npm run is recorded.
+    - **Manifest, recorded before the first control:** both commits, the Bun, Node and npm versions,
+      npm's cache path (`npm config get cache`), the hash of `npm config list --json`, and the
+      environment variables above as set or removed (names and values, no secrets).
     - npm's cache is the runner's default, shared by every arm, as for an agent; nothing clears it.
       **Freshness:** a timed invocation is valid only if the same call ran, in either arm, at most
       240 s before it started (inside npm's 300 s); the runner records each start time and checks it.
     - #8's cache is primed by one untimed #8 call per call, in its experiment's `XDG_CACHE_HOME`,
-      right before round 0. **Hits are proved, not assumed:** every timed #8 invocation must report,
-      for every package, the `measured_at` of its priming call, and in the browser workspace a
-      non-null `bundle`. A timed #8 invocation that is not a hit stops the run and fails the gate.
+      right before round 0. **Hits are proved, not assumed:** every timed #8 invocation's npm log
+      holds only `npm config list --json` and one `npm install --package-lock-only` per npm package
+      (no other `npm install` and no `npm ci`), as K1 requires; in K5 (a), every package also
+      reports a non-null `bundle` whose `measured_at` is non-null and equal to its priming call's. A
+      timed #8 invocation that is not a hit stops the run and fails the gate.
   - **Order, fixed before the controls run:** the experiments run one after another: the browser
     control (for `M_a`), the control with no browser signal (for `M_f`), then K5 (a), then K5 (f).
     In each, before round 0, every call runs once untimed in the listed order: in a control, in arm
