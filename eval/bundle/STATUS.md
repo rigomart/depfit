@@ -655,3 +655,65 @@ starts with the user.
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and
 `method.md` (bundler study).
+
+## Parallel builds (#7): measurements for the bar (2026-11-08)
+
+Measured for SPEC.md "Parallel builds (#7)" on an Apple M4 Pro (12 cores, 24 GB), Node 24.14.1,
+Bun 1.3.14, npm 11.11.0, warm npm cache, with research scripts outside the repo that reuse depfit's
+own runner (`startViteRunner`, `outcomeOf`, `measureRootEntry`). Another session's builds ran on the
+same machine during part of this; the per-package and pool numbers below are from quiet windows, and
+the zod and motion worker sweeps were taken under load, so they show the shape, not exact times.
+
+**Today, CLI wall time** (`test/fixtures/browser-app`, two rounds, bundle facts on / off):
+
+| Call | On | Off |
+|---|---|---|
+| valibot | 3.6, 4.2 s | 1.9, 1.0 s |
+| zod | 7.1, 7.7 s | 2.1, 2.1 s |
+| date-fns | 7.9, 8.8 s | 1.8, 1.7 s |
+| motion | 10.8, 10.7 s | 2.6, 1.7 s |
+| zod valibot | 7.2, 7.3 s | 1.3, 1.3 s |
+| valibot zod date-fns motion | 16.3, 14.2 s | 2.2, 2.0 s |
+
+Each pair of reports was identical apart from `generated_at`.
+
+**Where the time goes today** (one candidate, ms from start): zod resolved at 592, installed at
+1273, OSV done at 2029, builds done at 8027; motion 488, 1011, 1092, 10199. Builds start after the
+install and run alongside the lookups, which all end by about 2.2 s.
+
+**Bundle step: today against a shared pool** (every build of the root, recycling after 100 builds):
+
+| Package (exports) | Today | 1 worker | 2 workers | 4 workers |
+|---|---|---|---|---|
+| valibot (321) | 3.26 s | 3.41 s | 1.86 s | 1.05 s |
+| zod (260) | 6.01 s | 6.07 s | 3.84 s | 3.30 s |
+| date-fns (251) | 5.95 s | 6.05 s | 3.79 s | 2.61 s |
+| motion (350) | 9.32 s | 9.38 s | 5.80 s | 4.20 s |
+| zod valibot | 5.80 s | 8.97 s | 5.12 s | 3.75 s |
+| all four | 11.6 s | 24.4 s | 13.8 s | 9.7 s (9.2 s without recycling) |
+
+"Today" for several packages is one child per candidate, all at once. Under load: zod at 1, 2, 4, 6
+and 8 workers took 5.6, 3.7, 2.9, 2.7 and 3.0 s; motion at 2, 4 and 6 took 5.4, 3.8 and 3.6 s;
+all four at 6 and 8 workers took 8.7 and 8.5 s.
+
+**Same results:** every outcome (bytes, problems, peers) matched the sequential build in every pool
+run above: 261, 351, 321, 251, 582 and 1184 builds, at 1 to 8 workers, with and without recycling,
+with workers started in a neutral directory serving every install. Two entry layouts did not:
+
+- A per-worker entry file name (`__depfit_entry_<i>.mjs`) changed @storybook/addon-a11y@10.6.6's lazy
+  bytes by 2 B (687,903 to 687,905 min). Its lazy chunks name the entry chunk. The same name in a
+  per-worker directory, or a copy of the install per worker (1.05 s to copy three), was identical.
+- An entry in a per-worker directory turned biome's `NO_ENTRY` into `UNRESOLVED_IMPORT`, because
+  `problemsFromBuild` recognizes the entry by its path relative to the root.
+- No package in `single-reference.json` has lazy bytes, so CI's checks would not see the first one.
+
+**Memory** (summed resident memory of the Vite workers, sampled every 150 ms): one worker building
+motion's exports over and over held 632 MB after 100 builds, 947 MB after 200, 1.5 GB after 500 and
+2.3 GB after 1000; capped at a 384 MB heap it ran out at about build 570, so the memory is kept, not
+merely uncollected. Peaks: today motion 1.4 to 1.5 GB, zod 0.8 GB, all four 3.0 to 3.1 GB. Pool with
+4 workers and recycling: zod 2.0 GB, motion 2.5 GB, zod valibot 2.0 GB, all four 2.6 GB (4.1 GB
+without recycling, 5.9 GB at 8 workers). A fresh worker's first build took 100 ms, later builds
+11 ms (median).
+
+**Not measured:** a machine with 1 or 2 CPUs, and CI's 4-vCPU runners (worker counts 1 and 2 were run
+on 12 cores instead); subpath builds under a pool (iteration 2 is not merged).
