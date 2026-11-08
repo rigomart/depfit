@@ -128,7 +128,13 @@ export function unbuiltSubpaths(
   reason: string | null = null,
 ): SubpathMeasurement {
   if (!listed.ok) {
-    return { exportsMap: null, listed: null, patterns: null, subpaths: null, reason: listed.reason };
+    return {
+      exportsMap: null,
+      listed: null,
+      patterns: null,
+      subpaths: null,
+      reason: listed.reason,
+    };
   }
   const { exportsMap, patterns, subpaths } = listed.listing;
   const state = { exportsMap, listed: subpaths.length, patterns };

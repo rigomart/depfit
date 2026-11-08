@@ -308,7 +308,7 @@ describe("rootEntryFacts", () => {
       "./tty",
     ]);
     expect(facts.reasons).toEqual([
-      "bundle: BUILD_ERROR in subpaths [\"./silent\"]",
+      'bundle: BUILD_ERROR in subpaths ["./silent"]',
       'bundle: UNRESOLVED_IMPORT in subpaths ["./node","./tty"]',
     ]);
     expect(subpathDetail(measured)).toEqual([
@@ -489,7 +489,11 @@ describe("unbuiltSubpaths", () => {
       subpaths: null,
       reason: null,
     });
-    expect(unbuiltSubpaths(listing(0), 30, crash)).toMatchObject({ listed: 0, subpaths: [], reason: null });
+    expect(unbuiltSubpaths(listing(0), 30, crash)).toMatchObject({
+      listed: 0,
+      subpaths: [],
+      reason: null,
+    });
     expect(unbuiltSubpaths(listing(31), 30, crash)).toMatchObject({
       listed: 31,
       subpaths: null,

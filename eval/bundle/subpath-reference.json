@@ -673,10 +673,7 @@
       "id": "testing-library__jest-dom",
       "package": "@testing-library/jest-dom",
       "version": "7.0.1",
-      "external_packages": [
-        "@testing-library/dom",
-        "vitest"
-      ],
+      "external_packages": ["@testing-library/dom", "vitest"],
       "subpaths": {
         "./jest-globals": {
           "rollup": {
@@ -753,10 +750,7 @@
       "id": "react-router",
       "package": "react-router",
       "version": "8.4.0",
-      "external_packages": [
-        "react",
-        "react-dom"
-      ],
+      "external_packages": ["react", "react-dom"],
       "subpaths": {
         "./dom": {
           "rollup": {
@@ -851,10 +845,7 @@
       "id": "framer-motion",
       "package": "framer-motion",
       "version": "14.3.0",
-      "external_packages": [
-        "react",
-        "react-dom"
-      ],
+      "external_packages": ["react", "react-dom"],
       "subpaths": {
         "./animate-view": {
           "rollup": {
@@ -949,11 +940,7 @@
       "id": "react-redux",
       "package": "react-redux",
       "version": "9.3.0",
-      "external_packages": [
-        "@types/react",
-        "react",
-        "redux"
-      ],
+      "external_packages": ["@types/react", "react", "redux"],
       "subpaths": {
         "./alternate-renderers": {
           "rollup": {
@@ -990,9 +977,7 @@
       "id": "postcss-js",
       "package": "postcss-js",
       "version": "5.1.0",
-      "external_packages": [
-        "postcss"
-      ],
+      "external_packages": ["postcss"],
       "subpaths": {
         "./async": {
           "rollup": {
@@ -1087,9 +1072,7 @@
       "id": "preact",
       "package": "preact",
       "version": "11.0.1",
-      "external_packages": [
-        "preact-render-to-string"
-      ],
+      "external_packages": ["preact-render-to-string"],
       "subpaths": {
         "./compat": {
           "rollup": {
@@ -1469,10 +1452,7 @@
       "id": "reduxjs__toolkit",
       "package": "@reduxjs/toolkit",
       "version": "2.13.0",
-      "external_packages": [
-        "react",
-        "react-redux"
-      ],
+      "external_packages": ["react", "react-redux"],
       "subpaths": {
         "./query": {
           "rollup": {

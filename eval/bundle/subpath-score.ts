@@ -181,7 +181,11 @@ async function scoreListing(control: string): Promise<void> {
       version,
       source,
     })),
-    ...(await loadWildPackages()).map((p) => ({ name: p.name, version: p.version, source: "wild" })),
+    ...(await loadWildPackages()).map((p) => ({
+      name: p.name,
+      version: p.version,
+      source: "wild",
+    })),
   ];
   const coverage: string[] = [];
   if (specs.length !== 288) coverage.push(`${specs.length} manifests, not 288`);
@@ -304,7 +308,10 @@ export function subpathGroups(entry: string): Array<{ code: string; keys: string
       }
     }
     if (end < 0) break;
-    groups.push({ code: match[1] ?? "", keys: asStringArray(JSON.parse(entry.slice(start, end + 1))) });
+    groups.push({
+      code: match[1] ?? "",
+      keys: asStringArray(JSON.parse(entry.slice(start, end + 1))),
+    });
     head.lastIndex = end + 1;
   }
   return groups;
@@ -347,7 +354,9 @@ function nullNamingProblems(reasons: string[], key: string, codes: string[]): st
   const problems = codes
     .filter((code) => pairs.get(`${key} ${code}`) !== 1)
     .map((code) => `${key} with ${code} named ${pairs.get(`${key} ${code}`) ?? 0} times`);
-  const extra = [...pairs.keys()].filter((pair) => pair.startsWith(`${key} `) && !codes.includes(pair.slice(key.length + 1)));
+  const extra = [...pairs.keys()].filter(
+    (pair) => pair.startsWith(`${key} `) && !codes.includes(pair.slice(key.length + 1)),
+  );
   return [...problems, ...extra.map((pair) => `${pair} named but not a code of its build`)];
 }
 
@@ -452,8 +461,7 @@ async function scoreReference(): Promise<void> {
           const naming = nullNamingProblems(reasons, key, codes.length ? codes : ["BUILD_ERROR"]);
           if (problem || naming.length) {
             aFail.push(`${label}: ${[problem, ...naming].filter(Boolean).join("; ")}`);
-          }
-          else honestNulls.push(`${label}: ${codes.join(", ")}`);
+          } else honestNulls.push(`${label}: ${codes.join(", ")}`);
           results.push({ name, key, problems: outcome.problems });
           continue;
         }
@@ -476,7 +484,14 @@ async function scoreReference(): Promise<void> {
         }
         const mismatch = conformance(bytes, refs.vite);
         if (mismatch) cFail.push(`${label}: ${mismatch}`);
-        results.push({ name, key, bytes, rollup: refs.rollup, webpack: refs.webpack, vite: refs.vite });
+        results.push({
+          name,
+          key,
+          bytes,
+          rollup: refs.rollup,
+          webpack: refs.webpack,
+          vite: refs.vite,
+        });
       }
       console.log(`${name}@${version}: ${first.subpaths?.listed ?? "?"} listed`);
     } finally {
@@ -548,13 +563,19 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
       for (const { key, outcome } of report.subpaths?.subpaths ?? []) {
         if (outcome.bytes) continue;
         const codes = [...new Set(outcome.problems.map((p) => p.code))].sort();
-        for (const naming of nullNamingProblems(reasons, key, codes.length ? codes : ["BUILD_ERROR"])) {
+        for (const naming of nullNamingProblems(
+          reasons,
+          key,
+          codes.length ? codes : ["BUILD_ERROR"],
+        )) {
           aFail.push(`${spec} (default report): ${naming}`);
         }
       }
     });
     const last = times.at(-1);
-    console.log(`${spec}: subpath phase ${last?.ms ?? "?"} ms, ${last?.built ?? 0} built (default call)`);
+    console.log(
+      `${spec}: subpath phase ${last?.ms ?? "?"} ms, ${last?.built ?? 0} built (default call)`,
+    );
   }
   const sorted = times.flatMap((t) => Array<number>(t.count).fill(t.ms)).sort((a, b) => a - b);
   const median = sorted[Math.floor(sorted.length / 2)] ?? 0;
@@ -659,7 +680,8 @@ function contractProblems(pkg: Record<string, unknown>, measured: Measured | und
   problems.push(...repeatedCodes(reasons));
   // (i) Metadata comes from the listing alone; the map follows the first state that applies.
   if (exportsMap === null) {
-    if (listed !== null || map !== null || patterns !== null) problems.push("unknown listing, non-null fields");
+    if (listed !== null || map !== null || patterns !== null)
+      problems.push("unknown listing, non-null fields");
     if (!reasons.some((r) => r.startsWith("bundle: SUBPATH_LIST_FAILED"))) {
       problems.push("unknown listing without SUBPATH_LIST_FAILED");
     }
@@ -687,7 +709,8 @@ function contractProblems(pkg: Record<string, unknown>, measured: Measured | und
     if (JSON.stringify(mapKeys) !== JSON.stringify([...mapKeys].sort(byCodePoint))) {
       problems.push("map members not in code-point order");
     }
-    if (mapKeys.length !== listed) problems.push(`map has ${mapKeys.length} keys, listed ${listed}`);
+    if (mapKeys.length !== listed)
+      problems.push(`map has ${mapKeys.length} keys, listed ${listed}`);
     // (iii) Correspondence with the measurement call.
     if (!measured?.subpaths) problems.push("no measurement-call result to compare");
     else {
@@ -698,7 +721,9 @@ function contractProblems(pkg: Record<string, unknown>, measured: Measured | und
       for (const detail of measured.subpaths) {
         const value = map[detail.entry_point];
         if (value !== detail.whole_eager_js_gzip9_bytes) {
-          problems.push(`${detail.entry_point}: ${String(value)} vs measured ${String(detail.whole_eager_js_gzip9_bytes)}`);
+          problems.push(
+            `${detail.entry_point}: ${String(value)} vs measured ${String(detail.whole_eager_js_gzip9_bytes)}`,
+          );
         }
         // (iv) and A (ii): a null value's codes, each named once with its key, and nothing else.
         const codes = value === null ? detail.unmeasurable_codes : [];
@@ -745,7 +770,10 @@ async function probeSets(): Promise<Map<string, string>> {
     const n = (counters.get(project) ?? 0) + 1;
     counters.set(project, n);
     const packages = asStringArray(probe.packages);
-    sets.set(`${project}/${n}-${packages.join("-vs-").replaceAll("/", "_")}`, asString(probe.set) ?? "");
+    sets.set(
+      `${project}/${n}-${packages.join("-vs-").replaceAll("/", "_")}`,
+      asString(probe.set) ?? "",
+    );
   }
   return sets;
 }
@@ -797,7 +825,12 @@ function scoreCandidate(
     });
     if (value === null) kinds.add("null");
     else if (bundle.exports_map === false) kinds.add("1a");
-    else if (map === null && asNumber(bundle.subpaths_listed) !== null && (asNumber(bundle.subpaths_listed) ?? 0) > REPORT_SUBPATH_LIMIT) kinds.add("1c");
+    else if (
+      map === null &&
+      asNumber(bundle.subpaths_listed) !== null &&
+      (asNumber(bundle.subpaths_listed) ?? 0) > REPORT_SUBPATH_LIMIT
+    )
+      kinds.add("1c");
     else if (matchesPattern) kinds.add("1b");
     else kinds.add("unlisted");
     uncovered.push(key);
@@ -819,9 +852,14 @@ function scoreCandidate(
     else if (kinds.has("1a")) missClass = "1a add-on, no exports map";
     else if (kinds.has("1b")) missClass = "1b pattern subpath";
     else if (kinds.has("1c")) missClass = "1c over the report's cap";
-    else if (L !== null && real < 0.9 * L && subpaths.some((s) => typeof map?.[`./${s.slice(name.length + 1)}`] === "number")) {
+    else if (
+      L !== null &&
+      real < 0.9 * L &&
+      subpaths.some((s) => typeof map?.[`./${s.slice(name.length + 1)}`] === "number")
+    ) {
       missClass = "4 part of a listed subpath";
-    } else if (/;\s*[A-Za-z_$][\w$]*\.[A-Za-z_$]/.test(snippet)) missClass = "2 members of one export";
+    } else if (/;\s*[A-Za-z_$][\w$]*\.[A-Za-z_$]/.test(snippet))
+      missClass = "2 members of one export";
   }
   return { L, U, uncovered, bracketed, miss_class: missClass };
 }
@@ -835,7 +873,8 @@ async function scoreReports(options: { on: string; again: string; off: string })
     const actual = createHash("sha256").update(JSON.stringify(entries)).digest("hex");
     if (actual !== sha) coverage.push(`${set} probes changed (sha256 ${actual})`);
   }
-  if (files.length !== PROBE_COUNT) coverage.push(`${files.length} probe reports, not ${PROBE_COUNT}`);
+  if (files.length !== PROBE_COUNT)
+    coverage.push(`${files.length} probe reports, not ${PROBE_COUNT}`);
   const sets = await probeSets();
   const expected = await loadExpectedNulls();
   const measured = await latestMeasured();
@@ -876,9 +915,9 @@ async function scoreReports(options: { on: string; again: string; off: string })
         (rest ? eDiffs : eFlakes).push(text);
       }
     }
-    const snippets = asArray(await readJson(join(options.on, project, `${base}.snippets.json`))).map(
-      asRecord,
-    );
+    const snippets = asArray(
+      await readJson(join(options.on, project, `${base}.snippets.json`)),
+    ).map(asRecord);
     for (const pkg of onPackages) {
       if (pkg.kind !== "npm") continue;
       const name = asString(pkg.name) ?? "";
@@ -925,7 +964,10 @@ async function scoreReports(options: { on: string; again: string; off: string })
         const label = `${id} ${name} ${key}`;
         if (admitted.size > REPORT_SUBPATH_LIMIT) overCap.push(label);
         else if (!map || !(key in map)) coverageR.push(`${label}: not a key of the map`);
-        else if (map[key] === null && !expected.some((e) => e.package === name && e.subpath === key)) {
+        else if (
+          map[key] === null &&
+          !expected.some((e) => e.package === name && e.subpath === key)
+        ) {
           coverageR.push(`${label}: null, not a listed null`);
         }
       }
@@ -976,10 +1018,25 @@ async function scoreReports(options: { on: string; again: string; off: string })
       (c) =>
         `    ${c.miss_class ?? "UNCLASSIFIED"}: ${c.probe} ${c.name} real ${c.real} L ${c.L} U ${c.U}${c.uncovered.length ? ` uncovered ${c.uncovered.join(" ")}` : ""}`,
     ),
-    `  left out (real usage null): ${candidates.filter((c) => c.bracketed === null).map((c) => `${c.name} (${c.real_reason})`).join("; ") || "none"}`,
+    `  left out (real usage null): ${
+      candidates
+        .filter((c) => c.bracketed === null)
+        .map((c) => `${c.name} (${c.real_reason})`)
+        .join("; ") || "none"
+    }`,
   ];
   console.log(lines.join("\n"));
-  await save("report", { coverage, eFail, eDiffs, eFlakes, dFail, candidates, pairs, coverageR, overCap });
+  await save("report", {
+    coverage,
+    eFail,
+    eDiffs,
+    eFlakes,
+    dFail,
+    candidates,
+    pairs,
+    coverageR,
+    overCap,
+  });
 }
 
 // --- H0: comprehension ------------------------------------------------------------------------------
@@ -1005,7 +1062,7 @@ const H0_KEY = [
   "No: both are standalone builds of named imports, neither is this app's usage nor its marginal cost (what it adds given what the app already bundles); real usage of a few exports usually lies between the median and the whole.",
   "Some exports' own builds failed depfit's checks (unmeasurable) and are left out of the median; unavailable gives the reason, one entry per cause. It does not mean they do not exist or are unused.",
   "The workspace has no browser signal (project.browser_signals is empty), so bundle facts were not measured (`bundle: skipped, no browser signal in workspace`); it says nothing about their size or whether they work in a browser.",
-  'Everything `shiki/core` exports, kept whole: the eager JS (entry chunk plus static imports) of a standalone build of that subpath alone, gzipped, peers left out. It is not added to the root\'s number: it is its own build, not root plus core.',
+  "Everything `shiki/core` exports, kept whole: the eager JS (entry chunk plus static imports) of a standalone build of that subpath alone, gzipped, peers left out. It is not added to the root's number: it is its own build, not root plus core.",
   "`highlight.js/lib/core` is the `./lib/core` value of `subpaths_whole_eager_js_gzip9_bytes`. `highlight.js/lib/languages/typescript` matches the pattern `./lib/languages/*` in `subpath_patterns_unmeasured`, which is not expanded or measured: it has no number of its own and its standalone size is unknown (it is not zero and not inside lib/core's number).",
   "dayjs has no exports map, so any file of the package can be imported, `dayjs/plugin/relativeTime` included; no subpath is listed or measured, so the report has no size for that plugin.",
   "Its build was unmeasurable: unavailable names `./react` with its code (UNRESOLVED_IMPORT: an import, react, does not resolve in the isolated build because the package does not declare it). The size is unknown, not zero.",
@@ -1021,8 +1078,12 @@ async function writeComprehension(): Promise<void> {
       (await depfit(["zod", "valibot"], browser)).report,
       (await depfit(["simple-git@4.0.2"], browser)).report,
       (await depfit(["zod", "valibot"], plain)).report,
-      (await depfit(["highlight.js", "shiki", "@formkit/auto-animate", "dayjs", "date-fns"], browser))
-        .report,
+      (
+        await depfit(
+          ["highlight.js", "shiki", "@formkit/auto-animate", "dayjs", "date-fns"],
+          browser,
+        )
+      ).report,
     ];
     if (reports.some((r) => r === null)) throw new Error("a CLI run printed no report");
     const { stdout: schema } = await run("bun", [join(REPO, "src/cli.ts"), "--schema"]);
@@ -1075,6 +1136,8 @@ switch (positionals[0]) {
     await writeComprehension();
     break;
   default:
-    console.error("usage: subpath-score.ts listing|reference|probes|report|comprehension [options]");
+    console.error(
+      "usage: subpath-score.ts listing|reference|probes|report|comprehension [options]",
+    );
     process.exitCode = 2;
 }
