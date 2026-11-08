@@ -17,9 +17,11 @@ import { join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ESTree } from "rolldown/utils";
 import { type BundleEntry, entryModuleSource, isCandidateSource } from "./bundle-entry.ts";
+import { track } from "./children.ts";
 import { isRecord, reasonText } from "./util.ts";
 
-const ENTRY_FILE = "__depfit_entry.mjs";
+/** The entry module of every build: in the install root, or in a pool worker's own directory. */
+export const ENTRY_FILE = "__depfit_entry.mjs";
 const RUNNER = fileURLToPath(new URL("./vite-build.mjs", import.meta.url));
 const BUILD_TIMEOUT_MS = 5 * 60_000;
 
@@ -444,23 +446,45 @@ function isChunk(value: unknown): value is ViteChunk {
   );
 }
 
-/** Builds requests one at a time in one `vite-build.mjs` child process; `close` ends it. */
+/**
+ * Builds requests one at a time in one `vite-build.mjs` child process. `close` ends its input (and
+ * kills it mid-build); `kill` stops it at once; `exited` settles when the process has exited.
+ * `failed` is set once a build failed to run (the child exited, timed out, or printed an unreadable
+ * result): every later build is rejected.
+ */
 export type ViteRunner = {
   build: (request: ViteBuildRequest) => Promise<ViteBuildResult>;
   close: () => void;
+  kill: () => void;
+  exited: Promise<void>;
+  pid: number | undefined;
+  readonly failed: boolean;
 };
 
 /**
  * Starts `vite-build.mjs` with Node, in `root`. Node, not depfit's own runtime: Vite's output
  * depends on the runtime (its preload helper is built from function source text), and Vite users run
  * Node. Node is already required for npm. Requests and results are one JSON object per line; a
- * build that takes longer than BUILD_TIMEOUT_MS ends the child.
+ * build that takes longer than `timeoutMs` (BUILD_TIMEOUT_MS), counted from when it is sent, ends
+ * the child.
  */
-export function startViteRunner(root: string, script = RUNNER): ViteRunner {
+export function startViteRunner(
+  root: string,
+  script = RUNNER,
+  { timeoutMs = BUILD_TIMEOUT_MS }: { timeoutMs?: number } = {},
+): ViteRunner {
   const child = spawn("node", [script], {
     cwd: root,
     env: childEnv(),
     stdio: ["pipe", "pipe", "pipe"],
+  });
+  track(child);
+  const exited = new Promise<void>((resolve) => {
+    child.once("exit", () => resolve());
+    // A child that never started (no `node` on PATH) emits only `error`.
+    child.once("error", () => {
+      if (child.pid === undefined) resolve();
+    });
   });
   let pending: { resolve: (r: ViteBuildResult) => void; reject: (e: Error) => void } | null = null;
   let failure: Error | null = null;
@@ -484,10 +508,14 @@ export function startViteRunner(root: string, script = RUNNER): ViteRunner {
         // Reported below.
       }
       if (!pending) continue;
-      const { resolve, reject } = pending;
-      pending = null;
-      if (isBuildResult(parsed)) resolve(parsed);
-      else reject(new Error(`vite build printed an unreadable result: ${line.slice(0, 200)}`));
+      if (isBuildResult(parsed)) {
+        const { resolve } = pending;
+        pending = null;
+        resolve(parsed);
+      } else {
+        fail(new Error(`vite build printed an unreadable result: ${line.slice(0, 200)}`));
+        child.kill();
+      }
     }
   });
   child.stderr.on("data", (data: Buffer) => {
@@ -509,9 +537,9 @@ export function startViteRunner(root: string, script = RUNNER): ViteRunner {
         if (failure) return reject(failure);
         if (pending) return reject(new Error("vite build: one request at a time"));
         const timer = setTimeout(() => {
-          fail(new Error(`vite build timed out after ${BUILD_TIMEOUT_MS / 60_000} min`));
+          fail(new Error(`vite build timed out after ${timeoutMs / 60_000} min`));
           child.kill();
-        }, BUILD_TIMEOUT_MS);
+        }, timeoutMs);
         pending = {
           resolve: (result) => {
             clearTimeout(timer);
@@ -530,6 +558,14 @@ export function startViteRunner(root: string, script = RUNNER): ViteRunner {
       child.stdin.end();
       if (pending === null) return;
       child.kill();
+    },
+    kill: () => {
+      child.kill("SIGKILL");
+    },
+    exited,
+    pid: child.pid,
+    get failed() {
+      return failure !== null;
     },
   };
 }

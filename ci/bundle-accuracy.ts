@@ -180,13 +180,17 @@ process.env.DEPFIT_LOCK_DIR = lockDir;
 // includes peers.
 process.env.npm_config_legacy_peer_deps = "true";
 
+// The CLI runs at the default worker count, as users get it; only the measurement steps take
+// DEPFIT_BUNDLE_WORKERS.
+const { DEPFIT_BUNDLE_WORKERS: _workers, ...cliEnv } = process.env;
+
 function cli(spec: string): Promise<{ report: unknown; error: string | null; ms: number }> {
   const started = performance.now();
   return new Promise((resolve) => {
     execFile(
       process.execPath,
       [CLI, spec, "--json", "--cwd", scratch],
-      { maxBuffer: 1 << 26, timeout: 600_000 },
+      { maxBuffer: 1 << 26, timeout: 600_000, env: cliEnv },
       (error, stdout, stderr) => {
         const ms = Math.round(performance.now() - started);
         try {

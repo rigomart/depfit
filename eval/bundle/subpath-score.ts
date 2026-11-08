@@ -569,9 +569,11 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
       if (buildable && !rootFailed && builtCount !== listedCount) {
         coverage.push(`${spec}: ${builtCount} of ${listedCount} listed subpaths built`);
       }
-      // number of builds, and A (ii) on its reasons.
+      // number of builds, and A (ii) on its reasons. Gate F is timed serially (SPEC.md, "Parallel
+      // builds (#7)").
       let ms = 0;
       const report = await rootEntryBundle(dir, name, await manifestIn(dir, name), {
+        serial: true,
         onSubpathPhase: (elapsed) => {
           ms = elapsed;
         },

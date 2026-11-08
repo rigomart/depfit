@@ -44,6 +44,11 @@ with no change here:
 - `cases.json`: every browser null case that imports the root must give a null whole build through
   the CLI, with its `bundle: <code>` (and specifier) in `unavailable`.
 
+The measurement steps (`bundle.measure.*`, `bundle.subpaths.*`) run on 2 Vite workers
+(`DEPFIT_BUNDLE_WORKERS=2` in the workflow), so the parallel path is checked and timed although the
+default on these 4-vCPU runners is 1 worker for one candidate; the CLI step (`bundle.cli.*`) runs
+with the default count, as users get it.
+
 Installs replay the frozen trees in `eval/bundle/locks` through `DEPFIT_LOCK_DIR`, with npm's
 `legacy_peer_deps` (the trees were frozen without peers, which no bundle includes), so the numbers
 are deterministic. A reference file in `eval/bundle` that the script neither replays nor lists in
@@ -53,7 +58,8 @@ are deterministic. A reference file in `eval/bundle` that the script neither rep
 ## Performance baseline
 
 `ci/perf-baseline.json` holds one time per metric, recorded on GitHub's runners. Gated metrics are
-the totals and each package's bundle measurement with a baseline of 2 s or more; the rest are listed
+the totals and each package's bundle measurement (`bundle.measure.*`, `bundle.subpaths.*`) with a
+baseline of 2 s or more; the rest are listed
 in the job summary only, since single CLI runs are mostly network time and short times double from
 runner noise alone.
 

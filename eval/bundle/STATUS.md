@@ -655,3 +655,218 @@ starts with the user.
 
 Research is copied to `results/research/` (gitignored): `catalog.md` (post-mortem and corpus) and
 `method.md` (bundler study).
+
+## Parallel builds (#7): measurements for the bar (2026-11-08)
+
+**Bar approved by the user on 2026-11-08.** Independent review (Codex gpt-6.1-sol, high effort,
+read-only), four rounds: not ready three times (failure precedence; full comparisons; on-demand
+start; owned-process cleanup; today's CPU baseline; the small-machine rule; the CPU allowance; the
+default-call bound; CI protocol), each fixed; the fourth, on the text rebased onto #9: approve with
+changes (iteration 2's gate D populations, per-package subpath gating in `ci/perf.ts`, run counts,
+the small-machine bound kept at 1.05x), applied in the approved text.
+
+Measured for SPEC.md "Parallel builds (#7)" on an Apple M4 Pro (12 cores, 24 GB), Node 24.14.1,
+Bun 1.3.14, npm 11.11.0, warm npm cache, with research scripts outside the repo that reuse depfit's
+own runner (`startViteRunner`, `outcomeOf`, `measureRootEntry`). Another session's builds ran on the
+same machine during part of this; the per-package and pool numbers below are from quiet windows, and
+the zod and motion worker sweeps were taken under load, so they show the shape, not exact times.
+
+**Today, CLI wall time** (`test/fixtures/browser-app`, two rounds, bundle facts on / off):
+
+| Call | On | Off |
+|---|---|---|
+| valibot | 3.6, 4.2 s | 1.9, 1.0 s |
+| zod | 7.1, 7.7 s | 2.1, 2.1 s |
+| date-fns | 7.9, 8.8 s | 1.8, 1.7 s |
+| motion | 10.8, 10.7 s | 2.6, 1.7 s |
+| zod valibot | 7.2, 7.3 s | 1.3, 1.3 s |
+| valibot zod date-fns motion | 16.3, 14.2 s | 2.2, 2.0 s |
+
+Each pair of reports was identical apart from `generated_at`.
+
+**Where the time goes today** (one candidate, ms from start): zod resolved at 592, installed at
+1273, OSV done at 2029, builds done at 8027; motion 488, 1011, 1092, 10199. Builds start after the
+install and run alongside the lookups, which all end by about 2.2 s.
+
+**Bundle step: today against a shared pool, first prototype** (the whole build and every export,
+recycling after 100 builds; the two listing builds were not run in the pool, which took the names
+from today's run, so these times favor the pool slightly; superseded by the alternating runs below):
+
+| Package (exports) | Today | 1 worker | 2 workers | 4 workers |
+|---|---|---|---|---|
+| valibot (321) | 3.26 s | 3.41 s | 1.86 s | 1.05 s |
+| zod (260) | 6.01 s | 6.07 s | 3.84 s | 3.30 s |
+| date-fns (251) | 5.95 s | 6.05 s | 3.79 s | 2.61 s |
+| motion (350) | 9.32 s | 9.38 s | 5.80 s | 4.20 s |
+| zod valibot | 5.80 s | 8.97 s | 5.12 s | 3.75 s |
+| all four | 11.6 s | 24.4 s | 13.8 s | 9.7 s (9.2 s without recycling) |
+
+"Today" for several packages is one child per candidate, all at once. Under load: zod at 1, 2, 4, 6
+and 8 workers took 5.6, 3.7, 2.9, 2.7 and 3.0 s; motion at 2, 4 and 6 took 5.4, 3.8 and 3.6 s;
+all four at 6 and 8 workers took 8.7 and 8.5 s.
+
+**Same results:** every outcome (bytes, problems, peers) matched the sequential build in every
+first-prototype run: 261, 351, 321, 251, 582 and 1184 builds, at 1 to 8 workers, with and without recycling,
+with workers started in a neutral directory serving every install. Two entry layouts did not:
+
+- A per-worker entry file name (`__depfit_entry_<i>.mjs`) changed @storybook/addon-a11y@10.6.6's lazy
+  bytes by 2 B (687,903 to 687,905 min). Its lazy chunks name the entry chunk. The same name in a
+  per-worker directory, or a copy of the install per worker (1.05 s to copy three), was identical.
+- An entry in a per-worker directory turned biome's `NO_ENTRY` into `UNRESOLVED_IMPORT`, because
+  `problemsFromBuild` recognizes the entry by its path relative to the root.
+- No package in `single-reference.json` has lazy bytes, so CI's checks would not see the first one.
+
+**Memory, first prototype** (summed resident memory of processes whose command named
+`vite-build.mjs`, sampled every 150 ms; the earliest runs matched any worktree's, so another
+session's worker may be counted in them; the alternating runs below sample owned processes only): one worker building
+motion's exports over and over held 632 MB after 100 builds, 947 MB after 200, 1.5 GB after 500 and
+2.3 GB after 1000; capped at a 384 MB heap it ran out at about build 570, so the memory is kept, not
+merely uncollected. Peaks: today motion 1.4 to 1.5 GB, zod 0.8 GB, all four 3.0 to 3.1 GB. Pool with
+4 workers and recycling: zod 2.0 GB, motion 2.5 GB, zod valibot 2.0 GB, all four 2.6 GB (4.1 GB
+without recycling, 5.9 GB at 8 workers). A fresh worker's first build took 100 ms, later builds
+11 ms (median).
+
+**Load per call** (re-measured after a restart, under `nice -n 10`, at most 4 workers, recycling
+after 100 builds, while another session's eval ran on the machine, load average 11 to 15). Each
+worker's CPU time (user plus system, all threads) is read when it exits:
+
+| Call | Workers | Wall | CPU time | Busy cores (average) |
+|---|---|---|---|---|
+| zod | 1 / 2 / 4 | 6.36 / 4.27 / 3.39 s | 18.2 / 18.1 / 16.9 s | 2.9 / 4.2 / 5.0 |
+| motion | 1 / 2 / 4 | 9.70 / 5.62 / 4.19 s | 38.8 / 39.8 / 39.3 s | 4.0 / 7.1 / 9.4 |
+| all four | 2 / 4 | 14.81 / 9.98 s | 85.9 / 87.4 s | 5.8 / 8.8 |
+
+Today's code in the same window: zod 5.99 s, motion 9.86 s, all four 13.09 s (one child per
+candidate, 3.1 GB). Among pool sizes the work per call does not change; against today's code, see
+the alternating runs below. One worker already keeps about 3 to 4 cores busy, because rolldown is
+multi-threaded.
+
+**First alternating runs, the whole root operation** (their CPU totals were printed, not kept, so
+they cannot be rebuilt from the files) (after the first review; superseded by the
+second set below, because these started every worker at once, started a replacement before the
+retiring worker exited, sampled depfit's workers but not depfit itself, and printed CPU time
+without keeping it; `nice -n 10`, at most 4
+workers). Each invocation measures one way on installs prepared once: today's `measureRootEntry`
+for every candidate at once, or one shared pool of 4 workers running each candidate's whole build,
+both listing builds and then every export, in that dependency order, recycling after 100 builds.
+CPU is user plus system time of the invocation and every child, from `/usr/bin/time -l`; memory is
+sampled every 100 ms over the invocation's own descendants, per process and summed. Today and pool
+alternate; another session's eval ran on the machine part of the time (load average 7 to 16).
+
+| Call (builds) | Today, wall | Pool, wall | Ratio | Today, CPU | Pool, CPU | Ratio | Today / pool memory (largest process) |
+|---|---|---|---|---|---|---|---|
+| clsx (5) | 0.15 s | 0.19 s | | 0.26 s | 0.64 s | 2.5x | 105 / 359 MB (103) |
+| valibot (323) | 3.21, 3.17 s | 1.12, 1.15 s | 0.35x | 5.4 s | 6.4 s | 1.18x | 0.6 / 1.1 GB (285 MB) |
+| zod (263) | 6.94, 5.77, 5.67 s | 3.08, 3.10, 2.98 s | 0.53x | 20.3 to 21.0 s | 20.8 s | 1.02x | 0.8 / 1.9 GB (524 MB) |
+| date-fns (253) | 5.77, 5.76 s | 2.68, 2.66 s | 0.46x | 24.4 s | 26.9, 27.7 s | 1.12x | 1.0 / 2.3 GB (591 MB) |
+| motion (353) | 9.97, 9.12, 9.04 s | 4.23, 4.22, 4.55 s | 0.46x | 40.5 to 42.1 s | 43.8 to 44.4 s | 1.09x | 1.5 / 2.6 GB (656 MB) |
+| zod valibot (586) | 5.81, 5.84 s | 3.91, 3.92 s | 0.67x | 26.2 s | 26.5, 26.8 s | 1.02x | 1.3 / 1.6 GB (429 MB) |
+| all four (1192) | 12.15, 11.86 s | 10.48, 10.27 s | 0.86x, 0.87x | 95.3, 95.2 s | 97.7, 98.3 s | 1.03x | 3.1 / 2.6 GB (683 MB) |
+
+The largest process today is the one child per candidate (motion 1.5 GB); in the pool, a worker.
+Every outcome matched across all 30 runs (each call's today and pool runs compared in full: whole
+build, export names, listing problems as a set, each export). clsx's pool started 4 workers at once
+for 5 builds, which is the cost on-demand start removes. Scripts and every run's output are kept with
+the author's notes (local, gitignored).
+
+**Second alternating runs** (after the second review, before #9 merged; quiet machine, load average 2
+to 16 from these runs themselves, `nice -n 10`). The pool now starts a worker only when a build waits
+and every live worker is busy, and waits for a worker retiring after 100 builds to exit before
+starting its replacement. Memory covers depfit's own process and everything it started. Each run's
+JSON and its `/usr/bin/time -l` output are kept (52 runs; every outcome identical within each call).
+Time and CPU are medians; each pool experiment is compared with the today runs alternated with it;
+memory is the largest sampled peak (GiB, from `ps` RSS):
+
+| Call, workers | Pairs | Wall, today / pool | Ratio | CPU, today / pool | Ratio | Memory, today / pool (largest worker, MiB) | Started (most live) |
+|---|---|---|---|---|---|---|---|
+| clsx, 4 | 3 | 0.11 / 0.19 s | | 0.21 / 0.33 s | 1.57x | 0.18 / 0.18 (114) | 2 (2) |
+| valibot, 4 | 3 | 2.94 / 1.10 s | 0.38x | 5.09 / 6.27 s | 1.23x | 0.71 / 1.22 (295) | 4 (4) |
+| zod, 4 | 3 | 5.66 / 3.13 s | 0.55x | 20.5 / 20.6 s | 1.01x | 1.04 / 2.23 (554) | 4 (4) |
+| date-fns, 4 | 3 | 5.75 / 2.69 s | 0.47x | 24.6 / 26.9 s | 1.09x | 1.13 / 2.44 (604) | 4 (4) |
+| motion, 4 | 3 | 9.18 / 4.28 s | 0.47x | 40.9 / 43.9 s | 1.07x | 1.67 / 2.67 (639) | 4 (4) |
+| zod valibot, 4 | 3 | 5.82 / 4.02 s | 0.69x | 26.1 / 26.9 s | 1.03x | 1.53 / 1.91 (450) | 8 (4) |
+| all four, 4 | 3 | 12.13 / 10.75 s | 0.89x | 95.0 / 97.2 s | 1.02x | 3.32 / 2.95 (682) | 12 (4) |
+| zod valibot, 2 | 3 | 5.86 / 5.66 s | 0.97x | 26.2 / 26.5 s | 1.01x | 1.55 / 1.38 (573) | 6 (2) |
+| zod, 1 | 2 | 5.72 / 5.89 s | 1.03x | 20.3 / 20.6 s | 1.02x | 1.03 / 0.81 (589) | 3 (1) |
+
+**Third alternating runs, as merged in #9** (c0e2a5d, after rebasing; same method). Today is
+`measureRootEntry` with the default report's subpaths (`subpaths: true`, at most 30), as the CLI
+calls it; the pool queues each listed subpath's whole build (once per target file) as soon as the
+whole build has passed the toolchain check, alongside the exports. Subpaths built: clsx 1, zod 9,
+motion 10, preact 12 targets; valibot and react-hook-form none; date-fns lists 739, over the cap, so
+none. 44 runs (22 pairs), every outcome identical within each call, subpaths included:
+
+| Call, workers | Pairs | Wall, today / pool | Ratio | CPU, today / pool | Ratio | Memory, today / pool (largest worker, MiB) | Started (most live) |
+|---|---|---|---|---|---|---|---|
+| clsx, 4 | 3 | 0.12 / 0.20 s | | 0.23 / 0.47 s | 2.04x | 0.18 / 0.18 (115) | 3 (3) |
+| zod, 4 | 3 | 6.04 / 3.38 s | 0.56x | 21.2 / 21.6 s | 1.02x | 1.11 / 2.32 (543) | 4 (4) |
+| motion, 4 | 3 | 9.67 / 4.49 s | 0.46x | 42.4 / 45.7 s | 1.08x | 1.74 / 2.76 (660) | 4 (4) |
+| zod valibot, 4 | 3 | 6.32 / 4.30 s | 0.68x | 27.2 / 28.0 s | 1.03x | 1.55 / 1.98 (462) | 8 (4) |
+| all four, 4 | 3 | 12.69 / 11.32 s | 0.89x | 97.6 / 100.7 s | 1.03x | 3.35 / 3.00 (701) | 16 (4) |
+| all four, react-hook-form, preact, 4 | 2 | 12.87 / 11.34 s | 0.88x | 98.7 / 101.3 s | 1.03x | 3.30 / 3.02 (690) | 16 (4) |
+| zod valibot, 2 | 3 | 6.36 / 6.11 s | 0.96x | 27.1 / 27.8 s | 1.03x | 1.56 / 1.40 (578) | 7 (2) |
+| zod, 1 | 2 | 6.21 / 6.41 s | 1.03x | 21.3 / 21.7 s | 1.02x | 1.13 / 0.87 (613) | 3 (1) |
+
+Today's memory includes one process per candidate (motion's: 1.4 to 1.5 GiB). The 1- and 2-worker
+rows stand in for a small machine, where the rule gives as many workers as candidates. Subpaths
+added 0.4 to 0.5 s to today's zod and motion and 0.25 s to the pool's; the ratios moved by at most
+0.01. Valibot and date-fns build no subpaths, so their second-set numbers stand.
+
+**Not measured:** a machine with 1 to 4 CPUs, including CI's 4-vCPU runners (worker counts 1 and 2
+were run on 12 cores instead); worker counts above 4 after the restart
+(the 6- and 8-worker numbers above are from before it). The research scripts are kept with the
+author's notes (local, gitignored).
+
+## Parallel builds (#7): scorecard (2026-11-08)
+
+Built to the approved bar (SPEC.md, "Parallel builds (#7)"): `src/collect/vite-pool.ts` (the shared
+pool), `src/collect/children.ts` (every child stopped on SIGINT or SIGTERM), `root-entry.ts` (a
+candidate's builds at once, the result decided by today's order), `index.ts` (one pool per run).
+"Today" is c0e2a5d in a separate checkout, run alternately with #7 on the same machine (Apple M4
+Pro, 12 cores; default count 4) under `nice -n 10`. Scored by `eval/bundle/parallel-score.ts`;
+every run's output is kept with the author's evidence (local, gitignored).
+
+**Scorecard: passes.**
+
+| Gate | Result |
+|---|---|
+| P1 (a). Same results, reference packages | Pass: 41 packages (single-reference.json, the 8 root null cases of cases.json, subpath-reference.json, @storybook/addon-a11y with its 687,903 lazy bytes), 1,290 export builds and 102 subpath builds, the measurement call (cap 100) and the default report in full: identical to today in all 8 variants (default twice, 1, 2 and 4 workers, reversed at 1 and 4, serial) |
+| P1 (b). Full reports | Pass: 9 calls in `test/fixtures/browser-app` (clsx, valibot, zod, date-fns, motion, zod valibot, all four, `node:sqlite`, a missing name), 5 alternating pairs each, every #7 report identical to the today report before it apart from `generated_at`; and 32 probe calls through `eval/run.ts`, bundle facts identical, one GitHub count (`commits_last_year` 1864 to 1861) differing once and identical when the pair was run again |
+| P1 (c). Stock Vite (gate C) | Pass: `ci/bundle-accuracy.ts` at `DEPFIT_BUNDLE_WORKERS=2`, 10 whole, 8 null cases, 100 exports, 51 subpaths, 0 failures (today's code: the same) |
+| P1 (d). Earlier gate D | Pass: iteration 2 default reports over every probe, two #7 runs, 0 differences; the measurement call twice per probe package (88 packages), 0 differences; iteration 1 probe reports, 0 differences; iteration 1 reference singles, 0 differences. Iteration 1 A, B, C and iteration 2 A and E pass too |
+| P2. Speed (5 pairs, medians) | Pass: valibot 0.39x (3.18 to 1.22 s), zod 0.53x (6.30 to 3.34 s), date-fns 0.48x, motion 0.47x (9.69 to 4.56 s); zod valibot 0.69x; all four 0.90x; six 0.90x; zod at 1 worker 1.04x, zod valibot at 2 workers 0.96x. CLI: valibot 0.47x, zod 0.59x (7.36 to 4.31 s), date-fns 0.57x, motion 0.50x (10.10 to 5.08 s), zod valibot 0.69x (7.12 to 4.94 s), all four 0.89x, clsx 0.98x; `node:sqlite` and the missing name equal (9 pairs: 0.04 and 0.38 s both ways) and start no worker |
+| P3. Load and memory | Pass: CPU valibot 1.20x, zod 1.00x, date-fns 1.08x, motion 1.08x, clsx 0.50 against 0.24 s, zod valibot 1.02x, all four and six 1.03x, all inside 1.25x plus 0.1 s per allowed worker; workers started at most the allowed count plus one per 100 builds (all four: 16 for 1,211 builds); memory valibot 1.19 GiB (today 0.72), zod 2.41 (1.15), date-fns 2.48 (1.16), motion 2.88 (1.75), zod valibot 2.05 (1.55), all four 3.16 (3.32), six 3.12 (3.37), all inside their allowance; largest worker 705 MiB |
+| P4. Robustness | Pass: tests with stand-in runners for the timeout from dispatch, a timeout, a crash, an unreadable result, a worker that cannot start, a dropped queued build, a subpath failure while root builds run, two failures in either completion order, a worker ignoring the end of its input (killed after the grace period, also when it is retiring and another build waits), and SIGINT or SIGTERM at start-up, during builds, during a recycle, with a worker that ignores SIGTERM (killed after 2 s), and during an install whose npm started a process of its own (every PID gone); no worker after a CLI run; no browser signal: 0 Vite or rolldown modules loaded |
+| P5. Contract and CI | Pass locally: no field, reason or schema change; type check, lint, format, unit tests on Node and Bun (267), `ci/e2e.ts`, `ci/bundle-accuracy.ts`. CI runs the measurement steps at 2 workers and the CLI step at the default; `ci/perf.ts` gates `bundle.subpaths.<package>` at a 2 s baseline |
+| Earlier cost gates | Pass: iteration 1 gate F, median 324 ms (max 1.5 s); iteration 2 gate F on the serial schedule, median 0 ms, p90 85 ms, max 915 ms (shiki); the default call's bound over 32 probe calls: none above 1.1x today's plus 0.2 s, median ratio 0.74 (total 144.6 to 81.9 s) |
+
+Decisions made while building, for review:
+
+- **The entry module is labeled by its file name** wherever it is written (`vite-build.mjs`), so a
+  worker's entry in `.depfit-w<n>/` under the install root is still recognized by the checks
+  (`NO_ENTRY`). For today's entry in the root the label was already the file name.
+- **An unreadable result now ends its worker**, as an exit or a timeout does; before, it failed that
+  one build and the root phase then threw anyway.
+- **A call measured without a pool** (the eval and CI scripts call `measureRootEntry` directly) uses
+  one of its own, `bundleWorkers(1)` workers, closed before it returns.
+- **Queued builds of a candidate are dropped** once its result is decided by a failure, so a package
+  whose builds all crash does not start a worker per build.
+
+Code review (Codex gpt-6.1-sol, high effort, read-only), on the diff with the bar and this
+scorecard: not ready, three findings, all fixed and checked by tests that fail on the code before
+the fix:
+
+1. A retiring worker that never exits kept its place, so with one worker the next build never
+   started (only `close` had a deadline). A retiring worker is now killed after the same 2 s grace.
+2. On a signal, only direct children got SIGTERM and depfit ended at once: a child ignoring SIGTERM,
+   or a process npm started, survived. Now every process descending from depfit (read from `ps`
+   before any is signalled) gets SIGTERM, any left after 2 s is killed, a child started meanwhile
+   is killed at once, and then depfit ends with the signal.
+3. Timing-sensitive tests: the scripted stand-in runner imported Vite, a timeout test gave a fresh
+   worker 200 ms, and the real-Vite comparison ran four pools at once. The runner now reads the pins
+   from package.json, the timeout tests use 1.5 s limits with the gap still deciding them, and the
+   real-Vite variants run one after another.
+
+After the fixes, P1 (a) (41 packages, 8 variants), gate C, `ci/e2e.ts` on Bun and Node, and the
+unit tests were rerun: unchanged results, all pass. The speed and load pairs were not rerun: the
+fixes change only what happens to a worker that does not exit on its own, which Vite's do.

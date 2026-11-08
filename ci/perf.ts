@@ -2,7 +2,7 @@
  * Compares the times CI measured (ci/e2e.ts and ci/bundle-accuracy.ts `--timings` files) with the
  * recorded baseline in ci/perf-baseline.json, and fails at 2x the baseline or more on a gated
  * metric. Every time is listed in the job summary. Gated: every total, and each package's bundle
- * measurement (local CPU, no network) whose baseline is at least 2 s. The rest are reported only:
+ * measurement, root or subpaths (local CPU, no network), whose baseline is at least 2 s. The rest are reported only:
  * single CLI runs are mostly network time, and a time under 2 s can double from runner noise alone.
  *
  *   bun ci/perf.ts compare <timings-dir>     # table to stdout and $GITHUB_STEP_SUMMARY
@@ -16,8 +16,11 @@ const BASELINE = join(import.meta.dirname, "perf-baseline.json");
 const FAIL_RATIO = 2;
 const GATED_MIN_MS = 2000;
 
+const MEASUREMENTS = ["bundle.measure.", "bundle.subpaths."];
+
 const gated = (metric: string, baseline: number) =>
-  metric.endsWith(".total") || (metric.startsWith("bundle.measure.") && baseline >= GATED_MIN_MS);
+  metric.endsWith(".total") ||
+  (MEASUREMENTS.some((prefix) => metric.startsWith(prefix)) && baseline >= GATED_MIN_MS);
 
 async function readTimings(dir: string): Promise<Record<string, number>> {
   const timings: Record<string, number> = {};

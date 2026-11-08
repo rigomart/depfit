@@ -21,7 +21,7 @@
  * runtime `require` helper. The observing plugin resolves nothing and transforms nothing.
  */
 import { readFileSync, realpathSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 import { createInterface } from "node:readline";
 import { gzipSync } from "node:zlib";
 import { build, esmExternalRequirePlugin, rolldownVersion, version } from "vite";
@@ -81,8 +81,11 @@ async function buildOnce(request) {
   const keepExports = request.exports === true;
   // Module ids use the real path (on macOS the temp dir is /var -> /private/var).
   const realRoot = realpathSync(root);
+  const realEntry = realpathSync(entry);
+  // Labeled by file name wherever a worker wrote it: bundle.ts matches `importer === ENTRY_FILE`.
   const label = (id) => {
     if (id === null) return null;
+    if (id === realEntry || id === entry) return basename(entry);
     const base = id.startsWith(realRoot) ? realRoot : id.startsWith(root) ? root : null;
     return base ? relative(base, id) : id;
   };
