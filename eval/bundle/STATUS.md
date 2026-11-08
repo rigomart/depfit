@@ -873,7 +873,7 @@ fixes change only what happens to a worker that does not exit on its own, which 
 
 ## Cache (#8): measurements for the bar (2026-11-08)
 
-**Bar drafted, pending the user's approval.** Measured for SPEC.md "Cache (#8)" on an Apple M4 Pro
+**Bar drafted and revised after review, pending the user's approval.** Measured for SPEC.md "Cache (#8)" on an Apple M4 Pro
 (12 cores), Node 24.14.1, Bun 1.3.14, npm 11.11.0, at 573991c, every command under `nice -n 10`,
 one at a time, at most 4 Vite workers, over the real registry from a home network. Research scripts
 are outside the repo and reuse depfit's own functions (`resolvePackage`, `advisories`,
@@ -902,8 +902,10 @@ was the warm-up and its full install is shown as "first"):
 | @mui/material (36) | 714 | 3423 | 363 | 3028 | 475 |
 | next (54) | 2219 | 4395 | 528 | 2443 | 1829 |
 
-In all 40 runs the lock-only lockfile was identical to the full install's, every field of every
-entry, and `npm ci` from it installed the same tree.
+In all 40 runs every `packages` entry other than the root was identical, all fields, between the
+lock-only lockfile and the full install's, and the lockfile `npm ci` wrote from it matched on
+version, `resolved`, `integrity` and the dev, optional and peer flags. The root entry, the
+installed files and `readTree`'s facts were not compared; gate K1 covers them.
 
 **Lock-only on a stale npm cache** (a private npm cache filled at 13:10, timed at 13:17, past
 npm's 300 s freshness, then again at once; s): zod 0.65 then 0.15, motion 2.22 then 0.32,
@@ -925,6 +927,14 @@ the names in the lockfile): react-hook-form 3 for a tree of 2, @tanstack/react-f
 peers and similar. Adding every dependency and peer named in the installed manifests still missed 6
 of motion's and 1 of @mui/material's, so the bar takes the set from npm's own log:
 `--loglevel=http` prints one `npm http fetch` or `npm http cache` line per packument URL.
+
+**How often the recording rule applies** (one lock-only resolution per package with
+`--loglevel=http`, then a HEAD request for every logged URL, against the rule in SPEC.md): all 10
+packages of the table above qualify, every log line a `hit`. The youngest packument in any tree was
+typescript's, last modified 611 minutes earlier (an optional peer valibot's resolution reads; it
+publishes nightly), then playwright's at 798 minutes (motion, next). So a tree that reads
+typescript gets new validators about once a day, and its first call after that takes step 3.
+Run once, on one day; the preflight measures the rate on the full corpus.
 
 **Probes, once per run:** `npm config list --json` 67 to 77 ms (170 keys, including `npm-version`,
 `registry`, `legacy-peer-deps`; identical from two different directories); `node -p` 25 ms.
@@ -976,3 +986,34 @@ which today's code does at the end of every install, took 0.31 s (@mui/material)
 **Not measured:** Linux, Windows and CI's runners; private registries; concurrent runs; a range
 floating in the wild (nothing can be published to npm for it; gate K2 (b) uses a local test
 registry instead); and the cache itself, which does not exist yet.
+
+**Independent review of the bar** (Codex gpt-6.1-sol, high effort, read-only, 2026-11-08), on the
+first draft and the raw outputs: **not ready**, eleven findings, all applied in the revised text:
+
+1. Must-fix: the age window alone does not show what npm read, since npm serves a stale cached
+   packument when a revalidation fails. Now no validators are recorded unless every log line is a
+   network fetch or `hit`, `revalidated` or `updated` (npm logs that case as `stale`), with a test.
+2. Must-fix: one lockfile can install different trees (`omit=optional` keeps omitted packages in
+   it). The npm settings hash is now in the entry key and the install directory's name, and install
+   facts are cached only when every missing package is excluded by `os`, `cpu` or `libc`.
+3. Must-fix: `npm config list --json` omits credentials. The text says so, and validators are
+   recorded only for npmjs URLs that answer without credentials.
+4. Must-fix: caching every code but `BUNDLER_ERROR` would keep transient failures
+   (`SUBPATH_LIST_FAILED` from a read error, unreadable directories in `readTree`). Now only codes
+   that depend on the package alone are cached, with recovery tests.
+5. Must-fix: a 15-minute grace does not protect a concurrent reader of an install. No #8 run reads a
+   kept install, so the grace is gone, and #10 must define how a run takes hold of one.
+6. Must-fix: the limits could not be enforced with exemptions. Nothing published is exempt now, an
+   oversized install is not kept, eviction runs after every run that opened the cache, staging of
+   dead runs is removed, and the limits are soft only by work in flight; file system tests added.
+7. Must-fix: `measured_at` could not promise an order relative to `generated_at` (a concurrent run
+   can publish later), nor a time when no build completed. It is now the stored measurement's time,
+   null when no build completed.
+8. Should-fix: the identity left out Vite's own dependencies. It now lists Vite's installed closure.
+9. Should-fix: the speed targets rest on a simulation that recorded validators unconditionally. K5
+   is now provisional until a preflight, the rule's rate was measured (above), and the 50 ms
+   budget's scope is defined.
+10. Should-fix: the test-registry gate needed freshness control, mutations that change the tree,
+    and a seam, since the CLI resolves on npmjs. All three are now specified.
+11. Should-fix: STATUS claimed more lockfile equality than the script checked. Narrowed, and step 3
+    now starts in a directory with no lockfile or `node_modules`.
