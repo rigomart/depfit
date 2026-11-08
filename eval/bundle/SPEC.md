@@ -646,26 +646,32 @@ does the result under the pool:
 
 ### Worker count, load and memory
 
-These are operating choices backed by the measurements below, not limits proven for every machine.
+These are provisional operating choices backed by the measurements below, not limits proven for
+every machine; the preflight before code checks them again.
 
-- **Workers: `floor(os.availableParallelism() / 3)`, at least 1 and at most 4** (12 cores: 4; 8: 2;
-  4, as on CI's runners: 1). The rule budgets cores and heat, not only speed, because depfit runs in
-  agent loops, often on laptops:
+- **Workers: `min(4, max(floor(os.availableParallelism() / 3), candidates))`, at least 1,** where
+  `candidates` is the number of npm candidates whose install started. 12 cores: 4. On 4 cores (CI's
+  runners): 1 for one candidate, as today; 2 for two; up to 4. The rule never runs fewer builds at
+  once than today, which gives every candidate its own process, so a small machine is not slower than
+  today; and on a large one it never takes more than a third of the cores' worth of workers beyond
+  that. It budgets cores, not only speed, because depfit runs in agent loops, often on laptops:
   - A worker is not one core. Rolldown builds on several threads: one worker kept 2.9 (zod) to 4.0
     (motion) cores busy on average, and 4 workers 5.0 to 9.4 of 12. Dividing by 3 keeps the expected
-    busy cores near the machine's count, leaves it usable during a call, and gives small machines one
-    worker, today's speed and load.
-  - The pool adds a little work: CPU time per call was 1.02x to 1.18x today's (the most for valibot,
-    whose four workers each pay Vite's start-up). Each call therefore heats the machine about as much
-    as today, spent in a shorter burst at more cores. CPU time stands in for energy here; temperature
-    was not measured, and the laptop did run hot during a 1 to 8 worker sweep.
+    busy cores near the machine's count and leaves it usable during a call.
+  - With as many workers as candidates the pool matched today on this machine (`zod valibot` at 2
+    workers: 0.97x the time, 1.01x the CPU, less memory; zod at 1 worker: 1.04x the time, 1.01x the
+    CPU). That stands in for a small machine, where it was not measured.
+  - The pool does a little more computational work: CPU time per call was 1.01x to 1.23x today's on
+    calls of 250 builds or more (the most for valibot, whose builds are tiny and whose four workers
+    each pay Vite's start-up), and 0.33 s against 0.21 s for clsx (5 builds, 2 workers started). CPU
+    time is computational work, not temperature, which was not measured; the laptop did run hot
+    during a 1 to 8 worker sweep.
   - Above 4 workers buys little and costs memory: zod's builds took 2.9 s at 4 workers, 2.7 s at 6
     and 3.0 s at 8; four candidates 9.2 s at 4, 8.7 s at 6 and 8.5 s at 8, for about 900 MB more per
-    two workers (measured under load, before this rule, without the listing builds).
-  - Today a call with several candidates has no limit: one process per candidate at once (four
-    candidates: 3.0 to 3.1 GB). The pool caps that.
+    two workers (measured under load, without the listing builds, before this rule).
   - Repeated calls in an agent loop are what caching (#8) removes; until then every call rebuilds.
-- **An eval and CI switch `DEPFIT_BUNDLE_WORKERS=<n>`** sets the count (1 to 4), like
+- **An eval and CI switch `DEPFIT_BUNDLE_WORKERS=<n>`** sets the count (1 to 4) in place of the
+  rule, like
   `DEPFIT_BUNDLE` and `DEPFIT_LOCK_DIR`, and AGENTS.md lists it with them.
 - **A worker is replaced after at most 100 builds.** A worker's memory grows with every build and is
   not given back (motion: 632 MB after 100 builds, 1.5 GB after 500, 2.3 GB after 1000; with a 384 MB
@@ -676,21 +682,24 @@ These are operating choices backed by the measurements below, not limits proven 
 ### Gates
 
 "Today" is the sequential code at #7's parent commit (main after #9 merges), on the same machine and
-day. Times are medians of runs that alternate today's code and #7's (today, #7, today, #7, ...),
-with no other build running on the machine, under `nice -n 10`, on frozen installs
-(`DEPFIT_LOCK_DIR`) and a warm npm cache. Every individual time, the versions, locks and outputs are
-kept with the scorecard. Memory is the peak of samples every 100 ms of the processes depfit owns
-(its descendants), per process and summed.
+day. Every performance gate (P2, P3) is at least 5 pairs of runs that
+alternate today's code and #7's (today, #7, today, #7, ...), judged on the medians, with no other
+build running on the machine, under `nice -n 10`, on frozen installs (`DEPFIT_LOCK_DIR`) and a warm
+npm cache. Every individual run's time, CPU time, memory, versions, locks and output are kept with
+the scorecard. CPU time is user plus system time of depfit and every child it waited for. Memory is
+the peak of samples every 100 ms of depfit's own process and every process it started (recorded by
+PID when started), per process and summed.
 
 **Before any code:** the P2 and P3 measurements are repeated with a prototype on the post-#9 parent,
-subpath builds included. If one misses its target there, the work stops and goes back to the user;
+subpath builds included, that starts workers on demand and waits for a retiring worker to exit
+before its replacement starts. If one misses its target there, the work stops and goes back to the user;
 the targets are not moved to fit.
 
 | Gate | Pass condition |
 |---|---|
 | **P1. Same results** | Compared in full, not by reference values: each candidate's complete measurement (whole outcome, export names, listing problems, every export's outcome, every subpath's outcome and the subpath state after #9), with problem lists compared as sets because their order follows Vite's resolution order, and the serialized report. (a) **Every reference package:** every package in `single-reference.json` (every export, not only the 5 listed), every root case in `cases.json` (biome's `NO_ENTRY` among them, with its exact reason list), and after #9 every package in `subpath-reference.json`; plus @storybook/addon-a11y, frozen, the one case whose builds emit lazy chunks (no reference set has one). Today's measurement against #7's at `DEPFIT_BUNDLE_WORKERS` 1, 2 and 4, at 1 and 4 again with the build queue reversed, and twice at the default count. All identical. (b) **Full reports:** in `test/fixtures/browser-app`, the calls `clsx`, `valibot`, `zod`, `date-fns`, `motion`, `zod valibot`, `valibot zod date-fns motion`, `node:sqlite` alone, and one with a name that does not exist, on frozen installs, alternating today's CLI and #7's: each #7 report identical to the today report before it, apart from `generated_at`. If a field fed by the network differs, the pair is run again; two today runs agreeing while #7 differs fails. (c) Stock-Vite conformance (gate C as `ci/bundle-accuracy.ts` checks it) passes unchanged. |
-| **P2. Speed** | On this machine (12 cores, default count 4), bundle step alone (no network). **Per package:** valibot, zod, date-fns and motion each at most 0.65x today (measured 0.35x, 0.53x, 0.46x, 0.46x). **Several packages:** `zod valibot` at most 0.75x (measured 0.67x); `valibot zod date-fns motion` at most 0.95x (measured 0.86x and 0.87x), since today already gives each candidate its own process. **One worker:** each package at most 1.1x today (measured 1.00x to 1.05x without the listing builds). **Full CLI calls** (median of 5): none of P1(b)'s calls slower than today; `clsx` at most 0.3 s slower (provisional: measured +0.04 s with every worker started at once); `node:sqlite` alone and the missing name start no worker. Expected, not gated: zod about 4.7 s (today 7.1 to 7.7), motion 5.8 s (10.7), `zod valibot` 5.3 s (7.2). **Fewer cores:** not measured; on CI's 4 vCPUs the default is 1 worker, and CI's own jobs cover it (below). |
-| **P3. Load and memory** | On P2's calls: CPU time of depfit and every child (user plus system) at most 1.2x today's (measured 1.02x to 1.18x); average busy cores reported. No worker's sampled peak above 1 GB (measured at most 683 MB); the summed peak of the four-candidate call at most today's (measured 2.6 GB against 3.0 to 3.1 GB). A single large candidate may use more than today (motion: 1.4 to 1.5 GB today, 2.6 GB with 4 workers); that is accepted. With 1 or 2 workers, several candidates can be slower than today (on 12 cores: `zod valibot` 9.0 s at 1 worker against 5.8 s; all four 14.8 s at 2 against 13.1 s), because today runs every candidate at once; accepted, and provisional until measured on such a machine. The count rule, on-demand start and recycling each have a test. |
+| **P2. Speed** | On this machine (12 cores, default count 4), bundle step alone (no network). **Per package:** valibot, zod, date-fns and motion each at most 0.65x today (measured 0.38x, 0.55x, 0.47x, 0.47x). **Several packages:** `zod valibot` at most 0.75x (measured 0.69x); `valibot zod date-fns motion` at most 0.95x (measured 0.89x), since today already gives each candidate its own process. **Small-machine counts:** with `DEPFIT_BUNDLE_WORKERS` set to the number of candidates (what the rule gives on 4 cores), each P2 call at most 1.05x today (measured: zod at 1 worker 1.04x, `zod valibot` at 2 0.97x). **Full CLI calls:** none of P1(b)'s calls slower than today, except `clsx`, which may be up to 0.3 s slower (measured +0.08 s on its bundle step); `node:sqlite` alone and the missing name start no worker. Expected, not gated: zod about 4.9 s (today 7.1 to 7.7), motion 5.8 s (10.7), `zod valibot` 5.4 s (7.2). **On CI's 4-vCPU runners:** in #7's pull request, no `bundle.cli.*` time (one candidate each, so 1 worker by the rule) is above 1.1x its old baseline in either CI run, before the baseline is re-recorded. |
+| **P3. Load and memory** | On P2's calls. **CPU time** at most 1.25x today's plus 0.1 s per worker started (measured 1.01x to 1.23x on calls of 250 builds or more; clsx 0.33 s against 0.21 s with 2 workers started); average busy cores reported. **Memory**, depfit included: each call's summed peak at most today's plus 0.7 GB for each worker beyond the number of processes today runs (one per candidate), 0.7 GB being the largest worker measured (682 MB). Measured against that allowance: valibot 1.2 GB (today 0.7), zod 2.3 (1.1), date-fns 2.5 (1.2), motion 2.7 (1.7), `zod valibot` 2.0 (1.6), all four 3.0 (3.4), clsx 0.18 (0.18). No worker's sampled peak above 1 GB. The count rule, on-demand start, recycling and the live-worker cap (a retiring worker counts until it has exited) each have a test. |
 | **P4. Robustness** | Each with a test using a stand-in runner (as `test/fixtures/runner/` does): (a) **Timeout:** the 5-minute limit counts from when a worker takes the build, not from when it was queued; a build over it ends its worker. (b) **Failures:** a worker that exits, hangs past the limit or prints an unreadable result, in the root phase and in a subpath build, including a subpath build that fails while root builds are still running, two failures at once in either completion order, and a root failure together with `SUBPATH_LIST_FAILED` or `SUBPATH_LIMIT`: each gives the result "Each candidate's result is today's result" defines, and a new worker takes the remaining work. (c) **A worker that fails to start** gives `BUNDLER_ERROR` to the candidates that needed it, and the run ends. (d) **Every child stops:** depfit records the PID of every process it starts (workers, and npm through its installs), and a test checks that each one and its descendants have exited: after a normal run, a candidate failure, a worker failure, recycling, and SIGINT or SIGTERM during start-up, an install, builds and a recycle. A worker that ignores the end of its input is killed after at most 2 s. depfit exits without waiting on idle workers. (e) **No browser signal:** no worker is started, and Vite and rolldown are never loaded (iteration 1 gate F's tracer, plus no worker PID recorded). |
 | **P5. Contract and CI** | No field, reason text or `SCHEMA_VERSION` change; `schema-docs` unchanged. Type check, lint, unit tests, `ci/e2e.ts` on Bun and Node 22, and `ci/bundle-accuracy.ts` pass. CI runs both counts: the end-to-end jobs and the bundle job's CLI step at the default (1 worker on its runners), and the bundle job's measurement step (`bundle.measure.*`) at `DEPFIT_BUNDLE_WORKERS=2`. A test fails if the pool stops running builds at the same time (a stand-in runner that waits per build: 8 builds on 4 workers finish in well under 8 waits), because CI's 2x gate alone would not catch losing the speed-up. |
 

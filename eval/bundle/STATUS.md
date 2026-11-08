@@ -734,7 +734,10 @@ candidate, 3.1 GB). Among pool sizes the work per call does not change; against 
 the alternating runs below. One worker already keeps about 3 to 4 cores busy, because rolldown is
 multi-threaded.
 
-**Alternating runs, the whole root operation** (after the first review; `nice -n 10`, at most 4
+**First alternating runs, the whole root operation** (after the first review; superseded by the
+second set below, because these started every worker at once, started a replacement before the
+retiring worker exited, sampled depfit's workers but not depfit itself, and printed CPU time
+without keeping it; `nice -n 10`, at most 4
 workers). Each invocation measures one way on installs prepared once: today's `measureRootEntry`
 for every candidate at once, or one shared pool of 4 workers running each candidate's whole build,
 both listing builds and then every export, in that dependency order, recycling after 100 builds.
@@ -753,10 +756,32 @@ alternate; another session's eval ran on the machine part of the time (load aver
 | all four (1192) | 12.15, 11.86 s | 10.48, 10.27 s | 0.86x, 0.87x | 95.3, 95.2 s | 97.7, 98.3 s | 1.03x | 3.1 / 2.6 GB (683 MB) |
 
 The largest process today is the one child per candidate (motion 1.5 GB); in the pool, a worker.
-Every outcome matched across all 26 runs (each call's today and pool runs compared in full: whole
+Every outcome matched across all 30 runs (each call's today and pool runs compared in full: whole
 build, export names, listing problems as a set, each export). clsx's pool started 4 workers at once
 for 5 builds, which is the cost on-demand start removes. Scripts and every run's output are kept with
 the author's notes (local, gitignored).
+
+**Second alternating runs** (after the second review; quiet machine, load average 2 to 16 from these
+runs themselves, `nice -n 10`). The pool now starts a worker only when a build waits and every live
+worker is busy, and waits for a worker retiring after 100 builds to exit before starting its
+replacement. Memory covers depfit's own process and everything it started. Each run's JSON and its
+`/usr/bin/time -l` output are kept (52 runs; every outcome identical within each call). Medians:
+
+| Call (builds) | Pairs | Today, wall | Pool, wall | Ratio | CPU, today / pool | Ratio | Memory, today / pool (largest pool process) | Workers started (most live) |
+|---|---|---|---|---|---|---|---|---|
+| clsx (5), 4 workers | 3 | 0.11 s | 0.19 s | | 0.21 / 0.33 s | 1.57x | 181 / 183 MB (114) | 2 (2) |
+| valibot (323), 4 | 3 | 2.94 s | 1.10 s | 0.38x | 5.09 / 6.27 s | 1.23x | 0.73 / 1.25 GB (295 MB) | 4 (4) |
+| zod (263), 4 | 3 | 5.66 s | 3.13 s | 0.55x | 20.4 / 20.6 s | 1.01x | 1.06 / 2.28 GB (554 MB) | 4 (4) |
+| date-fns (253), 4 | 3 | 5.75 s | 2.69 s | 0.47x | 24.6 / 26.9 s | 1.09x | 1.16 / 2.50 GB (604 MB) | 4 (4) |
+| motion (353), 4 | 3 | 9.18 s | 4.28 s | 0.47x | 40.9 / 43.9 s | 1.07x | 1.71 / 2.74 GB (639 MB) | 4 (4) |
+| zod valibot (586), 4 | 3 | 5.83 s | 4.02 s | 0.69x | 26.2 / 26.9 s | 1.03x | 1.58 / 1.96 GB (450 MB) | 8 (4) |
+| all four (1192), 4 | 3 | 12.13 s | 10.75 s | 0.89x | 95.0 / 97.2 s | 1.02x | 3.40 / 3.02 GB (682 MB) | 12 (4) |
+| zod valibot, 2 workers | 3 | 5.83 s | 5.66 s | 0.97x | 26.2 / 26.5 s | 1.01x | 1.58 / 1.41 GB (573 MB) | 6 (2) |
+| zod, 1 worker | 2 | 5.66 s | 5.89 s | 1.04x | 20.4 / 20.6 s | 1.01x | 1.06 / 0.83 GB (589 MB) | 3 (1) |
+
+Today's memory includes one process per candidate (motion's: 1.4 to 1.5 GB). The last two rows stand
+in for a small machine, where the rule gives as many workers as candidates. Waiting for retiring
+workers moved the four-candidate ratio from 0.87x to 0.89x.
 
 **Not measured:** a machine with 1 or 2 CPUs, and CI's 4-vCPU runners (worker counts 1 and 2 were run
 on 12 cores instead); subpath builds under a pool (iteration 2 is not merged); worker counts above 4 after the restart
