@@ -180,8 +180,8 @@ process.env.DEPFIT_LOCK_DIR = lockDir;
 // includes peers.
 process.env.npm_config_legacy_peer_deps = "true";
 
-// The measurement steps run with the job's DEPFIT_BUNDLE_WORKERS (CI sets 2, so the parallel path is
-// timed on its 1-worker runners); the CLI runs with the default count, as users get it.
+// The CLI runs at the default worker count, as users get it; only the measurement steps take
+// DEPFIT_BUNDLE_WORKERS.
 const { DEPFIT_BUNDLE_WORKERS: _workers, ...cliEnv } = process.env;
 
 function cli(spec: string): Promise<{ report: unknown; error: string | null; ms: number }> {

@@ -874,7 +874,6 @@ describe("measureRootEntry on a shared pool", () => {
   const CORE = "{ core as __depfit_0 }";
   const DEFAULT = 'import __depfit_0 from "with-subpaths";';
 
-  /** with-subpaths installed in a temp dir, with rules for the scripted runner. */
   async function installed(rules: Rule[] | null): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), "depfit-root-pool-"));
     await writeFile(join(dir, "package.json"), '{ "private": true }');
@@ -978,7 +977,6 @@ describe("measureRootEntry on a shared pool", () => {
           ? [...inner].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
           : inner,
       );
-    // One after another, so no more than 4 real Vite workers run at once.
     const runs = [];
     for (const options of [
       { size: 1, serial: true, script: null },

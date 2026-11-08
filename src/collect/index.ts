@@ -117,16 +117,17 @@ async function bundleFacts(
   }
 }
 
-/**
- * Everything that needs the isolated install of the candidate itself. With a pool, one worker
- * starts as the install does, so Vite's start-up overlaps it.
- */
+/** Starts one worker as an install starts, so Vite's start-up overlaps the install. */
+function warmDuringInstall(pool: () => Promise<VitePool>): void {
+  void pool().then(
+    (started) => started.warm(),
+    () => {},
+  );
+}
+
+/** Everything that needs the isolated install of the candidate itself. */
 async function treeFacts(resolved: Resolved, pool: (() => Promise<VitePool>) | null) {
-  if (pool)
-    void pool().then(
-      (started) => started.warm(),
-      () => {},
-    );
+  if (pool) warmDuringInstall(pool);
   return withIsolatedInstall(resolved.name, resolved.version, async ({ dir, tree }) => {
     const [vulnerabilities, bundledTypes, bundle] = await Promise.all([
       settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree))),
@@ -303,7 +304,6 @@ export const collect: Collect = async (specs, { cwd }) => {
       }),
     );
   } finally {
-    // Every worker ends before the report is printed; none outlives the run.
     if (pool)
       await pool.then(
         (started) => started.close(),

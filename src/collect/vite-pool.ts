@@ -17,7 +17,6 @@ import { ENTRY_FILE, startViteRunner, type ViteBuildResult, type ViteRunner } fr
 /** At most this many workers: more bought little and cost memory (SPEC.md, "Worker count"). */
 export const MAX_WORKERS = 4;
 
-/** A worker is replaced after this many builds. */
 export const BUILDS_PER_WORKER = 100;
 
 /** How long a retiring worker (or `close`) lets a worker end on its own before killing it. */
@@ -68,7 +67,7 @@ type Job = {
   reject: (error: unknown) => void;
 };
 
-/** Worker directories are unique in the process, so two pools never share one in an install. */
+/** Unique in the process, so two pools building in one install never share an entry file. */
 let nextWorkerId = 0;
 
 export function createVitePool({
@@ -111,7 +110,6 @@ export function createVitePool({
     return worker;
   };
 
-  /** Ends a worker's input, and kills it if it is still running after the grace period. */
   const retire = (worker: Worker) => {
     worker.runner.close();
     const deadline = setTimeout(() => worker.runner.kill(), closeGraceMs);
@@ -176,7 +174,6 @@ export function createVitePool({
       closed = true;
       for (const job of queue.splice(0)) job.reject(new Error("vite pool closed"));
       for (const worker of idle.splice(0)) retire(worker);
-      // A worker still building is killed after the same grace period.
       const ending = [...live];
       const deadline = setTimeout(() => {
         for (const worker of ending) worker.runner.kill();

@@ -37,7 +37,6 @@ function pool(options: Parameters<typeof createVitePool>[0]): VitePool {
   return created;
 }
 
-/** The builds the scripted runner logged: each entry source and the PID of the worker that built it. */
 async function log(dir: string): Promise<Array<{ source: string; pid: number }>> {
   const text = await readFile(join(dir, "runner-log.txt"), "utf8").catch(() => "");
   return text
@@ -97,8 +96,10 @@ describe("createVitePool", () => {
     const workers = pool({ size: 4 });
     const started = performance.now();
     await Promise.all(Array.from({ length: 8 }, (_, n) => build(workers, dir, `slow ${n}\n`)));
-    // Two rounds of 400 ms on 4 workers; one after another would take 3.2 s.
-    expect(performance.now() - started).toBeLessThan(2400);
+    expect(
+      performance.now() - started,
+      "2 rounds of 400 ms on 4 workers, not 3.2 s serial",
+    ).toBeLessThan(2400);
     expect(workers.stats.started).toBe(4);
     expect(workers.stats.peakLive).toBe(4);
   });
@@ -120,8 +121,9 @@ describe("createVitePool", () => {
     pools.push(workers);
     for (const n of [1, 2, 3, 4, 5]) await build(workers, dir, `build ${n}\n`);
     expect(workers.stats.started).toBe(3);
-    // Each retiring worker takes 500 ms to exit; its replacement waits for it.
-    expect(workers.stats.peakLive).toBe(1);
+    expect(workers.stats.peakLive, "a replacement waits for its 500 ms retiring predecessor").toBe(
+      1,
+    );
   });
 
   it("kills a retiring worker that does not exit, so the next build still runs", async () => {
@@ -142,14 +144,16 @@ describe("createVitePool", () => {
   });
 
   it("counts the timeout from when a worker takes the build, not from when it was queued", async () => {
-    // Queued, the second build would be over the limit (1.6 s); from when it is sent, it is not.
     const dir = await scratch([{ match: "slow", delayMs: 800 }]);
     const workers = pool({ size: 1, timeoutMs: 1500 });
     const results = await Promise.allSettled([
       build(workers, dir, "slow 1\n"),
       build(workers, dir, "slow 2\n"),
     ]);
-    expect(results.map((result) => result.status)).toEqual(["fulfilled", "fulfilled"]);
+    expect(
+      results.map((result) => result.status),
+      "1.6 s from queueing, 0.8 s from sending, limit 1.5 s",
+    ).toEqual(["fulfilled", "fulfilled"]);
   });
 
   it("ends a worker whose build times out, and builds the rest on a new one", async () => {

@@ -10,13 +10,9 @@ import { type ChildProcess, execFileSync } from "node:child_process";
 const live = new Set<ChildProcess>();
 const SIGNALS = ["SIGINT", "SIGTERM"] as const;
 const GRACE_MS = 2000;
-/** Set once a signal arrived: a child started after that (a pool replacing a worker) is killed. */
 let stopping = false;
 
-/**
- * Every process descending from `root`, from `ps` (POSIX), taken before any is signalled, so a
- * descendant whose parent dies first is still found. Empty where `ps` is not available.
- */
+/** Every process descending from `root`, from one `ps` snapshot (POSIX); empty without `ps`. */
 export function descendants(root: number): number[] {
   let table: string;
   try {
@@ -51,12 +47,10 @@ const running = (pid: number) => {
   }
 };
 
-const send = (pid: number, signal: NodeJS.Signals) => {
+const signalIfAlive = (pid: number, signal: NodeJS.Signals) => {
   try {
     process.kill(pid, signal);
-  } catch {
-    // Already gone.
-  }
+  } catch {}
 };
 
 function stopAll(signal: NodeJS.Signals): void {
@@ -64,12 +58,12 @@ function stopAll(signal: NodeJS.Signals): void {
   for (const name of SIGNALS) process.off(name, stopAll);
   const tree = descendants(process.pid);
   const pids = new Set([...tree, ...[...live].flatMap((child) => child.pid ?? [])]);
-  for (const pid of pids) send(pid, "SIGTERM");
+  for (const pid of pids) signalIfAlive(pid, "SIGTERM");
   const started = Date.now();
   const check = () => {
     const left = [...pids].filter(running);
     if (left.length && Date.now() - started < GRACE_MS) return void setTimeout(check, 50);
-    for (const pid of left) send(pid, "SIGKILL");
+    for (const pid of left) signalIfAlive(pid, "SIGKILL");
     process.kill(process.pid, signal);
   };
   check();

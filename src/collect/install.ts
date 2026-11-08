@@ -18,7 +18,6 @@ import type { TreeEdge, TreePackage } from "./facts.ts";
 import { resolveAlias } from "./lockfile.ts";
 import { asRecord, asString, asStringRecord } from "./util.ts";
 
-/** Runs npm, registered as depfit's child (children.ts) so a signal to depfit also stops it. */
 function npm(args: string[], options: ExecFileOptions): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = execFile("npm", args, options, (error) => (error ? reject(error) : resolve()));

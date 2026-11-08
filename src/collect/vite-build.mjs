@@ -82,8 +82,7 @@ async function buildOnce(request) {
   // Module ids use the real path (on macOS the temp dir is /var -> /private/var).
   const realRoot = realpathSync(root);
   const realEntry = realpathSync(entry);
-  // The entry is labeled by its file name wherever it is (a pool worker writes it in its own
-  // directory under the root), so the checks recognize it as the entry.
+  // Labeled by file name wherever a worker wrote it: bundle.ts matches `importer === ENTRY_FILE`.
   const label = (id) => {
     if (id === null) return null;
     if (id === realEntry || id === entry) return basename(entry);

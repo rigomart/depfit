@@ -59,7 +59,7 @@ type PoolModule = typeof import("../../src/collect/vite-pool.ts");
 const rootEntry: RootEntryModule = await import(join(repo, "src/collect/root-entry.ts"));
 const bundle: BundleModule = await import(join(repo, "src/collect/bundle.ts"));
 const install: InstallModule = await import(join(repo, "src/collect/install.ts"));
-/** null for today's code, which has no pool. */
+/** null when `--repo` is a checkout without vite-pool.ts (#7's parent). */
 const poolModule: PoolModule | null = await import(join(repo, "src/collect/vite-pool.ts")).catch(
   () => null,
 );
@@ -203,8 +203,7 @@ async function compare(): Promise<void> {
   process.exitCode = differences ? 1 : 0;
 }
 
-/** Peak memory of this process and its descendants, per process and summed (MiB). */
-function sampler() {
+function peakMemorySampler() {
   const perPid = new Map<number, number>();
   let sum = 0;
   let stop = false;
@@ -257,7 +256,7 @@ async function bundleStep(dirs: Array<{ name: string; dir: string }>): Promise<v
     ? Number(values.workers)
     : (poolModule?.bundleWorkers(dirs.length) ?? null);
   const pool = poolModule && size !== null ? poolModule.createVitePool({ size }) : undefined;
-  const peak = sampler();
+  const peak = peakMemorySampler();
   const started = performance.now();
   const reports = await Promise.all(
     dirs.map(({ dir, name }, at) =>

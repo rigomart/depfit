@@ -3,9 +3,9 @@
  * 1): the whole entry point (`import * as m`, kept whole), and each export alone, one build per
  * export; and each subpath of its `exports` map, measured whole (iteration 2). The report gets a
  * compact map of the subpaths (at most REPORT_SUBPATH_LIMIT); the full detail per subpath
- * (`subpathDetail`) is kept for the follow-up flags (`--entries`, #10). The builds run on a pool of
- * Vite worker processes (`vite-pool.ts`), shared by every candidate of a run, and at the same time;
- * the result is the one today's order of the builds gives (SPEC.md, "Parallel builds (#7)").
+ * (`subpathDetail`) is kept for the follow-up flags (`--entries`, #10). The builds run at once on a
+ * pool of Vite workers (`vite-pool.ts`) shared by every candidate of a run; the result is the one
+ * the serial order gives (SPEC.md, "Parallel builds (#7)").
  * collect/index.ts imports this only for a browser workspace, so Vite and rolldown are never loaded
  * otherwise.
  */
@@ -153,7 +153,6 @@ function settle<T>(promise: Promise<T>): Promise<Settled<T>> {
   );
 }
 
-/** The value, or the error thrown: the first failure awaited in order is the one that counts. */
 function unwrap<T>(settled: Settled<T>): T {
   if (settled.ok) return settled.value;
   throw settled.error;
@@ -161,9 +160,8 @@ function unwrap<T>(settled: Settled<T>): T {
 
 /**
  * Builds each listed subpath whole (`import * as m from "<name>/<subpath>"`, kept), once per
- * target file, unless there is no map, the root's toolchain check failed, or the list is over
- * `limit`. `serial` builds them one after another in key order; otherwise all start at once. Either
- * way the first build in key order that fails to run throws (the caller keeps the root's results).
+ * target file. Serially or all at once, the first build in key order that fails to run throws,
+ * whatever finished first.
  */
 async function measureSubpaths(
   measure: (source: string) => Promise<BundleOutcome>,
@@ -221,11 +219,9 @@ async function listExports(
   serial: boolean,
 ): Promise<{ names: string[] | null; problems: BundleProblem[] }> {
   const from = JSON.stringify(candidate);
-  // Both listing builds start at once unless `serial`; the default's result counts only when the
-  // star listing succeeded, as when it is built second.
   const starBuild = settle(build(`export * from ${from};\n`));
   const defaultSource = `export { default } from ${from};\n`;
-  const early = serial ? null : settle(build(defaultSource));
+  const defaultStartedEarly = serial ? null : settle(build(defaultSource));
   const buildProblems = async (result: ViteBuildResult) =>
     problemsFromBuild(result, externals, candidate, await loadParser());
   const failed = async (result: ViteBuildResult) => {
@@ -239,7 +235,7 @@ async function listExports(
   if (star.errors !== null || star.exports === null || (await unresolved(star))) {
     return failed(star);
   }
-  const withDefault = unwrap(await (early ?? settle(build(defaultSource))));
+  const withDefault = unwrap(await (defaultStartedEarly ?? settle(build(defaultSource))));
   // Only a missing export error means there is no `default`; any other build error leaves the
   // names unknown. Other problems the checks find in a build that succeeds do not matter for names.
   const errors = withDefault.errors ?? [];
@@ -255,8 +251,8 @@ const isToolchainMismatch = (outcome: BundleOutcome) =>
  * Measures the root entry point of `candidate`, installed in `dir`, with `externals` left out:
  * the whole build, then (when it ran on the evaluated toolchain) the export names and each export
  * alone; and, when `options.subpaths` is set, each listed subpath whole. The result is the one
- * today's order of these builds gives (whole, listing, each export in sorted order, each subpath in
- * key order): a build that fails to run (its worker exits, times out or prints an unreadable
+ * the serial order of these builds gives (whole, listing, each export in sorted order, each subpath
+ * in key order): a build that fails to run (its worker exits, times out or prints an unreadable
  * result) decides it when it comes first in that order, whatever finished first. A failure in the
  * root phase throws; one in the subpath phase leaves the root's results as they are and gives the
  * subpaths `bundle: BUNDLER_ERROR`. Builds after the deciding failure that are still queued are
@@ -264,8 +260,8 @@ const isToolchainMismatch = (outcome: BundleOutcome) =>
  *
  * The builds run on `options.pool`, or on a pool of the call's own (`bundleWorkers(1)` workers,
  * closed before returning). They start at once, the subpaths as soon as the whole build has passed
- * the toolchain check, unless `options.serial` builds them one after another in today's order (one
- * worker, one candidate at a time: iteration 2's gate F schedule).
+ * the toolchain check, unless `options.serial` builds them one at a time in that order (gate F's
+ * schedule).
  */
 export async function measureRootEntry(
   dir: string,
@@ -279,7 +275,6 @@ export async function measureRootEntry(
     subpathLimit?: number;
     /** A stand-in for vite-build.mjs, for the call's own pool (tests). */
     runnerScript?: string;
-    /** The run's shared pool. */
     pool?: VitePool;
     serial?: boolean;
     /**
@@ -357,11 +352,6 @@ export async function measureRootEntry(
   }
 }
 
-/**
- * The root phase: the whole build; then, unless it ran on another toolchain, the listing and each
- * export alone (all at once unless `serial`, awaited in sorted order). `afterWhole` runs once the
- * whole build is in.
- */
 async function measureRoot(
   build: (source: string, exports?: boolean) => Promise<ViteBuildResult>,
   measure: (name: string | null) => Promise<BundleOutcome>,
@@ -551,7 +541,7 @@ export async function rootEntryBundle(
     runnerScript?: string;
     /** The run's shared pool; without one the call uses its own. */
     pool?: VitePool;
-    /** Today's order, one build at a time (see `measureRootEntry`). */
+    /** One build at a time, in the serial order (see `measureRootEntry`). */
     serial?: boolean;
   } = {},
 ): Promise<{ bundle: Bundle; reasons: string[] }> {

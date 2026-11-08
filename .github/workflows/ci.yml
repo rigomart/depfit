@@ -91,8 +91,8 @@ jobs:
           key: npm-bundle-${{ runner.os }}-${{ hashFiles('eval/bundle/locks/**', 'eval/bundle/cases.json') }}
           restore-keys: npm-bundle-${{ runner.os }}-
       - name: Replay the frozen bundle reference cases
-        # The measurement steps on 2 workers (the default on these 4-vCPU runners is 1 for one
-        # candidate), so the parallel path is checked and timed; the CLI step uses the default.
+        # 4-vCPU runners default to 1 worker for one candidate; 2 times the parallel path (the CLI
+        # step strips this).
         env:
           DEPFIT_BUNDLE_WORKERS: "2"
         run: mkdir -p timings && bun ci/bundle-accuracy.ts --timings timings/bundle.json
