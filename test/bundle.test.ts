@@ -20,6 +20,7 @@ import {
   unresolvedProblem,
   type ViteBuildResult,
 } from "../src/collect/bundle.ts";
+import { reasonText } from "../src/collect/util.ts";
 
 const chunk = (fileName: string, rest: Partial<ChunkInfo> = {}): ChunkInfo => ({
   fileName,
@@ -435,6 +436,14 @@ describe("bundle reasons and labels", () => {
     expect(bundleReasons(["./e.js", "./d.js", "./c.js", "./b.js", "./a.js"].map(outside))).toEqual([
       "bundle: IMPORT_OUTSIDE_BUNDLE ./a.js, ./b.js, ./c.js (+2 more)",
     ]);
+  });
+
+  it("percent-encodes %, ; and [ in names, so a name never looks like a subpath group", () => {
+    const named = (specifier: string) => ({ code: "IMPORT_OUTSIDE_BUNDLE", specifier });
+    expect(bundleReasons([named('x; NON_JS_IMPORT in subpaths ["./a"]'), named("50%.js")])).toEqual(
+      ['bundle: IMPORT_OUTSIDE_BUNDLE 50%25.js, x%3B NON_JS_IMPORT in subpaths %5B"./a"]'],
+    );
+    expect(reasonText("a;b[c]%")).toBe("a%3Bb%5Bc]%25");
   });
 
   it("calls the snippet's own unresolvable import of the candidate NO_ENTRY", () => {

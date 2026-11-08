@@ -1,0 +1,125 @@
+{
+  "rule": "SPEC.md, iteration 2, gate B: the first 20 packages in wild.json order whose exports map lists at least one subpath by the listing rule; up to 3 subpaths each: all when there are 3 or fewer, otherwise the first, the middle (index floor((n-1)/2)) and the last of the sorted keys. Frozen in the bar (2026-11-06, approved 2026-11-07): 51 cases in 20 packages. The coverage check asserts these exact tuples; gate L's listing must give the same set, and a difference stops the gate for review rather than changing the set.",
+  "packages": [
+    {
+      "package": "vite",
+      "version": "8.3.4",
+      "id": "vite",
+      "subpaths": ["./internal", "./module-runner"]
+    },
+    {
+      "package": "react",
+      "version": "19.3.1",
+      "id": "react",
+      "subpaths": ["./compiler-runtime", "./jsx-dev-runtime", "./jsx-runtime"]
+    },
+    {
+      "package": "jose",
+      "version": "6.2.12",
+      "id": "jose",
+      "subpaths": ["./base64url", "./jwt/decode", "./key/import"]
+    },
+    {
+      "package": "htmlparser2",
+      "version": "12.0.0",
+      "id": "htmlparser2",
+      "subpaths": ["./WebWritableStream", "./WritableStream"]
+    },
+    {
+      "package": "fflate",
+      "version": "0.8.3",
+      "id": "fflate",
+      "subpaths": ["./browser", "./node"]
+    },
+    {
+      "package": "react-refresh",
+      "version": "0.19.0",
+      "id": "react-refresh",
+      "subpaths": ["./babel", "./runtime"]
+    },
+    {
+      "package": "@opentelemetry/api",
+      "version": "1.9.1",
+      "id": "opentelemetry__api",
+      "subpaths": ["./experimental"]
+    },
+    {
+      "package": "reflect.getprototypeof",
+      "version": "1.0.10",
+      "id": "reflect.getprototypeof",
+      "subpaths": ["./auto", "./implementation", "./shim"]
+    },
+    {
+      "package": "dompurify",
+      "version": "3.4.17",
+      "id": "dompurify",
+      "subpaths": ["./dist/purify.js", "./dist/purify.min.js", "./purify.min.js"]
+    },
+    {
+      "package": "@testing-library/jest-dom",
+      "version": "7.0.1",
+      "id": "testing-library__jest-dom",
+      "subpaths": ["./jest-globals", "./matchers", "./vitest"]
+    },
+    {
+      "package": "react-router",
+      "version": "8.4.0",
+      "id": "react-router",
+      "subpaths": ["./dom", "./internal/react-server-client", "./route-pattern"]
+    },
+    {
+      "package": "framer-motion",
+      "version": "14.3.0",
+      "id": "framer-motion",
+      "subpaths": ["./animate-view", "./dom", "./projection"]
+    },
+    {
+      "package": "react-redux",
+      "version": "9.3.0",
+      "id": "react-redux",
+      "subpaths": ["./alternate-renderers"]
+    },
+    {
+      "package": "postcss-js",
+      "version": "5.1.0",
+      "id": "postcss-js",
+      "subpaths": ["./async", "./parser", "./sync"]
+    },
+    {
+      "package": "preact",
+      "version": "11.0.1",
+      "id": "preact",
+      "subpaths": ["./compat", "./compat/server.browser", "./test-utils"]
+    },
+    {
+      "package": "classnames",
+      "version": "2.5.1",
+      "id": "classnames",
+      "subpaths": ["./bind", "./dedupe", "./index.js"]
+    },
+    {
+      "package": "ua-parser-js",
+      "version": "2.0.10",
+      "id": "ua-parser-js",
+      "subpaths": ["./bot-detection", "./device-detection", "./helpers"]
+    },
+    {
+      "package": "hastscript",
+      "version": "9.0.1",
+      "id": "hastscript",
+      "subpaths": ["./jsx-dev-runtime", "./jsx-runtime", "./svg/jsx-runtime"]
+    },
+    {
+      "package": "@reduxjs/toolkit",
+      "version": "2.13.0",
+      "id": "reduxjs__toolkit",
+      "subpaths": ["./query", "./query/react", "./react"]
+    },
+    {
+      "package": "cheerio",
+      "version": "1.2.0",
+      "id": "cheerio",
+      "subpaths": ["./slim", "./utils"]
+    }
+  ]
+}

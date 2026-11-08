@@ -573,3 +573,223 @@ rerun.
    (iterations 2 and 3).
 3. **Standalone is still not marginal**, but in this round in-repo facts won where they applied
    (shiki, recharts, streamdown, date-fns, react-markdown).
+
+## Round 5 follow-up: subpaths (evidence for the iteration-2 bar, 2026-11-06)
+
+Small experiments made before any iteration-2 code, using the existing engine (`vite build` of
+`import * as m from "<name>/<subpath>"`, kept whole) on round 5's frozen install trees. They
+decide what the iteration-2 bar in SPEC.md measures and how strict its thresholds are.
+
+**What `exports` maps contain.** The census covered 259 manifests: the 59 probe packages at their
+frozen versions and the 200 packages of the wild corpus. 167 have an `exports` field. 71 list at
+least one key that resolves to a JS file under Vite's browser conditions. This classification
+used a hand-written resolver with Vite's conditions; gate L later checks the real listing against
+`resolve.exports`. Of the 1,365 keys other than `"."`:
+
+- 1,192 resolve to JS;
+- 109 are `./package.json`;
+- 44 are patterns;
+- 20 are other non-JS targets: 9 CSS, 6 JSON, 3 with no JS target for these conditions (2 keys
+  with only a `types` condition, 1 `.d.ts` target), 1 wasm and 1 other.
+
+Per package, the count of JS subpaths is small. In the wild corpus the maximum is 78
+(@base-ui/react), then 62 and 49. Among the probe packages it is 10, except date-fns at 739, one
+module per function. Pattern keys match many modules, counted per package from the published
+file lists: highlight.js 386, shiki 440, gsap 117, zod's locales 128, underscore 492. A single
+pattern matches between 0 and 451.
+gsap 3.15.1 has an `exports` map made only of patterns. Round 4's follow-up recorded it as having
+none.
+
+**Cost.** Once the child is warm, a whole subpath build takes 4–544 ms; most take under 40 ms.
+Some subpath totals, not counting the root's build:
+
+| Package | Subpaths built | Subpath build time |
+|---|---|---|
+| date-fns | 739 | 4.9 s |
+| @base-ui/react | 78 | 1.2 s |
+| storybook (mostly Node code) | 49 | 6.3 s |
+| shiki | 10 | 0.95 s |
+
+Of round 5's 65 probe candidates (each counted per probe), 26 have a JS subpath. 25 of them would
+build subpaths under the cap; date-fns would not. Those builds add a median of 0 ms, a p90 of 58 ms
+and a max of 0.95 s per candidate. This counts build time only, not listing. Round 4's follow-up gave 0.5–4.5 s
+per package, but that included 40 export builds per package as well as the entry points.
+
+**Per-export numbers for subpaths** would add 766 builds for motion and 1,579 for zod, against 350
+and 259 for their roots.
+
+**Real usage.** Round 5's ground truth was scored on the entry points each snippet imports. The
+root gives [single-export median, whole], and an explicit subpath gives its whole for both its
+lower and upper number. A candidate importing several entry points takes the largest lower number
+and the sum of the whole numbers.
+
+| | Root numbers (iteration 1) | Imported entry points |
+|---|---|---|
+| In `[0.9 × lower, 1.1 × upper]` | 59/64 | 58/64 |
+| Pairs pointing the same way that real usage agrees with | 43/44 | 48/48 |
+
+- **photoswipe** moves into range: `lightbox` (4.5 KB) plus the root (16.9 KB), against real
+  usage of 20.0 KB.
+- **shiki** stays in range: `core` (35.9 KB) plus `engine/javascript` (20.2 KB), against 53.3 KB.
+- **The highlight.js vs shiki pair**, the one pair that disagreed, now agrees. `lib/core` is 8.3
+  KB, against 306 KB for the root.
+- **Both motion probes** move out of range. `motion/react` is 73.2 KB whole and real usage is
+  43–45 KB. This is a framework subpath (iteration 3), and the root's wide range had covered it.
+- **Still out of range:** highlight.js and gsap, whose languages and Flip are reached only through
+  patterns, and dayjs and pragmatic-drag-and-drop, which have no `exports` map.
+
+**Nulls.** Every probe-package subpath that failed did so with a code:
+
+- @formkit/auto-animate's 6 framework subpaths: `UNRESOLVED_IMPORT` of a framework the package
+  does not declare.
+- fuse.js `./worker`: `NON_JS_IMPORT`, a worker.
+- micromark `./stream` and marked `./bin/marked`: `UNRESOLVED_IMPORT` of Node built-ins.
+
+The gate B reference set the bar's rule picks has 51 cases in 20 packages. 8 of them are null, each with a code:
+Node built-ins, computed `import()` (react-router, as in iteration 1), and an undeclared
+`@jest/globals`.
+
+**Resolution.** Vite 8.3.4 resolves `exports` with a bundled `resolve.exports` 2.0.3
+(`unsafe: true`, conditions `module`, `browser`, `production`, `import`, plus `default`). The
+listing rule and gate L use the same resolver.
+
+# Round 6: schema 6 with subpaths in the default report (iteration 2, gates R, H0 and H)
+
+There are 32 browser probes across 9 local projects: round 5's 22, plus 10 holdout-2 questions
+frozen on 2026-11-06 before any iteration-2 code. Every candidate gets round 5's root numbers and,
+from SPEC.md's bar amendment 6, `subpaths_whole_eager_js_gzip9_bytes`: each subpath its exports
+map lists, up to 30, built alone and whole. Packages with more than 30 get a null map and their
+count.
+
+Method:
+
+1. **Freeze.** Each project's revision was recorded first. Then the holdout-2 ground-truth
+   snippets were written: one blind Sonnet agent per project, from source and question only. All
+   29 passed the parser on the first try. A collection run with the iteration-1 CLI then recorded
+   every resolved version and install tree, and also serves as gate H's control. Hashes are in
+   STATUS.md.
+2. **Collection.** `bun eval/run.ts --revisions` ran three times on the frozen trees: once with
+   ground truth, once again for D, and once with `DEPFIT_BUNDLE=0` for E. One holdout project (a
+   React app in a Bun monorepo) had moved since the freeze and was measured from its frozen
+   commit.
+3. **Decisions.** Per project there were three blind evaluators, given only the JSON, the questions
+   and `--schema`: Sonnet on the control (the iteration-1 CLI's reports and schema), and Sonnet and
+   Haiku on iteration 2.
+
+## Real usage against the numbers (gate R)
+
+Each candidate is scored on the entry points its real usage imports. The root gives
+[single-export median, whole]. A subpath with a value gives that value.
+
+| | Round-4 probes | Holdout-1 | Holdout-2 | All |
+|---|---|---|---|---|
+| Real usage in `[0.9 × L, 1.1 × U]` | 29/34 | 29/30 | 24/25 | 82/89 (92.1%) |
+| Pairs pointing the same way that real usage agrees with | | | | 62/64 (96.9%) |
+
+- **The subpath map fixes three of round 5's iteration-1 misses.**
+  - photoswipe (`lightbox` plus the root).
+  - @reduxjs/toolkit (`query/react`: 23.4 KB real usage against a 14.6 KB root whole).
+  - The shiki vs highlight.js pair, through highlight.js `lib/core` (8.3 KB against a 306 KB root).
+- **The 7 misses all fall in named classes.**
+  - Three use modules of packages with no exports map: dayjs plugins, pragmatic-drag-and-drop
+    adapters, and mathjax-full's `js/*` modules (real usage 546 KB against a 52 KB root).
+  - Two go through unexpanded patterns: gsap's Flip and highlight.js languages.
+  - Two go through `motion/react` (76.3 KB whole, 44.7–46.5 KB real usage).
+- **The 2 disagreeing pairs** both involve mathjax-full.
+- **Left out**, because real usage is null:
+  - @formkit/auto-animate: its React subpath imports an undeclared React.
+  - @google/model-viewer and cal-heatmap: a computed `import()`.
+  - @xstate/store: the agent's snippet imported `@xstate/store/react`, which version 4.3.0 does not
+    export.
+  - @uiw/react-heat-map: it emits CSS.
+
+## Decisions
+
+Iteration 2 differed from the control on 3 of 32 probes for Sonnet and 6 of 32 for Haiku. The
+static Preact site's two iteration-2 evaluators were rerun on reports with maplibre-gl pinned to the
+control's version (STATUS.md), and the rows below come from those reruns. Real usage is gzip, from
+the iteration-2 run:
+
+| Probe | Control (Sonnet) | Iteration 2 | Real usage, iteration 2 vs control |
+|---|---|---|---|
+| Preact shared state | nanostores | @preact/signals (Sonnet and Haiku) | 2,993 vs 894 B. A trade-off: native Preact integration against a separate, unmeasured nanostores binding. Round 5's arms split on this question the other way |
+| Static-site routing (holdout-2) | wouter-preact | preact-iso (Sonnet and Haiku) | 1,734 vs 2,168 B. Chosen on `./router`; both evaluators noted that a subpath's peers are not in the report (known limit) |
+| README markdown | keep streamdown | react-markdown (Haiku) | 35 vs 157 KB, from facts in the report (streamdown's upgrade adds 5 packages and 1.8 MB). It weighed no migration cost for a library in use: a reading of the question |
+| LaTeX in notes (holdout-2) | katex | temml (Haiku) | 59.6 vs 76.6 KB |
+| Phoneme chart animation | motion | @react-spring/web (Haiku) | 17.0 vs 44.7 KB. Haiku saw `motion/react-mini` (3.4 KB) but could not confirm it covers the chart |
+| List virtualization | @tanstack/react-virtual | react-window (Sonnet and Haiku) | 6.3 vs 10.0 KB |
+
+None is worse on the facts. Every other decision matched the control in both arms:
+
+| Question | Decision |
+|---|---|
+| Route validation | valibot |
+| Map | leaflet |
+| Search | minisearch |
+| Markdown export | marked |
+| HTML sanitizing | dompurify |
+| ZIP export | client-zip |
+| Charts | keep recharts |
+| Dates | keep date-fns |
+| README code highlighting | sugar-high |
+| Data fetching | swr |
+| Toasts | keep sonner |
+| Drag and drop | keep dnd-kit |
+| Markdown notes | keep react-markdown |
+| Global state | jotai |
+| Calendar heatmap | @uiw/react-heat-map |
+| Diff highlighting | shiki |
+| Fuzzy match | match-sorter |
+| List animation | auto-animate |
+| Forms | react-hook-form |
+| Confetti | canvas-confetti |
+| Audio | howler |
+| Waveform | wavesurfer.js |
+| Lightbox | photoswipe |
+| 3D model | @google/model-viewer |
+| Tooltips | @floating-ui/react |
+| Date picker | react-day-picker |
+
+- **How readers used the map.** They used it to find the entry point they would import. Examples:
+  zod's `./mini`, highlight.js `./lib/core`, @reduxjs/toolkit's `./query/react`, motion's
+  `./react`, `./react-m` and `./react-mini`, and preact-iso's `./router`.
+- **No reader misread the map in the ways the bar names.** None added a subpath value to the
+  root's. None took a pattern or a module of a package without a map as measured. None took a null
+  map over 30 (date-fns, echarts) as "no subpaths": all read `SUBPATH_LIMIT` as "not measured in
+  this report". One Sonnet answer said outright that subpath values should not be added together.
+- **Two Haiku sentences went to the independent reviewer**, who ruled that neither is a misreading
+  of what a number measures:
+  - On the lightbox question, Haiku called photoswipe's `./lightbox` (4.5 KB) "the smallest
+    measured eager cost of the three". basiclightbox is 1.7 KB, and the same answer says so.
+  - On the date picker question, Haiku inferred "importing a locale is expensive" from
+    react-day-picker's whole `./locale` (124 KB). That number keeps every locale, the known limit
+    that subpaths are measured whole only.
+
+  The first is a wrong ranking; the second is an inference the known limit covers. Both decisions
+  match the control.
+- **Control evaluators noticed the missing entry points.** They had iteration 1's root numbers. 7
+  of the 9 control answers mention subpaths or entry points, and several list subpath sizes as
+  missing facts (OpenLayers' `ol/Map` and siblings, `motion/react`).
+
+## Comprehension (gate H0)
+
+Three blind Haiku readers answered all 11 questions correctly. They got four reports: iteration
+1's three, plus a browser workspace with highlight.js, shiki, @formkit/auto-animate, dayjs and
+date-fns. Each reader:
+
+- read a subpath value as that subpath alone, not added to the root's;
+- read a pattern subpath as having no size of its own;
+- read `exports_map: false` as "any file importable, none measured";
+- read a null value through the `unavailable` entry that names its key;
+- read a sum of two values as possibly counting shared code twice;
+- read date-fns's null map as "more than 30, not measured", not "no subpaths".
+
+## Takeaways
+
+1. **The compact map gives readers the entry point they would import**, and closes three of round
+   5's misses with no new misreading.
+2. **The remaining misses are outside this slice**: modules of packages without an exports map,
+   unexpanded patterns, and framework subpaths measured whole, which are left to #10's follow-up
+   flags.
+3. **A whole subpath can still overstate one import** (`./locale`, `motion/react`). The per-export
+   detail for an entry point is #10's job.

@@ -83,3 +83,12 @@ export async function fetchJson(url: string, init?: RequestInit): Promise<unknow
   if (!response.ok) throw new Error(`${url} responded ${response.status}`);
   return response.json();
 }
+
+/**
+ * Free text (a name or a message) as written into a `bundle:` entry: `%`, `;` and `[` are
+ * percent-encoded, so the text can never contain the `; ` that starts appended subpath groups or
+ * the `[` that opens a group's key array (SPEC.md iteration 2, amendment 6).
+ */
+export function reasonText(text: string): string {
+  return text.replaceAll("%", "%25").replaceAll(";", "%3B").replaceAll("[", "%5B");
+}

@@ -17,7 +17,7 @@ import { join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ESTree } from "rolldown/utils";
 import { type BundleEntry, entryModuleSource, isCandidateSource } from "./bundle-entry.ts";
-import { isRecord } from "./util.ts";
+import { isRecord, reasonText } from "./util.ts";
 
 const ENTRY_FILE = "__depfit_entry.mjs";
 const RUNNER = fileURLToPath(new URL("./vite-build.mjs", import.meta.url));
@@ -195,7 +195,8 @@ const NAMES_PER_REASON = 3;
 
 /**
  * The `unavailable` entries for some problems: one `bundle: <CODE> [names]` per code, sorted. The
- * names are the distinct specifiers, the first few in order and then a count of the rest.
+ * names are the distinct specifiers (as `reasonText`), the first few in order and then a count of
+ * the rest.
  */
 export function bundleReasons(problems: BundleProblem[]): string[] {
   const byCode = new Map<string, Set<string>>();
@@ -207,7 +208,7 @@ export function bundleReasons(problems: BundleProblem[]): string[] {
   return [...byCode]
     .map(([code, names]) => {
       const sorted = [...names].sort();
-      const shown = sorted.slice(0, NAMES_PER_REASON).join(", ");
+      const shown = sorted.slice(0, NAMES_PER_REASON).map(reasonText).join(", ");
       const rest = sorted.length - NAMES_PER_REASON;
       return [`bundle: ${code}`, shown, rest > 0 ? `(+${rest} more)` : ""]
         .filter(Boolean)

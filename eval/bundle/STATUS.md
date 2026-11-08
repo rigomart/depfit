@@ -14,10 +14,205 @@ SPEC-snippets-v1.md. Evidence: `eval/FINDINGS.md`, round 4 and its follow-up.
 |---|---|
 | 0. Remove the snippet API | Passes (user decision, 2026-11-04; below) |
 | 1. Root entry point, two ways, browser workspaces only | Built; scorecard below |
+| 2. Each subpath in the `exports` map, measured whole (#9) | Built 2026-11-08 with bar amendment 6 (a compact map in the default report); scorecard below |
 
 Holdout probes `holdout-1`, frozen 2026-10-19 before any iteration-1 code: 10 questions, sha256
 `f792fac58becfaed39b978a33e2e118526652b9cb6c9214b424d9cf2461f8466` of `JSON.stringify` of the
 `holdout-1` entries of `eval/probes.json` in file order.
+
+Holdout probes `holdout-2`, frozen 2026-11-06 before any iteration-2 code: 10 questions, 29
+candidates, sha256 `c39c0792cdc4fc44b13b7e34b8202fe06307d6c64d468463903a0b73e34a3dde` of
+`JSON.stringify` of the `holdout-2` entries of `eval/probes.json` in file order (appended after
+every earlier probe, so the files `eval/run.ts` writes for earlier probes keep their numbers).
+
+The holdout-2 measurement inputs were frozen on 2026-11-07, before the first iteration-2
+measurement, in the order SPEC.md gives:
+
+| Input | sha256 or value |
+|---|---|
+| Project revisions, recorded in a local record, with a hash of each working tree | sha256 of the record: `4723833f848ac776397c5754afedf8f85c95669a1c0a0c65aedb756bcb91b845` |
+| Ground-truth snippets (29) | `ece6ec2c17fd631dca54e6cc9ccf5172035ddb1b42f5061e01d95ce74b9cf584`, from `JSON.stringify` of the holdout-2 entries of `eval/snippets.json` in probe order |
+| Resolved versions and install trees (29 lockfiles) | `909adea328f4e81a968a79c8a72c7c5079625faa7e7b8f74d0654b07c2571312`, from `JSON.stringify` of `[{name, version, lock_sha256}]` sorted by name (compact) |
+| Collection run that recorded them, also gate H's control | the iteration-1 CLI at `7b30612` |
+
+- **Snippets.** One blind Sonnet agent per project wrote them, from the project's source and the
+  question only, with no sizes. All 29 passed depfit's snippet parser on the first try.
+
+## Iteration 2: subpaths, measured whole (built 2026-11-08)
+
+The bar is in SPEC.md, "Iteration 2", including bar amendment 6 (2026-11-07). Its evidence is in
+FINDINGS.md, under "Round 5 follow-up: subpaths" and "Round 6". The default report gets
+`exports_map`, `subpaths_listed`, `subpaths_whole_eager_js_gzip9_bytes` (at most 30 keys) and
+`subpath_patterns_unmeasured`. Each null value is named by code in `unavailable`. The detail of each
+subpath stays in the measurement code for the follow-up flags (#10). Scored by
+`eval/bundle/subpath-score.ts` (gates L, A, B, C, D, E, F, R and the H0 prompt) and by
+`root-score.ts`, which reruns iteration 1's gates.
+
+**Scorecard: every gate passes** on the final code (after the code review's fixes, below). All gates were rerun on it.
+
+| Gate | Result |
+|---|---|
+| L. Listing | Pass. (i) The unit tests cover every fixed manifest case the bar names. (ii) On the 288 manifests, depfit's listing equals `resolve.exports` 2.0.3 under the rule: 1,335 listed keys, 0 differences. The frozen B set equals the rule over this listing |
+| A. Honesty | Pass. The B set has 8 nulls with their listed code and specifiers, each named in `unavailable`, and 0 others. The probe packages, measured with the cap of 100, have 11 nulls with their listed reason and 0 others. In the default report, every null value's key is named once per code. Coverage: 88 packages, 94 candidates, every listed subpath built. One reviewed listing and one re-encoding were needed (below) |
+| B. Accuracy | Pass. 43 of 43 measured B-set subpaths fall in the rollup/webpack band on both gzip fields, with 0 gross errors |
+| C. Vite conformance | Pass. The 43 cases equal a stock `vite build`: min bytes identical, gzip within 1% |
+| D. Determinism | Pass. Over all 32 probes, two runs give 0 differences in the default report. The measurement call with the cap of 100 gives 0 differences on the B set and on the 88 probe packages |
+| E. Contract | Pass. The fields, states and precedence give 0 problems, as do the listing metadata against the measurement call, the serialized members (read from the printed JSON, duplicates kept), the exact correspondence of keys, values and codes with the measurement call (cap 100, the same frozen trees, an explicitly named result checked for src/ and lockfile identity), the framing, and the rule that each (key, code) pair is named once. With `DEPFIT_BUNDLE=0`, non-bundle fields differ in 0 places. Every package has the control run's version |
+| F. Cost | Pass. The default call's subpath phase per candidate: median 0 ms (budget 250), p90 78 ms (budget 1 s), max 875 ms (shiki, 10 subpaths), measured on the final code (`src/` tree `deb643a`). At most 10 subpaths were built for one package (limit 30). Iteration 1's bundle-step median, subpaths included, is 309.5 ms (limit 1.5 s; p90 4.0 s, max 32.2 s for three) |
+| S. Browser signal | Pass. 22 of 22 workspaces match the table |
+| R. Real usage | Pass. (a) 82 of 89 in `[0.9 × L, 1.1 × U]` (92.1%): round-4 29 of 34, holdout-1 29 of 30, holdout-2 24 of 25. (b) Pairs: 62 of 64 agree (96.9%). (c) Listing coverage: 0 uncovered, 0 over the cap. (d) The 7 misses are all classified: class 1a ×3 (dayjs, mathjax-full, pragmatic-drag-and-drop), class 1b ×2 (gsap, highlight.js languages) and class 3 ×2 (motion). The 2 disagreeing pairs both involve mathjax-full (class 1a). 5 candidates were left out because their real usage is null |
+| H0. Comprehension | Pass. 3 of 3 blind Haiku readers answered all 11 questions correctly |
+| H. Decisions | Pass. 0 misreadings of what a number measures. The independent code reviewer ruled on the two Haiku sentences left for review: a wrong ranking (lightbox) is not a misreading, and an inference about one locale from `./locale`'s whole size is covered by the known limit that subpaths are measured whole only. Iteration 2 differs from the control on 3 of 32 probes for Sonnet and 6 of 32 for Haiku. None is worse on the facts (FINDINGS.md, round 6) |
+
+Iteration 1's gates were rerun as regression checks on the final code, and all pass:
+
+| Gate | Result |
+|---|---|
+| A | 8 of 8 null cases; 16 single-export nulls as listed |
+| B (whole) | The wild corpus gives 141 numbers and 59 nulls with codes, and meets W's conditions: 0, 0 with 1 reviewed exception, 0. 40 packages drifted and were not compared |
+| B (single) | 84 of 84 |
+| C | 0 failures |
+| D, E | 0 differences |
+| S | 22 of 22 |
+| F | Median 309.5 ms |
+
+The probes R under the iteration-1 rule is 82 of 89, with 56 of 59 pairs agreeing.
+
+### Deviations and reviews while building
+
+- **Gate A, two probe nulls (reviewed 2026-11-08).**
+  - fuse.js `./worker` is null with `NON_JS_IMPORT`. Its specifier is the worker file emitted as
+    an asset. `subpath-nulls.json` had encoded the bar's "a worker" as the `worker <module>`
+    prefix, which is narrower than the bar's text.
+  - three `./addons`, a holdout-2 candidate, emits Basis and Draco wasm and decoder assets
+    (`NON_JS_IMPORT`). It was not listed because it was first measured after the bar.
+  - An independent reviewer (Codex gpt-6.1-sol, high effort) judged both nulls honest. It called
+    fuse.js an encoding correction, not a bar change, and approved listing three under gate A's
+    review-and-list rule, with its seven asset names.
+  - Following the reviewer, each entry of `subpath-nulls.json` now carries its own review; probe
+    results keep each null's problems; and the probe scorer checks its own coverage.
+- **A project moved after the freeze.** One holdout project, a React app in a Bun monorepo
+  (bun.lock), gained 10 commits after the freeze. They changed no `package.json` or lockfile, but
+  did change source files. It was measured from its frozen commit: `eval/run.ts --revisions`
+  exported that commit with `git archive` into a fixed temp path, so the project itself was only
+  read. Its workspaces were clean when the freeze was recorded.
+- **The freeze record does not cover the contents of untracked files.** The working-tree hash
+  covers each project's diff against HEAD and the names of its untracked files. When the freeze
+  was recorded, 4 of the 10 recorded workspaces had uncommitted changes, and 3 of those have
+  untracked files. An edit inside one of those files after the freeze would not have been caught.
+  Before and after the collection runs, the tracked state of every project matched the record,
+  except the moved project above.
+- **One candidate resolved to a newer release.** maplibre-gl, a holdout-1 candidate that the probe
+  names without a version, resolved to 6.17.0 in the first iteration-2 runs and to 6.16.0 in the
+  control run a day earlier. A frozen lock pins a tree per name@version, not which version
+  "latest" names. The final runs pin it with `eval/run.ts --pin`, so its `requested` reads
+  `maplibre-gl@6.16.0`. Report scoring now fails unless every package has the control run's
+  version. The project's two iteration-2 evaluators were rerun on the pinned reports.
+- **Tooling fixes found by the gates.** The export path for frozen revisions was first a random
+  temp directory, which made `project.root` differ between runs (gate E). It is now fixed per
+  project and revision, and the 6 probes it affected were rerun in all three runs. Gate R's scorer
+  now also classifies disagreeing pairs, as iteration 1's did.
+
+### Independent code review (Codex gpt-6.1-sol, high effort, read-only, 2026-11-08)
+
+**First review: do not approve.** Two must-fix findings:
+1. Gate E's checker accepted states the contract forbids. It did not check the named keys after an
+   unknown listing or an empty map, did not catch a populated map beside a root failure, and did not
+   check groups that name keys which are not null values.
+2. Candidate versions were not frozen across arms (maplibre-gl).
+
+Five should-fix findings:
+- untracked file contents in the freeze hash;
+- duplicate map members and a lenient reason parser;
+- correspondence read from the newest measurement file, unchecked;
+- versions missing from the B-set comparison;
+- the listing regex also admitting `.mjsx` and `.cjsx`.
+
+There were also missing CLI-path tests: a toolchain mismatch with listed subpaths, root crashes
+combined with a listing failure or the cap, and the 30/31 boundary.
+
+All were fixed:
+- Gate E now checks every state and its precedence, the listing metadata, members read from the
+  printed JSON, and the exact set of named pairs, with a strict parser for the framing rule.
+- `report` takes an explicit measurement file, checked for coverage, `src/` identity and lockfiles,
+  and requires the control run's versions.
+- References record their lock hashes.
+- The listing admits exactly `.js`, `.mjs`, `.cjs` and `.jsx`.
+- `eval/run.ts` gained `--pin` and a format-2 revision record that hashes untracked contents
+  (`--record-revisions`). The holdout-2 record is format 1 and stays accepted with a warning, as
+  noted under the deviations above.
+- The tests cover the CLI's call in each of the missing cases.
+
+Every gate was rerun on the fixed code.
+
+On the two gate-H sentences, the reviewer ruled:
+- (a) the lightbox ranking is neither a misreading nor a known-limit inference: it is an
+  internally inconsistent ranking.
+- (b) the locale sentence is an inference covered by the known limit.
+
+**CI.** #15 merged before this work landed. Its bundle-accuracy job now also replays
+`subpath-reference.json`: 51 subpaths, with exact bytes (gzip included) and the expected codes. The
+local run gave 169 cases and 0 failures, and `bundle.cli.total` was 31.4 s against the 36.6 s
+baseline. Tests and the end-to-end contract check pass on Bun and on Node.
+
+### Independent review of bar amendment 6 (2026-11-07)
+
+Codex gpt-6.1-sol, high effort, read-only. Three rounds, each briefed with the amendment and the
+user's instructions and with no expected verdict. All three rounds ran before any report-level
+iteration-2 result existed.
+
+- **Round 1: do not approve.** Five must-fix findings:
+  1. Gate E required each null key in exactly one entry, which contradicts one entry per code.
+  2. The `unavailable` format could not identify keys.
+  3. No gate tied published values to the measurement.
+  4. The states overlapped, with no precedence.
+  5. A, D and F did not say which call (cap 30 or cap 100) they read.
+
+  Should-fix: gate R carried round-5 scores as if they were new, map order was not a serialization
+  requirement, and some text still pointed at iterations 3 and 5. All were fixed, along with a bug
+  the new unit tests then caught (a package with no map fell through to the build path).
+- **Round 2: do not approve.** Two must-fix findings:
+  1. E's correspondence check contradicted the failure states.
+  2. Root-entry text could imitate an appended group.
+
+  Should-fix: F's timing boundary. All were fixed. E's correspondence check now applies to a
+  populated map only. Free text in `bundle:` entries percent-encodes `%`, `;` and `[`. F times one
+  manifest read, plus the end of the root phase to the subpaths' final state.
+- **Round 3: approve with changes.** One wording change: encoding applies outside the key arrays,
+  and parsing resumes after each complete array. It was made.
+
+### Independent review of the bar (2026-11-06)
+
+Independent review (Codex gpt-6.1-sol, high effort, read-only, two rounds, briefed with the draft
+and the evidence and no expected verdict):
+
+- **Round 1: do not approve.** Six must-fix findings:
+  1. Gate R's coverage check required bytes, which conflicts with the cap and with honest nulls.
+  2. Gate R's arithmetic and inputs were unspecified, and it was unclear which iteration-1 gates
+     are replaced.
+  3. There was no contract for failure states, and a crash could erase the root's numbers.
+  4. A reader could not tie a null subpath to its cause.
+  5. Gate H's control leaked iteration-2 information.
+  6. The B reference set has 51 cases, not 54.
+
+  There were also five should-fix findings: holdout inputs beyond the questions were not frozen;
+  cost counts and timing boundaries were wrong (26 of 65 candidates have a subpath, not 25;
+  @base-ui/react takes 1.2 s without its root build); an H0 question claimed "in no number"; there
+  were no fixed listing cases and `exports: null` was undefined; and a line-count estimate was wrong.
+
+  All were fixed. Gate R now has a written algorithm, its coverage check is about listing only, and
+  over-cap packages are reported separately. A state table was added, along with
+  `subpaths[].unmeasurable_codes` and two codes, `SUBPATH_LIMIT` and `SUBPATH_LIST_FAILED`. Gate H's
+  control is now the iteration-1 CLI. The 51 cases are listed. A preparation step freezes the
+  holdout inputs. Gate L has fixed manifests. The numbers in FINDINGS were corrected.
+- **Round 2: approve with changes.** The reviewer confirmed that all 11 findings were resolved. It
+  reproduced the 51 cases with 8 nulls, the 58/64 and 48/48 scores, the cost figures and the
+  holdout-2 hash. It raised four smaller points, all now fixed:
+  1. Gate A asked `unmeasurable_codes` for a kind of specifier, but that field holds codes only.
+     The kind is now checked against the build problems the eval keeps.
+  2. Gate F's timer had no end when nothing is built.
+  3. The percentile was misnamed.
+  4. The table had no display for unknown and failed states.
 
 ## Iteration 1: root entry point, two ways (2026-11-04)
 

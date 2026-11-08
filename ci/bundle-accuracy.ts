@@ -10,10 +10,14 @@
  *   Vite build, and the exports listed in single-nulls.json are null with exactly their code.
  * - cases.json, null cases that import the root: the CLI's whole build is null, and `unavailable`
  *   holds the case's `bundle: <code>` (and specifier).
+ * - subpath-reference.json, each subpath of an exports map alone and whole: depfit's four byte
+ *   numbers equal the subpath's stock Vite build, and the subpaths listed in subpath-nulls.json are
+ *   null with exactly their code and kind of specifier.
  *
  *   bun ci/bundle-accuracy.ts [--timings file]   # {"bundle.<step>.<name>": ms} for ci/perf.ts
  */
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { appendFile, copyFile, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { isBuiltin } from "node:module";
 import { tmpdir } from "node:os";
@@ -37,6 +41,7 @@ const EVAL = join(REPO, "eval/bundle");
 
 const REFERENCE_FILES: Record<string, string> = {
   "single-reference.json": "replayed",
+  "subpath-reference.json": "replayed",
   "reference.json":
     "not replayed: v1 import-snippet cases, measured through the snippet API that schema 6 removed",
   "wild-reference.json":
@@ -74,6 +79,7 @@ function byteDiffs(got: (key: RefKey) => unknown, ref: unknown): string[] {
 
 type CliCase = { label: string; spec: string; check: (pkg: Record<string, unknown>) => string[] };
 type ExportNull = { package: string; export: string; code: string; specifiers: unknown };
+type SubpathNull = { package: string; subpath: string; code: string; specifiers: unknown };
 
 const { values } = parseArgs({ options: { timings: { type: "string" } } });
 const failures: string[] = [];
@@ -100,6 +106,20 @@ const exportNulls: ExportNull[] = asArray(
   return {
     package: asString(entry.package) ?? "",
     export: asString(entry.export) ?? "",
+    code: asString(entry.code) ?? "",
+    specifiers: entry.specifiers,
+  };
+});
+const subpathRefs = asArray(
+  asRecord(await readJson(join(EVAL, "subpath-reference.json"))).packages,
+).map(asRecord);
+const subpathNulls: SubpathNull[] = asArray(
+  asRecord(await readJson(join(EVAL, "subpath-nulls.json"))).nulls,
+).map((raw) => {
+  const entry = asRecord(raw);
+  return {
+    package: asString(entry.package) ?? "",
+    subpath: asString(entry.subpath) ?? "",
     code: asString(entry.code) ?? "",
     specifiers: entry.specifiers,
   };
@@ -135,6 +155,18 @@ for (const ref of references) {
     asString(ref.version) ?? "",
     join(EVAL, "locks/wild", `${id}.json`),
   );
+}
+for (const ref of subpathRefs) {
+  const lock = join(EVAL, "locks/wild", `${asString(ref.id) ?? ""}.json`);
+  const sha = createHash("sha256")
+    .update(await readFile(lock))
+    .digest("hex");
+  if (sha !== asString(ref.lock_sha256)) {
+    failures.push(
+      `${asString(ref.package)}: frozen tree differs from the reference's (lock_sha256)`,
+    );
+  }
+  await freeze(asString(ref.package) ?? "", asString(ref.version) ?? "", lock);
 }
 for (const c of nullCases) {
   await freeze(
@@ -230,7 +262,7 @@ for (const c of cliCases) {
 timings["bundle.cli.total"] = cliTotal;
 
 function nullProblem(
-  listed: ExportNull,
+  listed: { code: string; specifiers: unknown },
   problems: Array<{ code: string; specifier: string | null }>,
 ): string | null {
   const codes = [...new Set(problems.map((p) => p.code))];
@@ -240,7 +272,9 @@ function nullProblem(
   const allowed = (s: string | null) =>
     listed.specifiers === "node-builtins"
       ? s !== null && isBuiltin(s)
-      : asStringArray(listed.specifiers).includes(s ?? "");
+      : listed.specifiers === "worker"
+        ? s?.startsWith("worker ") === true
+        : asStringArray(listed.specifiers).includes(s ?? "");
   const other = [
     ...new Set(problems.filter((p) => !allowed(p.specifier)).map((p) => p.specifier ?? "none")),
   ];
@@ -297,6 +331,53 @@ for (const ref of references) {
   }
 }
 timings["bundle.measure.total"] = measureTotal;
+
+let subpathTotal = 0;
+for (const ref of subpathRefs) {
+  const name = asString(ref.package) ?? "";
+  const version = asString(ref.version) ?? "";
+  try {
+    const measured = await withIsolatedInstall(name, version, async ({ dir }) => {
+      const manifest = asRecord(await readJson(join(dir, "node_modules", name, "package.json")));
+      const started = performance.now();
+      const m = await measureRootEntry(dir, name, externalPackages(manifest), { subpaths: true });
+      return { m, ms: Math.round(performance.now() - started) };
+    });
+    timings[`bundle.subpaths.${name}`] = measured.ms;
+    subpathTotal += measured.ms;
+    const outcomes = new Map((measured.m.subpaths?.subpaths ?? []).map((s) => [s.key, s.outcome]));
+    let bad = 0;
+    for (const [key, refs] of Object.entries(asRecord(ref.subpaths))) {
+      count("subpath alone (library)");
+      const label = `subpath ${name}@${version} ${key}`;
+      const outcome = outcomes.get(key);
+      const listed = subpathNulls.find((n) => n.package === name && n.subpath === key);
+      let problems: string[];
+      if (!outcome) problems = ["not listed or not built by depfit"];
+      else if (listed) {
+        const problem = outcome.bytes
+          ? `measured, but subpath-nulls.json lists it as ${listed.code}`
+          : nullProblem(listed, outcome.problems);
+        problems = problem ? [problem] : [];
+      } else if (!outcome.bytes) {
+        problems = [
+          `null with ${outcome.problems.map((p) => `${p.code} ${p.specifier ?? ""}`.trim()).join(", ")}`,
+        ];
+      } else {
+        const bytes = outcome.bytes;
+        problems = byteDiffs((k) => bytes[OUTCOME_FIELDS[k]], asRecord(refs).vite);
+      }
+      if (problems.length) bad += 1;
+      failures.push(...problems.map((p) => `${label}: ${p}`));
+    }
+    console.log(`${bad ? "FAIL" : "ok  "} subpaths ${name}@${version} ${measured.ms} ms`);
+  } catch (error) {
+    failures.push(
+      `subpaths ${name}@${version}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+timings["bundle.subpaths.total"] = subpathTotal;
 
 await rm(lockDir, { recursive: true, force: true });
 await rm(scratch, { recursive: true, force: true });

@@ -16,7 +16,7 @@ import {
 } from "../src/collect/bundle.ts";
 import { withIsolatedInstall } from "../src/collect/install.ts";
 import { resolvePackage } from "../src/collect/registry.ts";
-import { errorMessage } from "../src/collect/util.ts";
+import { errorMessage, reasonText } from "../src/collect/util.ts";
 
 /** One snippet's measurement, in schema v5's `packages[].bundle` shape plus its reasons. */
 export type SnippetBundle = {
@@ -63,7 +63,7 @@ export async function measureSnippet(
       (outcome) => ({ bytes: outcome.bytes, reasons: bundleReasons(outcome.problems) }),
       (error: unknown) => ({
         bytes: null,
-        reasons: [`bundle: BUNDLER_ERROR ${errorMessage(error)}`],
+        reasons: [`bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`],
       }),
     ),
   );

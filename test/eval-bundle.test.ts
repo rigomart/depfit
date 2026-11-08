@@ -1,6 +1,7 @@
 import { parseAst } from "rolldown/parseAst";
 import { describe, expect, it } from "vitest";
 import { compareContract } from "../eval/bundle/contract.ts";
+import { parseReason } from "../eval/bundle/reasons.ts";
 import { auditChunk, type ParseModule } from "../eval/bundle/wild-audit.ts";
 
 // The bundle eval's own checks: gate E's flake rule and gate W's auditor. The auditor parses with
@@ -116,5 +117,44 @@ describe("gate W auditor", () => {
     expect(fetches(`${loader}const l = (e) => import("../" + r.u(e));`, nested)[0]).toBe(false);
     // Text mode cannot tell a string from a call; it errs toward reporting.
     expect(fetches('const s = "import(";')).toEqual([false, true]);
+  });
+});
+
+describe("parseReason (iteration 2 unavailable format)", () => {
+  const errors = (entry: string) => parseReason(entry).errors;
+
+  it("parses an entry of its own and a group appended to a root entry", () => {
+    expect(parseReason('bundle: UNRESOLVED_IMPORT in subpaths ["./a","./b"]')).toEqual({
+      free: "",
+      groups: [{ code: "UNRESOLVED_IMPORT", keys: ["./a", "./b"] }],
+      errors: [],
+    });
+    const appended = parseReason(
+      'bundle: NON_JS_IMPORT x.css; NON_JS_IMPORT in subpaths ["./a,./b","./q\\"]"]',
+    );
+    expect(appended.groups).toEqual([{ code: "NON_JS_IMPORT", keys: ["./a,./b", './q"]'] }]);
+    expect(appended.errors).toEqual([]);
+    expect(
+      errors('bundle: 2 exports unmeasurable (A_CODE, B_CODE); B_CODE in subpaths ["./x"]'),
+    ).toEqual([]);
+  });
+
+  it("rejects text that breaks the framing rule", () => {
+    expect(errors("bundle: UNRESOLVED_IMPORT a;b")).toContain(
+      'unencoded ; or [ in "bundle: UNRESOLVED_IMPORT a;b"',
+    );
+    expect(errors("bundle: UNRESOLVED_IMPORT 50%.js").join()).toMatch(/unencoded %/);
+    expect(errors("bundle: UNRESOLVED_IMPORT 50%25.js, a%3Bb%5B")).toEqual([]);
+    expect(errors('bundle: CODE in subpaths ["./a"')).toEqual(["unterminated array for CODE"]);
+    expect(errors("bundle: CODE in subpaths [1]").join()).toMatch(/non-string keys/);
+    expect(errors('bundle: CODE in subpaths ["./b","./a"]').join()).toMatch(/code-point order/);
+    expect(errors('bundle: CODE in subpaths ["./a"] extra').join()).toMatch(/text after/);
+    expect(errors("bundle: UNRESOLVED_IMPORT fs; ").join()).toMatch(/separator with no group/);
+    expect(
+      errors('bundle: UNRESOLVED_IMPORT fs; NON_JS_IMPORT in subpaths ["./x"]').join(),
+    ).toMatch(/does not report that code/);
+    expect(
+      errors('bundle: B_CODE x; B_CODE in subpaths ["./a"]; A_CODE in subpaths ["./b"]').join(),
+    ).toMatch(/out of code-point order|does not report/);
   });
 });

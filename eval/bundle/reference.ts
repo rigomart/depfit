@@ -8,10 +8,12 @@
  *   bun eval/bundle/reference.ts [caseId...]
  *   bun eval/bundle/reference.ts --wild      # wild-reference.json (gate W, and B's whole half)
  *   bun eval/bundle/reference.ts --singles   # single-reference.json (iteration 1, gates B and C)
+ *   bun eval/bundle/reference.ts --subpaths  # subpath-reference.json (iteration 2, gates B and C)
  *   bun eval/bundle/reference.ts --emit <wildId> <export>   # that case's emitted code, for a review
  * Re-runs itself under Node when started with Bun, so gzip (node:zlib) is the same either way.
  */
 import { execFile, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { createRequire, isBuiltin } from "node:module";
 import { tmpdir } from "node:os";
@@ -52,12 +54,19 @@ for (const key of Object.keys(process.env)) if (key.startsWith("VITE_")) delete 
 
 const run = promisify(execFile);
 const SINGLES = process.argv.includes("--singles");
+const SUBPATHS = process.argv.includes("--subpaths");
 /** `--emit <wildId> <export>`: one single-export case, built three ways, emitted code saved. */
 const EMIT = process.argv.includes("--emit");
-const WILD = process.argv.includes("--wild") || SINGLES || EMIT;
+const WILD = process.argv.includes("--wild") || SINGLES || SUBPATHS || EMIT;
 const REFERENCE_FILE = join(
   import.meta.dirname,
-  SINGLES ? "single-reference.json" : WILD ? "wild-reference.json" : "reference.json",
+  SINGLES
+    ? "single-reference.json"
+    : SUBPATHS
+      ? "subpath-reference.json"
+      : WILD
+        ? "wild-reference.json"
+        : "reference.json",
 );
 const LOCKS_DIR = join(import.meta.dirname, "locks", ...(WILD ? ["wild"] : []));
 /** Wild packages are built this many at a time; npm is paced between installs. */
@@ -808,6 +817,91 @@ async function referenceSingles(): Promise<void> {
 }
 
 /**
+ * The frozen subpath reference set (subpath-set.json, SPEC.md iteration 2 gate B): each subpath
+ * built whole and alone (`import * as __depfit_0 from "<name>/<subpath>"`, kept) with rollup +
+ * terser, webpack and a stock Vite build, from the package's frozen wild lock.
+ */
+async function referenceSubpaths(): Promise<void> {
+  const tools = await installTools();
+  const set = asRecord(
+    JSON.parse(await readFile(join(import.meta.dirname, "subpath-set.json"), "utf8")),
+  );
+  const wild = await loadWild();
+  const packages: Record<string, unknown>[] = [];
+  for (const item of asArray(set.packages).map(asRecord)) {
+    const name = asString(item.package) ?? "";
+    const c = wild.find((w) => w.package === name);
+    if (!c || c.version !== asString(item.version))
+      throw new Error(`${name}: not in wild.json at its version`);
+    const dir = await installCandidate([c]);
+    try {
+      const peers = await peersOf(dir, name).catch(() => []);
+      const external = peerPattern(peers);
+      const entry = join(dir, "__depfit_entry.mjs");
+      const base = { toolsDir: tools.dir, dir, entry, target: "browser" as const, external };
+      const subpaths: Record<string, unknown> = {};
+      for (const key of asStringArray(item.subpaths)) {
+        await writeFile(entry, singleEntrySource(`${name}/${key.slice(2)}`, null));
+        let contexts: string[] = [];
+        const rollup = await attempt(() => buildRollup({ ...base, builtins: new Set() }));
+        const webpack = await attempt(() =>
+          buildWebpack({
+            ...base,
+            builtins: new Set(),
+            onContextModules: (found) => {
+              contexts = found;
+            },
+          }),
+        );
+        const vite = await attempt(() => buildVite({ ...base, builtins: new Set() }));
+        subpaths[key] = {
+          ...(contexts.length
+            ? {
+                webpack_context_modules: contexts,
+                band_excluded: {
+                  webpack:
+                    "webpack built context modules (a computed require bundled with every file it could match); the other bundlers leave the call",
+                },
+              }
+            : {}),
+          rollup,
+          webpack,
+          vite,
+        };
+        console.log(
+          `${c.id} ${key}: rollup ${show(rollup)} | webpack ${show(webpack)} | vite ${show(vite)}`,
+        );
+      }
+      const lock = await readFile(lockFile(c.id));
+      packages.push({
+        id: c.id,
+        package: name,
+        version: c.version,
+        lock_sha256: createHash("sha256").update(lock).digest("hex"),
+        external_packages: peers,
+        subpaths,
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }
+  await writeFile(
+    REFERENCE_FILE,
+    `${JSON.stringify(
+      {
+        generated_at: new Date().toISOString(),
+        tools: tools.versions,
+        rule: asString(set.rule),
+        packages,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(`wrote ${resolve(REFERENCE_FILE)}`);
+}
+
+/**
  * Builds one single-export case with rollup + terser, webpack and stock Vite from its frozen wild
  * lock and writes each bundler's emitted JS to results/emit-<id>-<export>.json, so a reviewed
  * exception's cause can be inspected against the code itself.
@@ -854,6 +948,10 @@ async function emitCase(id: string, exportName: string): Promise<void> {
 
 if (SINGLES) {
   await referenceSingles();
+  process.exit(0);
+}
+if (SUBPATHS) {
+  await referenceSubpaths();
   process.exit(0);
 }
 if (EMIT) {
