@@ -48,7 +48,7 @@ subpath stays in the measurement code for the follow-up flags (#10). Scored by
 `eval/bundle/subpath-score.ts` (gates L, A, B, C, D, E, F, R and the H0 prompt) and by
 `root-score.ts`, which reruns iteration 1's gates.
 
-**Scorecard: every gate passes. Gate H is pending the reviewer's ruling on two sentences.**
+**Scorecard: every gate passes** on the final code (after the code review's fixes, below). All gates were rerun on it.
 
 | Gate | Result |
 |---|---|
@@ -57,12 +57,12 @@ subpath stays in the measurement code for the follow-up flags (#10). Scored by
 | B. Accuracy | Pass. 43 of 43 measured B-set subpaths fall in the rollup/webpack band on both gzip fields, with 0 gross errors |
 | C. Vite conformance | Pass. The 43 cases equal a stock `vite build`: min bytes identical, gzip within 1% |
 | D. Determinism | Pass. Over all 32 probes, two runs give 0 differences in the default report. The measurement call with the cap of 100 gives 0 differences on the B set and on the 88 probe packages |
-| E. Contract | Pass. The fields, states and precedence give 0 problems, as do the serialized order, the correspondence with the measurement call, and the rule that each (key, code) pair is named once. With `DEPFIT_BUNDLE=0`, non-bundle fields differ in 0 places; 3 differences were network flakes (npm downloads API 429s) |
-| F. Cost | Pass. The default call's subpath phase per candidate: median 0 ms (budget 250), p90 84 ms (budget 1 s), max 930 ms (shiki, 10 subpaths). At most 10 subpaths were built for one package (limit 30). Iteration 1's bundle-step median, subpaths included, is 309.5 ms (limit 1.5 s; p90 4.0 s, max 32.2 s for three) |
+| E. Contract | Pass. The fields, states and precedence give 0 problems, as do the listing metadata against the measurement call, the serialized members (read from the printed JSON, duplicates kept), the exact correspondence of keys, values and codes with the measurement call (cap 100, the same frozen trees, an explicitly named result checked for src/ and lockfile identity), the framing, and the rule that each (key, code) pair is named once. With `DEPFIT_BUNDLE=0`, non-bundle fields differ in 0 places. Every package has the control run's version |
+| F. Cost | Pass. The default call's subpath phase per candidate: median 0 ms (budget 250), p90 89 ms (budget 1 s), max 923 ms (shiki, 10 subpaths). At most 10 subpaths were built for one package (limit 30). Iteration 1's bundle-step median, subpaths included, is 309.5 ms (limit 1.5 s; p90 4.0 s, max 32.2 s for three) |
 | S. Browser signal | Pass. 22 of 22 workspaces match the table |
 | R. Real usage | Pass. (a) 82 of 89 in `[0.9 × L, 1.1 × U]` (92.1%): round-4 29 of 34, holdout-1 29 of 30, holdout-2 24 of 25. (b) Pairs: 62 of 64 agree (96.9%). (c) Listing coverage: 0 uncovered, 0 over the cap. (d) The 7 misses are all classified: class 1a ×3 (dayjs, mathjax-full, pragmatic-drag-and-drop), class 1b ×2 (gsap, highlight.js languages) and class 3 ×2 (motion). The 2 disagreeing pairs both involve mathjax-full (class 1a). 5 candidates were left out because their real usage is null |
 | H0. Comprehension | Pass. 3 of 3 blind Haiku readers answered all 11 questions correctly |
-| H. Decisions | Pass, pending review. 0 misreadings of the kinds the bar names. Iteration 2 differs from the control on 2 of 32 probes for Sonnet and 5 of 32 for Haiku. None is worse on the facts (FINDINGS.md, round 6). The reviewer is asked to rule on two Haiku sentences |
+| H. Decisions | Pass. 0 misreadings of what a number measures. The independent code reviewer ruled on the two Haiku sentences left for review: a wrong ranking (lightbox) is not a misreading, and an inference about one locale from `./locale`'s whole size is covered by the known limit that subpaths are measured whole only. Iteration 2 differs from the control on 3 of 32 probes for Sonnet and 6 of 32 for Haiku. None is worse on the facts (FINDINGS.md, round 6) |
 
 Iteration 1's gates were rerun as regression checks on the final code, and all pass:
 
@@ -103,14 +103,57 @@ The probes R under the iteration-1 rule is 82 of 89, with 56 of 59 pairs agreein
   Before and after the collection runs, the tracked state of every project matched the record,
   except the moved project above.
 - **One candidate resolved to a newer release.** maplibre-gl, a holdout-1 candidate that the probe
-  names without a version, resolved to 6.17.0 in the iteration-2 runs and to 6.16.0 in the control
-  run a day earlier. The three iteration-2 runs agree with each other. For this one candidate, gate
-  H's control and iteration-2 reports compare two releases. As before, a frozen lock pins a tree
-  per name@version, not which version "latest" names.
+  names without a version, resolved to 6.17.0 in the first iteration-2 runs and to 6.16.0 in the
+  control run a day earlier. A frozen lock pins a tree per name@version, not which version
+  "latest" names. The final runs pin it with `eval/run.ts --pin`, so its `requested` reads
+  `maplibre-gl@6.16.0`. Report scoring now fails unless every package has the control run's
+  version. The project's two iteration-2 evaluators were rerun on the pinned reports.
 - **Tooling fixes found by the gates.** The export path for frozen revisions was first a random
   temp directory, which made `project.root` differ between runs (gate E). It is now fixed per
   project and revision, and the 6 probes it affected were rerun in all three runs. Gate R's scorer
   now also classifies disagreeing pairs, as iteration 1's did.
+
+### Independent code review (Codex gpt-6.1-sol, high effort, read-only, 2026-11-08)
+
+**First review: do not approve.** Two must-fix findings:
+1. Gate E's checker accepted states the contract forbids. It did not check the named keys after an
+   unknown listing or an empty map, did not catch a populated map beside a root failure, and did not
+   check groups that name keys which are not null values.
+2. Candidate versions were not frozen across arms (maplibre-gl).
+
+Five should-fix findings:
+- untracked file contents in the freeze hash;
+- duplicate map members and a lenient reason parser;
+- correspondence read from the newest measurement file, unchecked;
+- versions missing from the B-set comparison;
+- the listing regex also admitting `.mjsx` and `.cjsx`.
+
+There were also missing CLI-path tests: a toolchain mismatch with listed subpaths, root crashes
+combined with a listing failure or the cap, and the 30/31 boundary.
+
+All were fixed:
+- Gate E now checks every state and its precedence, the listing metadata, members read from the
+  printed JSON, and the exact set of named pairs, with a strict parser for the framing rule.
+- `report` takes an explicit measurement file, checked for coverage, `src/` identity and lockfiles,
+  and requires the control run's versions.
+- References record their lock hashes.
+- The listing admits exactly `.js`, `.mjs`, `.cjs` and `.jsx`.
+- `eval/run.ts` gained `--pin` and a format-2 revision record that hashes untracked contents
+  (`--record-revisions`). The holdout-2 record is format 1 and stays accepted with a warning, as
+  noted under the deviations above.
+- The tests cover the CLI's call in each of the missing cases.
+
+Every gate was rerun on the fixed code.
+
+On the two gate-H sentences, the reviewer ruled:
+- (a) the lightbox ranking is neither a misreading nor a known-limit inference: it is an
+  internally inconsistent ranking.
+- (b) the locale sentence is an inference covered by the known limit.
+
+**CI.** #15 merged before this work landed. Its bundle-accuracy job now also replays
+`subpath-reference.json`: 51 subpaths, with exact bytes (gzip included) and the expected codes. The
+local run gave 169 cases and 0 failures, and `bundle.cli.total` was 31.4 s against the 36.6 s
+baseline. Tests and the end-to-end contract check pass on Bun and on Node.
 
 ### Independent review of bar amendment 6 (2026-11-07)
 

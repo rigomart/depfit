@@ -705,13 +705,15 @@ Each candidate is scored on the entry points its real usage imports. The root gi
 
 ## Decisions
 
-Iteration 2 differed from the control on 2 of 32 probes for Sonnet and 5 of 32 for Haiku. Real
-usage is gzip, from the iteration-2 run:
+Iteration 2 differed from the control on 3 of 32 probes for Sonnet and 6 of 32 for Haiku. The
+static Preact site's two iteration-2 evaluators were rerun on reports with maplibre-gl pinned to the
+control's version (STATUS.md), and the rows below come from those reruns. Real usage is gzip, from
+the iteration-2 run:
 
 | Probe | Control (Sonnet) | Iteration 2 | Real usage, iteration 2 vs control |
 |---|---|---|---|
-| Preact shared state | nanostores | @preact/signals (Sonnet) | 2,993 vs 894 B. A trade-off: native Preact integration against a separate, unmeasured nanostores binding. Round 5's arms split on this question the other way |
-| Static-site routing (holdout-2) | wouter-preact | preact-iso (Haiku) | 1,734 vs 2,168 B. Chosen on `./router`; the evaluator noted that a subpath's peers are not in the report (known limit) |
+| Preact shared state | nanostores | @preact/signals (Sonnet and Haiku) | 2,993 vs 894 B. A trade-off: native Preact integration against a separate, unmeasured nanostores binding. Round 5's arms split on this question the other way |
+| Static-site routing (holdout-2) | wouter-preact | preact-iso (Sonnet and Haiku) | 1,734 vs 2,168 B. Chosen on `./router`; both evaluators noted that a subpath's peers are not in the report (known limit) |
 | README markdown | keep streamdown | react-markdown (Haiku) | 35 vs 157 KB, from facts in the report (streamdown's upgrade adds 5 packages and 1.8 MB). It weighed no migration cost for a library in use: a reading of the question |
 | LaTeX in notes (holdout-2) | katex | temml (Haiku) | 59.6 vs 76.6 KB |
 | Phoneme chart animation | motion | @react-spring/web (Haiku) | 17.0 vs 44.7 KB. Haiku saw `motion/react-mini` (3.4 KB) but could not confirm it covers the chart |
@@ -755,14 +757,16 @@ None is worse on the facts. Every other decision matched the control in both arm
   root's. None took a pattern or a module of a package without a map as measured. None took a null
   map over 30 (date-fns, echarts) as "no subpaths": all read `SUBPATH_LIMIT` as "not measured in
   this report". One Sonnet answer said outright that subpath values should not be added together.
-- **Two Haiku sentences are left for review.**
+- **Two Haiku sentences went to the independent reviewer**, who ruled that neither is a misreading
+  of what a number measures:
   - On the lightbox question, Haiku called photoswipe's `./lightbox` (4.5 KB) "the smallest
     measured eager cost of the three". basiclightbox is 1.7 KB, and the same answer says so.
   - On the date picker question, Haiku inferred "importing a locale is expensive" from
     react-day-picker's whole `./locale` (124 KB). That number keeps every locale, the known limit
     that subpaths are measured whole only.
 
-  Both decisions match the control.
+  The first is a wrong ranking; the second is an inference the known limit covers. Both decisions
+  match the control.
 - **Control evaluators noticed the missing entry points.** They had iteration 1's root numbers. 7
   of the 9 control answers mention subpaths or entry points, and several list subpath sizes as
   missing facts (OpenLayers' `ol/Map` and siblings, `motion/react`).
