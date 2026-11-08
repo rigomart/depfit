@@ -1005,35 +1005,54 @@ in `STATUS.md`). The original text is in git history; the lines changed above sa
   today". Why:
   - **The absolute limit is dropped** because a hit cannot end before the live lookups, which the
     cache does not control: the registry resolution, then, once npm has resolved the tree, the
-    dependency OSV query, and the other lookups alongside. The 1.5 s came from a simulation of the
-    hit path whose motion dependency OSV queries were mostly 0.32 to 0.47 s, with one of 0.67 s; on
-    the traced real path the query took about 0.65 s. The simulation did run the query after the
-    tree, as the code does; what it got wrong was the query's typical time, which is the registry's
-    and OSV's, not the cache's. The absolute medians stay reported.
+    dependency OSV query, and the other lookups alongside. The simulation behind the 1.5 s observed
+    motion's dependency OSV query at 320 to 671 ms, and already queried OSV after resolving the
+    tree, as the code does. Those observations do not justify a fixed end-to-end ceiling for calls
+    that depend on live services. (A traced real call took about 0.65 s for it; that trace was not
+    kept, so the figure is unverified.) The absolute medians stay reported.
   - **"No slower" needs a margin**, because a hit and today's call end on the same network
     lookups, and two medians of 6 calls differ by noise. The margin is not chosen by hand: it is
     measured by running today's CLI against itself under the same protocol, before #8's rerun.
-  - **The control protocol, fixed before it runs:**
-    - **Arms:** two arms, A and B, both today's CLI (573991c, the separate checkout), with
-      identical arguments and environment. One control per gate: for `M_a`, in
-      `test/fixtures/browser-app` with `DEPFIT_BUNDLE=0`; for `M_f`, in `test/fixtures/lockfile-npm`
-      (no browser signal) as is.
-    - **Calls:** `zod`, `valibot`, `motion`, `shiki`, `zod valibot`, each with `--json`.
-    - **Rounds:** each call is run once first, untimed, so npm's cache is fresh. Then 6 rounds; in
-      each round every call runs in both arms, A first in even rounds (0, 2, 4) and B first in odd
-      ones. One call at a time, under `nice -n 10`, with no other build running.
-    - **Recorded per call:** the arm, round, call, wall time in ms (from spawn to exit), exit code,
-      the full stdout report and stderr. A call that exits non-zero or prints no parseable report
-      makes its round invalid: the round is repeated once, and both attempts are kept and reported.
-      A second invalid attempt stops the control.
-    - **Rule:** for each call, the median of its 6 times in A and in B (the mean of the middle two),
-      in ms. The margin is the largest of the five `|median(A) − median(B)|`, unrounded:
-      `M_a` from the browser control, `M_f` from the other.
-    - **Then #8's rerun,** under the bar's protocol: (a) and (f) pair today's call (the same
-      arguments and environment as the control's arms) with #8's hit, 6 balanced rounds, the same
-      records and validity rule. Each call passes when `median(#8) − median(today) ≤ M`. The
-      control is not rerun after #8's results are seen, and `M` is not changed.
-  - Recorded: both controls' rows and margins, then every K5 gate's result, pass or fail.
+  - **Commands and environment, frozen before the controls run:**
+    - Today's CLI: `bun <checkout>/src/cli.ts <call> --cwd <workspace> --json`, where `<checkout>`
+      is a separate checkout at 573991c with its own `bun install --frozen-lockfile`. #8's CLI: the
+      same command on the branch's commit under test.
+    - Every invocation inherits the runner's environment unchanged, except: today's arms in the
+      browser workspace get `DEPFIT_BUNDLE=0`; #8's arm in the browser workspace runs with bundle
+      facts on (no `DEPFIT_BUNDLE`); every arm gets its own `XDG_CACHE_HOME`, a new empty directory
+      made for that experiment, never the user's own cache directory.
+    - npm's cache is the runner's default, shared by every arm, as for an agent; nothing clears it.
+      **Freshness:** a timed invocation is valid only if the same call ran, in either arm, at most
+      240 s before it started (inside npm's 300 s); the runner records each start time and checks it.
+    - #8's cache is primed by one untimed #8 call per call, in its experiment's `XDG_CACHE_HOME`,
+      right before round 0. **Hits are proved, not assumed:** every timed #8 invocation must report,
+      for every package, the `measured_at` of its priming call, and in the browser workspace a
+      non-null `bundle`. A timed #8 invocation that is not a hit stops the run and fails the gate.
+  - **Order, fixed before the controls run:** the experiments run one after another: the browser
+    control (for `M_a`), the control with no browser signal (for `M_f`), then K5 (a), then K5 (f).
+    In each, before round 0, every call runs once untimed in the listed order: in a control, in arm
+    A; in a candidate run, today's arm, then #8's priming call. Then 6 rounds. A round is the ten
+    timed invocations of the five calls, in the listed order (`zod`, `valibot`, `motion`, `shiki`,
+    `zod valibot`), the two arms of a call adjacent: arm A first in even rounds (0, 2, 4), arm B
+    first in odd ones. In the controls, A and B are both today's CLI; in a candidate run, today is
+    A and #8 is B. One invocation at a time, under `nice -n 10`, with no other build running.
+  - **Recorded per invocation:** experiment, round, attempt, call, arm, start time, wall time in ms
+    (spawn to exit), exit code, the full stdout and stderr, and the `XDG_CACHE_HOME` it used.
+  - **Validity:** an invocation is invalid when it exits non-zero, prints no parseable report, or
+    breaks the freshness rule. The first invalid invocation ends its round at once; the whole round
+    is repeated once, in the same order. Every invocation of the failed attempt is kept as
+    evidence and left out of every median. If the repeat also has an invalid invocation, the
+    experiment is aborted: a control then sets no margin, a candidate run gives no verdict, and the
+    work stops for the user. A completed valid control is final: it is never rerun, whatever any
+    later result shows.
+  - **Rule:** for each call, the median of its 6 valid times in A and in B (the mean of the middle
+    two), in ms. The margin is the largest of the five `|median(A) − median(B)|`, unrounded: `M_a`
+    from the browser control, `M_f` from the other.
+  - **Judging #8:** in K5 (a) and (f), each call passes when `median(B) − median(A) ≤ M` (B being
+    #8), unrounded; the gate passes when all five do. `M` is not changed after #8's results are
+    seen.
+  - Recorded in `STATUS.md`: both controls' rows and margins, then every K5 gate's result, pass or
+    fail.
 
 ### Stop conditions
 
