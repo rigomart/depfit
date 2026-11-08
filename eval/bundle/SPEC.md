@@ -649,12 +649,13 @@ does the result under the pool:
 These are provisional operating choices backed by the measurements below, not limits proven for
 every machine; the preflight before code checks them again.
 
-- **Workers: `min(4, max(floor(os.availableParallelism() / 3), candidates))`, at least 1,** where
-  `candidates` is the number of npm candidates whose install started. 12 cores: 4. On 4 cores (CI's
-  runners): 1 for one candidate, as today; 2 for two; up to 4. The rule never runs fewer builds at
-  once than today, which gives every candidate its own process, so a small machine is not slower than
-  today; and on a large one it never takes more than a third of the cores' worth of workers beyond
-  that. It budgets cores, not only speed, because depfit runs in agent loops, often on laptops:
+- **Workers: `min(4, max(floor(os.availableParallelism() / 3), candidates))`,** where `candidates`
+  is the number of npm candidates in the call (at least 1; workers still start only on demand, so a
+  candidate that fails to resolve starts none). 12 cores: 4. On 4 cores (CI's runners): 1 for one
+  candidate, as today; 2 for two; at most 4. The floor keeps today's concurrency, one process per
+  candidate, so a small machine is not slower than today; above it the pool adds at most one worker
+  per three cores. The rule budgets cores, not only speed, because depfit runs in agent loops, often
+  on laptops:
   - A worker is not one core. Rolldown builds on several threads: one worker kept 2.9 (zod) to 4.0
     (motion) cores busy on average, and 4 workers 5.0 to 9.4 of 12. Dividing by 3 keeps the expected
     busy cores near the machine's count and leaves it usable during a call.
@@ -671,8 +672,7 @@ every machine; the preflight before code checks them again.
     two workers (measured under load, without the listing builds, before this rule).
   - Repeated calls in an agent loop are what caching (#8) removes; until then every call rebuilds.
 - **An eval and CI switch `DEPFIT_BUNDLE_WORKERS=<n>`** sets the count (1 to 4) in place of the
-  rule, like
-  `DEPFIT_BUNDLE` and `DEPFIT_LOCK_DIR`, and AGENTS.md lists it with them.
+  rule, like `DEPFIT_BUNDLE` and `DEPFIT_LOCK_DIR`, and AGENTS.md lists it with them.
 - **A worker is replaced after at most 100 builds.** A worker's memory grows with every build and is
   not given back (motion: 632 MB after 100 builds, 1.5 GB after 500, 2.3 GB after 1000; with a 384 MB
   heap cap it ran out at about build 570). One shared worker would otherwise do every build of every
