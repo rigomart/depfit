@@ -3,7 +3,9 @@
  * candidate of one depfit run (eval/bundle/SPEC.md, "Parallel builds (#7)"). Builds wait in one
  * queue; a worker starts only when a build waits and every live worker is busy, up to `size`, and is
  * replaced after `buildsPerWorker` builds because a worker's memory grows with every build. A
- * retiring worker counts toward `size` until it has exited. Each worker writes its builds' entry in
+ * retiring worker counts toward `size` until it has exited, and is killed if it has not exited
+ * `closeGraceMs` after its input ended, so a worker that ignores the end of its input cannot hold
+ * its place. Each worker writes its builds' entry in
  * its own directory under the install root, under the one entry file name, so no two builds in
  * flight share a file and the output does not depend on which worker built it.
  */
@@ -18,7 +20,7 @@ export const MAX_WORKERS = 4;
 /** A worker is replaced after this many builds. */
 export const BUILDS_PER_WORKER = 100;
 
-/** How long `close` lets a worker end on its own before killing it. */
+/** How long a retiring worker (or `close`) lets a worker end on its own before killing it. */
 const CLOSE_GRACE_MS = 2000;
 
 /**
@@ -109,6 +111,13 @@ export function createVitePool({
     return worker;
   };
 
+  /** Ends a worker's input, and kills it if it is still running after the grace period. */
+  const retire = (worker: Worker) => {
+    worker.runner.close();
+    const deadline = setTimeout(() => worker.runner.kill(), closeGraceMs);
+    void worker.runner.exited.then(() => clearTimeout(deadline));
+  };
+
   const run = async (worker: Worker, job: Job) => {
     const { root, source, peers, exports } = job.request;
     try {
@@ -122,7 +131,7 @@ export function createVitePool({
     }
     worker.builds += 1;
     if (worker.runner.failed) worker.runner.kill();
-    else if (closed || worker.builds >= buildsPerWorker) worker.runner.close();
+    else if (closed || worker.builds >= buildsPerWorker) retire(worker);
     else idle.push(worker);
     pump();
   };
@@ -166,7 +175,8 @@ export function createVitePool({
     close: async () => {
       closed = true;
       for (const job of queue.splice(0)) job.reject(new Error("vite pool closed"));
-      for (const worker of idle.splice(0)) worker.runner.close();
+      for (const worker of idle.splice(0)) retire(worker);
+      // A worker still building is killed after the same grace period.
       const ending = [...live];
       const deadline = setTimeout(() => {
         for (const worker of ending) worker.runner.kill();

@@ -836,8 +836,8 @@ every run's output is kept with the author's evidence (local, gitignored).
 | P1 (d). Earlier gate D | Pass: iteration 2 default reports over every probe, two #7 runs, 0 differences; the measurement call twice per probe package (88 packages), 0 differences; iteration 1 probe reports, 0 differences; iteration 1 reference singles, 0 differences. Iteration 1 A, B, C and iteration 2 A and E pass too |
 | P2. Speed (5 pairs, medians) | Pass: valibot 0.39x (3.18 to 1.22 s), zod 0.53x (6.30 to 3.34 s), date-fns 0.48x, motion 0.47x (9.69 to 4.56 s); zod valibot 0.69x; all four 0.90x; six 0.90x; zod at 1 worker 1.04x, zod valibot at 2 workers 0.96x. CLI: valibot 0.47x, zod 0.59x (7.36 to 4.31 s), date-fns 0.57x, motion 0.50x (10.10 to 5.08 s), zod valibot 0.69x (7.12 to 4.94 s), all four 0.89x, clsx 0.98x; `node:sqlite` and the missing name equal (9 pairs: 0.04 and 0.38 s both ways) and start no worker |
 | P3. Load and memory | Pass: CPU valibot 1.20x, zod 1.00x, date-fns 1.08x, motion 1.08x, clsx 0.50 against 0.24 s, zod valibot 1.02x, all four and six 1.03x, all inside 1.25x plus 0.1 s per allowed worker; workers started at most the allowed count plus one per 100 builds (all four: 16 for 1,211 builds); memory valibot 1.19 GiB (today 0.72), zod 2.41 (1.15), date-fns 2.48 (1.16), motion 2.88 (1.75), zod valibot 2.05 (1.55), all four 3.16 (3.32), six 3.12 (3.37), all inside their allowance; largest worker 705 MiB |
-| P4. Robustness | Pass: tests with stand-in runners for the timeout from dispatch, a timeout, a crash, an unreadable result, a worker that cannot start, a dropped queued build, a subpath failure while root builds run, two failures in either completion order, a worker ignoring the end of its input (killed after the grace period), and SIGINT or SIGTERM at start-up, during builds, during a recycle and during an install (every PID gone); no worker after a CLI run; no browser signal: 0 Vite or rolldown modules loaded |
-| P5. Contract and CI | Pass locally: no field, reason or schema change; type check, lint, format, unit tests on Node and Bun (265), `ci/e2e.ts`, `ci/bundle-accuracy.ts`. CI runs the measurement steps at 2 workers and the CLI step at the default; `ci/perf.ts` gates `bundle.subpaths.<package>` at a 2 s baseline |
+| P4. Robustness | Pass: tests with stand-in runners for the timeout from dispatch, a timeout, a crash, an unreadable result, a worker that cannot start, a dropped queued build, a subpath failure while root builds run, two failures in either completion order, a worker ignoring the end of its input (killed after the grace period, also when it is retiring and another build waits), and SIGINT or SIGTERM at start-up, during builds, during a recycle, with a worker that ignores SIGTERM (killed after 2 s), and during an install whose npm started a process of its own (every PID gone); no worker after a CLI run; no browser signal: 0 Vite or rolldown modules loaded |
+| P5. Contract and CI | Pass locally: no field, reason or schema change; type check, lint, format, unit tests on Node and Bun (267), `ci/e2e.ts`, `ci/bundle-accuracy.ts`. CI runs the measurement steps at 2 workers and the CLI step at the default; `ci/perf.ts` gates `bundle.subpaths.<package>` at a 2 s baseline |
 | Earlier cost gates | Pass: iteration 1 gate F, median 324 ms (max 1.5 s); iteration 2 gate F on the serial schedule, median 0 ms, p90 85 ms, max 915 ms (shiki); the default call's bound over 32 probe calls: none above 1.1x today's plus 0.2 s, median ratio 0.74 (total 144.6 to 81.9 s) |
 
 Decisions made while building, for review:
@@ -851,3 +851,22 @@ Decisions made while building, for review:
   one of its own, `bundleWorkers(1)` workers, closed before it returns.
 - **Queued builds of a candidate are dropped** once its result is decided by a failure, so a package
   whose builds all crash does not start a worker per build.
+
+Code review (Codex gpt-6.1-sol, high effort, read-only), on the diff with the bar and this
+scorecard: not ready, three findings, all fixed and checked by tests that fail on the code before
+the fix:
+
+1. A retiring worker that never exits kept its place, so with one worker the next build never
+   started (only `close` had a deadline). A retiring worker is now killed after the same 2 s grace.
+2. On a signal, only direct children got SIGTERM and depfit ended at once: a child ignoring SIGTERM,
+   or a process npm started, survived. Now every process descending from depfit (read from `ps`
+   before any is signalled) gets SIGTERM, any left after 2 s is killed, a child started meanwhile
+   is killed at once, and then depfit ends with the signal.
+3. Timing-sensitive tests: the scripted stand-in runner imported Vite, a timeout test gave a fresh
+   worker 200 ms, and the real-Vite comparison ran four pools at once. The runner now reads the pins
+   from package.json, the timeout tests use 1.5 s limits with the gap still deciding them, and the
+   real-Vite variants run one after another.
+
+After the fixes, P1 (a) (41 packages, 8 variants), gate C, `ci/e2e.ts` on Bun and Node, and the
+unit tests were rerun: unchanged results, all pass. The speed and load pairs were not rerun: the
+fixes change only what happens to a worker that does not exit on its own, which Vite's do.

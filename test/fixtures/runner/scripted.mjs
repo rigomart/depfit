@@ -3,11 +3,15 @@
 // PID). Each rule applies to a build whose entry source contains `match`: `delayMs` waits first;
 // `crash` writes the text to stderr and exits 1; `hang` never answers; `unreadable` prints a line
 // that is not a result. Otherwise it answers with one tiny chunk on the evaluated Vite and rolldown
-// versions, and with `exports` (from the rules file) for a listing build.
+// versions (depfit's pins, read from its package.json rather than by loading Vite, so the runner
+// starts fast), and with `exports` (from the rules file) for a listing build.
 import { appendFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
-import { rolldownVersion, version } from "vite";
+
+const pins = JSON.parse(readFileSync(new URL("../../../package.json", import.meta.url), "utf8"));
+const version = pins.dependencies.vite;
+const rolldownVersion = pins.overrides.rolldown;
 
 for await (const line of createInterface({ input: process.stdin })) {
   if (!line.trim()) continue;

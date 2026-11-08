@@ -978,12 +978,16 @@ describe("measureRootEntry on a shared pool", () => {
           ? [...inner].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
           : inner,
       );
-    const runs = await Promise.all([
-      measured(null, { size: 1, serial: true, script: null }),
-      measured(null, { size: 1, script: null }),
-      measured(null, { size: 4, script: null }),
-      measured(null, { size: 4, lifo: true, script: null }),
-    ]);
+    // One after another, so no more than 4 real Vite workers run at once.
+    const runs = [];
+    for (const options of [
+      { size: 1, serial: true, script: null },
+      { size: 1, script: null },
+      { size: 4, script: null },
+      { size: 4, lifo: true, script: null },
+    ]) {
+      runs.push(await measured(null, options));
+    }
     const [first, ...rest] = runs.map((run) => sorted(run.result));
     expect(first).toContain('"eager_js_gzip9_bytes"');
     for (const other of rest) expect(other).toBe(first);

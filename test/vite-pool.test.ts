@@ -93,12 +93,12 @@ describe("createVitePool", () => {
   });
 
   it("runs builds at the same time, up to its size", async () => {
-    const dir = await scratch([{ match: "slow", delayMs: 250 }]);
+    const dir = await scratch([{ match: "slow", delayMs: 400 }]);
     const workers = pool({ size: 4 });
     const started = performance.now();
     await Promise.all(Array.from({ length: 8 }, (_, n) => build(workers, dir, `slow ${n}\n`)));
-    // Two rounds of 250 ms on 4 workers; one after another would take 2 s.
-    expect(performance.now() - started).toBeLessThan(1500);
+    // Two rounds of 400 ms on 4 workers; one after another would take 3.2 s.
+    expect(performance.now() - started).toBeLessThan(2400);
     expect(workers.stats.started).toBe(4);
     expect(workers.stats.peakLive).toBe(4);
   });
@@ -124,9 +124,27 @@ describe("createVitePool", () => {
     expect(workers.stats.peakLive).toBe(1);
   });
 
+  it("kills a retiring worker that does not exit, so the next build still runs", async () => {
+    const dir = await scratch();
+    const workers = createVitePool({
+      size: 1,
+      buildsPerWorker: 1,
+      closeGraceMs: 300,
+      script: runner("ignore-end.mjs"),
+    });
+    pools.push(workers);
+    await build(workers, dir, "first\n");
+    const started = performance.now();
+    await expect(build(workers, dir, "second\n")).resolves.toMatchObject({ errors: null });
+    expect(performance.now() - started).toBeLessThan(5000);
+    expect(workers.stats.started).toBe(2);
+    expect(workers.stats.peakLive).toBe(1);
+  });
+
   it("counts the timeout from when a worker takes the build, not from when it was queued", async () => {
-    const dir = await scratch([{ match: "slow", delayMs: 300 }]);
-    const workers = pool({ size: 1, timeoutMs: 500 });
+    // Queued, the second build would be over the limit (1.6 s); from when it is sent, it is not.
+    const dir = await scratch([{ match: "slow", delayMs: 800 }]);
+    const workers = pool({ size: 1, timeoutMs: 1500 });
     const results = await Promise.allSettled([
       build(workers, dir, "slow 1\n"),
       build(workers, dir, "slow 2\n"),
@@ -136,7 +154,7 @@ describe("createVitePool", () => {
 
   it("ends a worker whose build times out, and builds the rest on a new one", async () => {
     const dir = await scratch([{ match: "hang", hang: true }]);
-    const workers = pool({ size: 1, timeoutMs: 200 });
+    const workers = pool({ size: 1, timeoutMs: 1500 });
     await expect(build(workers, dir, "hang\n")).rejects.toThrow(/timed out/);
     await expect(build(workers, dir, "fine\n")).resolves.toMatchObject({ errors: null });
     expect(workers.stats.started).toBe(2);
@@ -231,7 +249,7 @@ describe("every child stops when depfit is signalled", () => {
     const exited = new Promise((resolve) => child.once("exit", resolve));
     child.kill(signal);
     await exited;
-    for (let tries = 0; tries < 50 && pids.some(alive); tries++) {
+    for (let tries = 0; tries < 150 && pids.some(alive); tries++) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
     return pids.filter(alive);
@@ -249,11 +267,18 @@ describe("every child stops when depfit is signalled", () => {
     expect(await signalled("recycle", "SIGTERM")).toEqual([]);
   });
 
-  it("stops npm in the middle of an install, on SIGINT", async () => {
+  it("kills a worker that ignores SIGTERM, after the grace period", async () => {
+    expect(await signalled("resistant", "SIGTERM")).toEqual([]);
+  });
+
+  it("stops npm and what it started, in the middle of an install, on SIGINT", async () => {
     const bin = await mkdtemp(join(tmpdir(), "depfit-fake-npm-"));
     dirs.push(bin);
     const pidFile = join(bin, "npm.pid");
-    await writeFile(join(bin, "npm"), '#!/bin/sh\necho $$ > "$NPM_PID_FILE"\nexec sleep 60\n');
+    await writeFile(
+      join(bin, "npm"),
+      '#!/bin/sh\nsleep 60 &\necho "$$ $!" > "$NPM_PID_FILE"\nwait\n',
+    );
     await chmod(join(bin, "npm"), 0o755);
     const left = await signalled("install", "SIGINT", {
       PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
