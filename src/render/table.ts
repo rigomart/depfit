@@ -298,6 +298,7 @@ function bundleRows(): Row[] {
       b.external_packages === null ? NONE : listOrNone(b.external_packages),
     ),
     row("Bundler", (b) => `${b.bundler}, ${b.target}`),
+    row("Measured at", (b) => b.measured_at ?? NONE),
   ];
 }
 

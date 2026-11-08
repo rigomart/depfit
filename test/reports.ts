@@ -805,6 +805,7 @@ export const valibotInBrowser: PackageReport = {
     subpaths_listed: 0,
     subpaths_whole_eager_js_gzip9_bytes: {},
     subpath_patterns_unmeasured: [],
+    measured_at: "2026-11-08T12:00:00.000Z",
   },
 };
 
@@ -828,6 +829,7 @@ export const sonnerInBrowser: PackageReport = {
     subpaths_listed: 0,
     subpaths_whole_eager_js_gzip9_bytes: null,
     subpath_patterns_unmeasured: [],
+    measured_at: "2026-11-07T09:30:00.000Z",
   },
 };
 
@@ -858,5 +860,6 @@ export const hugeInBrowser: PackageReport = {
     subpaths_listed: 3,
     subpaths_whole_eager_js_gzip9_bytes: { "./mini": 5321, "./node": null, "./worker": null },
     subpath_patterns_unmeasured: ["./locales/*"],
+    measured_at: "2026-11-08T12:00:00.000Z",
   },
 };

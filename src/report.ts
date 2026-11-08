@@ -130,6 +130,11 @@ export type Bundle = {
   subpaths_whole_eager_js_gzip9_bytes: Record<string, number | null> | null;
   /** Keys of the `exports` map containing `*`, verbatim; not expanded or measured. */
   subpath_patterns_unmeasured: string[] | null;
+  /**
+   * ISO 8601 UTC time the measurement behind this section finished; earlier than this run when it
+   * was read from depfit's cache. null when no build behind the section completed.
+   */
+  measured_at: string | null;
 };
 
 /** Facts derived from the current project. null when there is no project. */
@@ -258,7 +263,11 @@ export type Security = {
   dependency_vulnerabilities: string[];
 };
 
-export type CollectOptions = { cwd: string };
+export type CollectOptions = {
+  cwd: string;
+  /** false: neither read nor write depfit's cache (`--no-cache`). */
+  cache?: boolean;
+};
 
 /** Implemented in src/collect/index.ts. */
 export type Collect = (specs: string[], options: CollectOptions) => Promise<Report>;

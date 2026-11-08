@@ -18,7 +18,9 @@ bun ci/bundle-accuracy.ts  # the bundle eval's frozen reference cases, exact
 Collecting needs network access and `npm` on PATH. Three environment switches exist for the eval and CI only:
 `DEPFIT_BUNDLE=0` turns bundle facts off, `DEPFIT_LOCK_DIR=<dir>` records each isolated install's
 lockfile there, or replays it with `npm ci` when one exists, and `DEPFIT_BUNDLE_WORKERS=<1-4>` sets
-how many Vite workers build bundle measurements. GitHub facts need `GITHUB_TOKEN`, `GH_TOKEN`,
+how many Vite workers build bundle measurements. depfit's cache (`src/collect/cache.ts`) lives in `$XDG_CACHE_HOME/depfit`, else the platform's
+cache directory; every test, CI step and eval run uses an empty `XDG_CACHE_HOME` of its own or
+`--no-cache` (vitest's global setup fails a run that writes to the real one). GitHub facts need `GITHUB_TOKEN`, `GH_TOKEN`,
 or a logged-in `gh`; without one they are null and listed in `unavailable`.
 
 ## Layout
@@ -30,7 +32,9 @@ or a logged-in `gh`; without one they are null and listed in `unavailable`.
   project or call npm, OSV, and GitHub. `bundle.ts` builds with a real `vite build` in a separate
   Node process (`vite-build.mjs`, one build per request). `vite-pool.ts` runs those processes as a
   pool shared by every candidate of a run, and `children.ts` stops every child process depfit
-  started when it is signalled. `root-entry.ts` measures the root entry point whole, each export
+  started when it is signalled. `cache.ts` and `cached-install.ts` are the cache: npm resolves the
+  tree on every call, and a lockfile already cached is a hit (acceptance bar: `eval/bundle/SPEC.md`,
+  "Cache (#8)"). `root-entry.ts` measures the root entry point whole, each export
   alone and each subpath whole, all at once on the pool; `index.ts` imports it only in a browser
   workspace (`project.browser_signals`), so Vite is never loaded otherwise.
   The eval also measures import snippets (`bundle-entry.ts`) as real-usage ground truth.

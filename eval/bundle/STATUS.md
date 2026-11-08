@@ -870,3 +870,304 @@ the fix:
 After the fixes, P1 (a) (41 packages, 8 variants), gate C, `ci/e2e.ts` on Bun and Node, and the
 unit tests were rerun: unchanged results, all pass. The speed and load pairs were not rerun: the
 fixes change only what happens to a worker that does not exit on its own, which Vite's do.
+
+## Cache (#8): measurements for the bar (2026-11-08)
+
+**Bar approved by the user on 2026-11-08,** after two independent reviews (below). The user decided: the tree is resolved
+by npm (`--package-lock-only`) on every repeat, and the ETag fast path is deferred, since a
+validator that does not match what npm read would serve a stale tree. The conditional-request and
+recording-rule measurements below are kept as the basis for that deferred option. The user approved
+the other recommendations as drafted (SPEC.md, "Decided by the user"). Measured for SPEC.md "Cache (#8)" on an Apple M4 Pro
+(12 cores), Node 24.14.1, Bun 1.3.14, npm 11.11.0, at 573991c, every command under `nice -n 10`,
+one at a time, at most 4 Vite workers, over the real registry from a home network. Research scripts
+are outside the repo and reuse depfit's own functions (`resolvePackage`, `advisories`,
+`githubFacts`, `weeklyDownloads`, `typesPackage`, `dependencyVulnerabilities`,
+`withIsolatedInstall`, `measureRootEntry`). No cache code exists yet, so the hit times below are a
+simulation of its critical path, not a run of it.
+
+One batch was discarded: the first CLI timings ran before `bun install` in this worktree, so Bun
+auto-installed Vite 8.3.6 and every build crashed (`BUNDLER_ERROR`, bundle on and off took the same
+time). That is also why the bar never caches a `BUNDLER_ERROR`.
+
+**Lock-only resolution against a full install** (`npm install [--package-lock-only] <spec>` with
+depfit's flags in an empty temp directory, warm npm cache; medians of rounds 2 to 4, ms; round 1
+was the warm-up and its full install is shown as "first"):
+
+| Package (tree) | Full install | First | Lock-only | Lock-only, `--prefer-online` | `npm ci` from the lock-only lockfile |
+|---|---|---|---|---|---|
+| clsx (1) | 136 | 141 | 123 | 479 | 139 |
+| zod (1) | 237 | 238 | 133 | 505 | 222 |
+| valibot (1) | 183 | 544 | 167 | 624 | 130 |
+| date-fns (1) | 534 | 500 | 140 | 488 | 517 |
+| motion (5) | 425 | 2216 | 306 | 2128 | 249 |
+| react-hook-form (2) | 206 | 567 | 170 | 721 | 160 |
+| @tanstack/react-form (10) | 281 | 1451 | 229 | 1742 | 181 |
+| shiki (45) | 359 | 2473 | 185 | 2468 | 305 |
+| @mui/material (36) | 714 | 3423 | 363 | 3028 | 475 |
+| next (54) | 2219 | 4395 | 528 | 2443 | 1829 |
+
+In all 40 runs every `packages` entry other than the root was identical, all fields, between the
+lock-only lockfile and the full install's, and the lockfile `npm ci` wrote from it matched on
+version, `resolved`, `integrity` and the dev, optional and peer flags. The root entry, the
+installed files and `readTree`'s facts were not compared; gate K1 covers them.
+
+**Lock-only on a stale npm cache** (a private npm cache filled at 13:10, timed at 13:17, past
+npm's 300 s freshness, then again at once; s): zod 0.65 then 0.15, motion 2.22 then 0.32,
+@tanstack/react-form 1.88 then 0.25, shiki 2.46 then 0.20, @mui/material 2.90 then 0.38, next 2.23
+then 0.56. On the empty cache it took 0.77 to 4.72 s. `--prefer-online` matches the stale case.
+The registry sends `cache-control: public, max-age=300` for packuments.
+
+**Conditional revalidation** of every package in the tree (abbreviated packuments, the `Accept`
+header npm sends, `If-None-Match` with the ETag, all at once; 3 rounds, ms): zod 87 to 255 (1
+packument), motion 94 to 95 (5), @tanstack/react-form 108 to 131 (10), shiki 109 to 125 (45),
+@mui/material 111 to 116 (33), next 145 to 154 (54). Every response was 304. Fetching the same
+packuments in full took 0.39 to 0.87 s and 1.2 to 63 MB. A HEAD request's ETag gives a 304 on a
+conditional GET (next, zod, @types/node). `Last-Modified` was 2 to 10 s after the packument's
+`modified` field for zod, next, typescript, react, @types/node and motion.
+
+**Which packuments npm reads** (npm's cache index after a resolution into an empty cache, against
+the names in the lockfile): react-hook-form 3 for a tree of 2, @tanstack/react-form 10 of 10, shiki
+45 of 45, @mui/material 37 for 33, next 58 for 54, motion 14 for 5. The extra ones are optional
+peers and similar. Adding every dependency and peer named in the installed manifests still missed 6
+of motion's and 1 of @mui/material's, so the bar takes the set from npm's own log:
+`--loglevel=http` prints one `npm http fetch` or `npm http cache` line per packument URL.
+
+**How often an ETag recording rule would apply** (historical: for the deferred ETag fast path,
+not part of the decided bar; one lock-only resolution per package with `--loglevel=http`, then a
+HEAD request for every logged URL, against the rule of the first draft): all 10
+packages of the table above qualify, every log line a `hit`. The youngest packument in any tree was
+typescript's, last modified 611 minutes earlier (an optional peer valibot's resolution reads; it
+publishes nightly), then playwright's at 798 minutes (motion, next). So a tree that reads
+typescript would get new validators about once a day. Run once, on one day.
+
+**Probes, once per run:** `npm config list --json` 67 to 77 ms (170 keys, including `npm-version`,
+`registry`, `legacy-peer-deps`; identical from two different directories); `node -p` 25 ms.
+
+**A hit's critical path, simulated** (resolve the version; then, at once: the live lookups, the
+probes, conditional revalidation of every URL npm logged for the tree, reading a 100 KB file, and
+dependency OSV on the stored tree; 5 rounds, ms, median and range). CLI start-up and the project
+scan come on top (CI's baseline for `--schema`: 64 ms on Bun):
+
+| Package | Total | Revalidation done after resolve |
+|---|---|---|
+| zod | 617 (499 to 1047) | 90 to 100 |
+| valibot | 460 (435 to 510) | 84 to 90 |
+| motion | 590 (557 to 990) | 92 to 261 |
+| shiki | 762 (613 to 812) | 115 to 288 |
+| @mui/material | 788 (730 to 920) | 166 to 242 |
+| next | 1659 (1074 to 1741) | 126 to 718 |
+
+The same path with lock-only resolution (fresh npm cache) in place of revalidation: zod 483 to
+2295, valibot 442 to 466, motion 837 to 920, shiki 723 to 1003, @mui/material 990 to 1149, next
+1536 to 1753. Dependency OSV, which needs the tree, is the long pole for trees with dependencies
+(about 0.3 to 0.45 s after the tree is known); next's resolve (0.54 to 0.73 s, a large packument)
+and OSV (1.1 to 1.6 s) dominate it.
+
+**Today's CLI** (`test/fixtures/browser-app`, 3 rounds, s, median; bundle facts on / with
+`DEPFIT_BUNDLE=0`, which still installs): zod 4.18 / 1.32, valibot 1.76 / 1.75, motion 5.19 / 2.01,
+shiki 5.09 / 1.75, `zod valibot` 4.90 / 1.27, clsx 1.03 / 1.86. The off column varies with the
+network (valibot 1.06 to 1.89).
+
+**Cache entry sizes** (the measurement with the subpath cap of 100, what #10 reads; the overview's
+with the cap of 30 was the same size for all eight; install facts as `readTree` gives them; the
+install directory by `du`):
+
+| Package | Exports | Subpaths built | Measurement (gzip) | Install facts | Install dir (files) |
+|---|---|---|---|---|---|
+| clsx | 2 | 1 | 0.8 KB (0.2) | 0.2 KB | 0.1 MB (16) |
+| zod | 260 | 9 | 48.4 KB (4.5) | 0.2 KB | 8.1 MB (851) |
+| valibot | 320 | 0 | 57.7 KB (5.2) | 0.2 KB | 1.9 MB (23) |
+| date-fns | 250 | over the cap | 46.6 KB (4.0) | 0.2 KB | 26.5 MB (5,148) |
+| motion | 350 | 10 | 67.8 KB (7.0) | 1.2 KB | 16.4 MB (1,046) |
+| react-hook-form | 18 | 0 | 3.7 KB (0.6) | 0.4 KB | 2.6 MB (269) |
+| shiki | 54 | 10 | 12.9 KB (1.6) | 13.5 KB | 21.9 MB (2,432) |
+| @mui/material | 474 | over the cap | 98.7 KB (9.0) | 11.0 KB | 38.5 MB (5,428) |
+
+The install directory sizes are `du` (allocated blocks), measured after the builds and before
+removing depfit's build leftovers, so they slightly differ from what a kept install records (the
+sum of file lengths, leftovers removed). next's install is 337 MB (10,386 files). Renaming an install directory took 6 ms; deleting one,
+which today's code does at the end of every install, took 0.31 s (@mui/material), 0.28 s
+(date-fns) and 0.67 s (next).
+
+**Not measured:** Linux, Windows and CI's runners; private registries; concurrent runs; a range
+floating in the wild (nothing can be published to npm for it; gate K2 (b) uses a local test
+registry instead); and the cache itself, which does not exist yet.
+
+**Independent review of the bar** (Codex gpt-6.1-sol, high effort, read-only, 2026-11-08), on the
+first draft and the raw outputs: **not ready**, eleven findings, all applied in the revised text:
+
+1. Must-fix: the age window alone does not show what npm read, since npm serves a stale cached
+   packument when a revalidation fails. Now no validators are recorded unless every log line is a
+   network fetch or `hit`, `revalidated` or `updated` (npm logs that case as `stale`), with a test.
+2. Must-fix: one lockfile can install different trees (`omit=optional` keeps omitted packages in
+   it). The npm settings hash is now in the entry key and the install directory's name, and install
+   facts are cached only when every missing package is excluded by `os`, `cpu` or `libc`.
+3. Must-fix: `npm config list --json` omits credentials. The text says so, and validators are
+   recorded only for npmjs URLs that answer without credentials.
+4. Must-fix: caching every code but `BUNDLER_ERROR` would keep transient failures
+   (`SUBPATH_LIST_FAILED` from a read error, unreadable directories in `readTree`). Now only codes
+   that depend on the package alone are cached, with recovery tests.
+5. Must-fix: a 15-minute grace does not protect a concurrent reader of an install. No #8 run reads a
+   kept install, so the grace is gone, and #10 must define how a run takes hold of one.
+6. Must-fix: the limits could not be enforced with exemptions. Nothing published is exempt now, an
+   oversized install is not kept, eviction runs after every run that opened the cache, staging of
+   dead runs is removed, and the limits are soft only by work in flight; file system tests added.
+7. Must-fix: `measured_at` could not promise an order relative to `generated_at` (a concurrent run
+   can publish later), nor a time when no build completed. It is now the stored measurement's time,
+   null when no build completed.
+8. Should-fix: the identity left out Vite's own dependencies. It now lists Vite's installed closure.
+9. Should-fix: the speed targets rest on a simulation that recorded validators unconditionally. K5
+   is now provisional until a preflight, the rule's rate was measured (above), and the 50 ms
+   budget's scope is defined.
+10. Should-fix: the test-registry gate needed freshness control, mutations that change the tree,
+    and a seam, since the CLI resolves on npmjs. All three are now specified.
+11. Should-fix: STATUS claimed more lockfile equality than the script checked. Narrowed, and step 3
+    now starts in a directory with no lockfile or `node_modules`.
+
+**Second independent review** (Codex gpt-6.1-sol, high effort, read-only, 2026-11-08), on the bar as
+decided by the user: **not ready**, seven findings, all applied; none changed a user decision or a
+threshold:
+
+1. Must-fix: a measurement was eligible by its codes alone, but an optional dependency that failed
+   to download leaves the lockfile unchanged and can change the build. Now nothing (facts,
+   measurement or install) is cached from an incomplete install, with a recovery test.
+2. Must-fix: K2 (b)'s mutation sequence expected a miss where a correct cache hits (moving `latest`
+   back reuses the first tree). Each step's tree and hit or miss is now stated, and unpublishing is
+   tested on its own.
+3. Should-fix: facts and measurement now have their own files, published and checked separately;
+   a call is a hit only when every part it needs is valid, with tests across workspaces.
+4. Should-fix: K1 and K6 now assert that a hit runs no `npm install` or `npm ci`.
+5. Should-fix: an install's size record is written inside it before its rename; interruption,
+   concurrent eviction and injected write failures are tested; sizes are file lengths.
+6. Should-fix: K5's targets without a direct measurement are labelled proposed, the preflight
+   covers all of K5, the 50 ms budget is CPU time with the probes reported apart, and stale-cache
+   pairs start from one restored snapshot.
+7. Nit: the ETag rate paragraph is labelled historical, and the size measurement's limits stated.
+
+## Cache (#8): preflight (2026-11-08)
+
+Run on the first working path (the cache, the tree step, `--no-cache`, `measured_at`), as SPEC.md
+"Cache (#8)" requires before the rest of the work. "Today" is 573991c in a separate checkout, same
+machine, `nice -n 10`, one call at a time, `test/fixtures/browser-app`, warm npm cache unless said.
+Medians, ms. Raw rows are kept with the author's evidence (local, gitignored).
+
+**Pair order matters on this machine.** The first runs alternated today then #8 in every pair, as
+the bar's protocol reads; #8 always ran second. Under that protocol K5 (c) **failed**: cold calls
+measured −48 to +546 ms against today, motion +286 ms and four packages +546 ms over the +150 ms
+limit (the others: clsx −48, valibot +20, zod +4, `zod valibot` +41, `node:sqlite` −2, a missing
+name +17 ms). K5 (a) failed too (zod's hit +90 ms, motion 1.58 s). Swapping the order every round
+(today first in even rounds, #8 first in odd ones) removed every cold threshold failure; motion is
+still +35 ms. A three-way run of motion (today, `--no-cache`, cold; 4 rounds) printed 5.2 s for all
+three, but its output was not kept, so that figure is unverified. The numbers below use the
+swapped order, 6 rounds, before rounding.
+
+| Target | Result | Pass |
+|---|---|---|
+| K5 (a) hit, fresh npm cache: at most 1.5 s, and no slower than today with `DEPFIT_BUNDLE=0` | medians new / today, ms: zod 1306.5 / 1274 (+32.5); valibot 1062 / 1057 (+5); motion **1564** / 1711; shiki 1350.5 / 1712.5; `zod valibot` 1294 / 1304.5 | **No:** motion is over 1.5 s; zod and valibot are 32.5 and 5 ms slower |
+| K5 (b) hit, stale npm cache (both calls from one restored snapshot older than 300 s): at most today's full call | zod 1.28 against 4.54; valibot 1.07 against 2.14; motion 3.00 against 6.86; shiki 3.23 against 7.14; `zod valibot` 1.29 against 5.30 | Yes |
+| K5 (c) cold, empty cache: at most today + 0.15 s | swapped order: motion +35, date-fns −130, four packages −236.5 ms. The other six calls ran only under the first protocol (above) | **First protocol: failed. Balanced rerun of the three slowest: passed** |
+| K5 (c) cold, cache at its install limit (the oldest install, a real 14 MB copy, is evicted): at most + 0.3 s | zod +0.02, motion +0.02; evicted in every run | Yes |
+| K5 (d) changed tree: at most today + 0.6 s | zod +0.12, motion +0.14 | Yes |
+| K5 (e) depfit's CPU in the cache code | opening the cache 24 ms once per call (identity and settings, in process); hashing and reading both parts 0.3 to 1.1 ms per candidate; eviction 1.1 ms (three runs of `cpu.ts`, output not kept; unverified) | Yes, unverified |
+| K5 (f) a workspace with no browser signal, hit: no slower than today | zod −6.5, valibot **+0.5**, motion −250, shiki −263.5, `zod valibot` −22.5 ms | **No, literally:** valibot is 0.5 ms slower and the gate has no tolerance |
+
+**Where a hit's time goes** (temporary traces, output not kept, so unverified). zod: the registry resolution ends at 0.64 s,
+the cache's tree step (lock-only resolution and both parts read) at 0.80 s, and the live OSV
+lookup at 1.23 to 1.27 s, which ends the call; the same code with `--no-cache` and bundle facts off
+ends at the same time, its install finishing at 0.94 s. So for a package with no dependencies,
+both calls wait on OSV, and the hit's 140 ms head start does not show. motion: resolution 0.52 s,
+lock-only 0.31 s more, then the dependency OSV query, which needs the tree, about 0.65 s (the
+research simulation measured 0.3 to 0.45 s for it), ending at 1.41 to 1.52 s.
+
+K1 so far: on the first cold, hit and `--no-cache` calls of zod, `bundle` without `measured_at`,
+`unavailable` and `cost` were identical, and the hits kept the cold call's `measured_at`; every
+stale-cache hit kept its `measured_at`. The full K1 to K4 gates have not run.
+
+**Independent review of amendments K-1 and K-2** (Codex gpt-6.1-sol, high effort, read-only,
+2026-11-08), against the raw rows and the code: **K-1 agreed** (the fixed order confounded the
+change with its position; its wording now says the cause of the earlier gaps is unproven). **K-2
+disagreed as written:** dropping the absolute limit is defensible, but the 0.05 s margin was chosen
+after seeing a 32.5 ms gap, and the simulation's motion dependency OSV queries ranged 320 to 671 ms,
+so it had not simply mismeasured them. The review proposes setting the margin from a control
+experiment specified in advance (today's CLI against itself under the balanced protocol). Its other
+findings, applied above: K5 (f) and the first protocol's K5 (c) are recorded as failures, numbers
+are given in ms before rounding, and claims whose output was not kept are marked unverified. Still
+open from it: the balanced scripts kept neither full reports nor exit status, so the rerun must keep
+both. Work stopped here for the user's decision on K-2.
+
+**Amendment K-2 as decided by the user** (a margin from a control run of today's CLI against
+itself): three reviews of its text (Codex gpt-6.1-sol, high effort, read-only). The first two
+disagreed as written: no threshold was fitted to the results, but the protocol left choices to the
+runner (simulation wording, frozen commands and environment, ordering, retries; then the
+non-browser workspace, hit evidence where `bundle` is null, and an environment manifest). Each was
+fixed before anything ran. The third, on 0325b77: **agree**, no findings. The controls run only after
+that agreement.
+
+## Cache (#8): K5 under the amended bar (2026-11-08)
+
+Run by `k5.mjs` (kept with the author's evidence, local, gitignored) exactly as amendment K-2
+fixes it, in this order: both controls, then K5 (a) and (f), then (b), (c), (c) at the limit and
+(d), all under the balanced order, one invocation at a time, `nice -n 10`, a logging npm wrapper
+first on every arm's `PATH`. Every invocation's start time, wall time, exit code, stdout, stderr,
+npm arguments and `XDG_CACHE_HOME` are kept. No round was invalid in any experiment, and every
+timed #8 call in (a), (f) and (b) was proved a hit (npm ran only `config list` and one
+`install --package-lock-only` per package; in (a) and (b) every `measured_at` equals its priming
+call's). Medians in ms, unrounded in the record.
+
+**Controls (today's CLI against itself, 6 rounds).** The network was noisier than in the
+preflight: many calls took about 0.8 s longer, in both arms alike. Browser workspace with
+`DEPFIT_BUNDLE=0`: per-call `|median(A) − median(B)|` zod 76.1, valibot 511.2, motion 302.7, shiki
+364.2, `zod valibot` 171.2, so **`M_a` = 511.2 ms**. No browser signal: zod 332.5, valibot 800.5,
+motion 279.3, shiki 14.0, `zod valibot` 527.0, so **`M_f` = 800.45 ms**. These margins are what the
+rule gives in this window; they are wide, and the gate is correspondingly weak.
+
+| Gate | Result (median #8 against today, gap) | Pass |
+|---|---|---|
+| K5 (a) hit, fresh npm cache, ≤ today with `DEPFIT_BUNDLE=0` + `M_a` | zod 1306 / 1388 (−82.0); valibot 1296 / 1101 (+195.2); motion 1648 / 1792 (−143.8); shiki 1391 / 1702 (−310.8); `zod valibot` 1570 / 1287 (+282.6) | Yes |
+| K5 (f) no browser signal, hit, ≤ today + `M_f` | zod 1747 / 1409 (+337.9); valibot 1134 / 1079 (+54.3); motion 1594 / 1816 (−221.9); shiki 1757 / 1675 (+82.2); `zod valibot` 1595 / 1683 (−87.9) | Yes |
+| K5 (b) hit, stale npm cache, ≤ today's full call | zod 1739 / 4545; valibot 1074 / 2208; motion 3073 / 7063; shiki 3247 / 7357; `zod valibot` 1624 / 5444 | Yes |
+| K5 (c) cold, empty cache, ≤ today + 150 | clsx +1.2; valibot −26.2; zod −39.2; date-fns −194.8; motion +130.6; `zod valibot` −63.2; four packages −11.8; `node:sqlite` −2.4; a missing name −1.9 | Yes |
+| K5 (c) cache at its install limit (a real 14,253,810 B motion install as the oldest victim), ≤ today + 300 | zod +68.6, motion +68.4; the victim evicted in all 12 runs | Yes |
+| K5 (d) changed tree, ≤ today + 600 | zod +159.7, motion +143.9 | Yes |
+| K5 (e) depfit's CPU in the cache code, ≤ 50 ms per candidate | opening 23 to 25 ms per call, hashing and reading both parts 1.1 to 1.3 ms, eviction 0.7 to 0.9 ms (three runs, output kept); probes as measured earlier: `npm config list` 67 to 77 ms, `node -p` 25 ms elapsed | Yes |
+
+The first attempt at the at-limit run stopped before any invocation (its victim install had been
+deleted by an earlier experiment's cleanup); its empty directory was removed and the run made from a
+fresh install. **K5 passes under the amended bar.**
+
+## Cache (#8): scorecard (2026-11-08)
+
+Built to the bar as amended (SPEC.md, "Cache (#8)"). Scored by `k1.mjs`, `k5.mjs` and
+`p1-today.mjs` and the unit tests; every invocation's report, stderr, exit code and npm and node
+arguments are kept with the author's evidence (local, gitignored). One call at a time, `nice -n 10`.
+Every run used an `XDG_CACHE_HOME` of its own; the user's own cache directory was never written
+(checked after each part).
+
+**Scorecard: passes.**
+
+| Gate | Result |
+|---|---|
+| K1. Same results | Pass. 41 reference packages on frozen trees, #7's 9 P1 (b) calls live, 3 calls with no browser signal: `--no-cache`, cold and repeat give identical `bundle` (without `measured_at`), `bundle:` reasons, `cost` and install-derived `compatibility`. 39 reference repeats and every live and non-browser repeat are hits: the cold call's `measured_at`, npm ran only `config list` and (live) one `install --package-lock-only` per package, and no Vite worker started (0 worker starts in hits, 158 and 41 in the cold calls). blessed (`PARSE_ERROR`) and better-sqlite3 (`UNLOADABLE_DEPENDENCY`) are kept out of the cache by the approved rule (pass-through bundler codes) and were measured again, with identical facts. No browser signal: no Vite worker in any run. A first run's no-worker check was vacuous (depfit starts workers with a cleaned environment, which dropped the wrapper's log path); it was fixed and the whole of K1 rerun |
+| K2. A changed tree is never served | Pass. (a) Unit tests: tree hash, keys, identity inputs (Vite's closure included). (b) Local test registry: a publish misses and measures the new tree; moving `latest` back hits the earlier tree; an unpublish misses; a change outside the tree still hits; an optional dependency that fails to download caches nothing and is measured again once it downloads; `omit=optional` gives another key and other facts. (c) 98 probe candidates and reference packages: step 2's lockfile and a full install's identical, whole file, 98 of 98. (d) Parts across workspaces and a measurement that crashed: tested |
+| K3. Concurrency and failure | Pass. Two cold CLI calls at once on one cache: both correct, one entry (both parts), one install. SIGKILL during the install (node_modules present, no worker yet) and during the builds: the next call is correct and leaves no staging of the dead call. SIGKILL between a part's write and its link, and between an install's size record and its rename (unit tests with a pausing child): nothing partial, staging removed. Truncated, garbage, wrong-key, wrong-part, wrong-version and wrong-checksum parts are misses and replaced; a part deleted before its read is a miss; a transient read failure (unreadable package directory) and a crashed measurement are not cached. An unwritable cache directory and a failing publish: exit 0, correct facts |
+| K4. Size and eviction | Pass. Policy unit tests (least recently used, both limits, oversized installs not kept, staging of dead calls and older than a day removed, a live call's and another host's young staging kept); repeated publication stays under the limit after every call. The size recorded for clsx, zod, valibot, date-fns, motion, react-hook-form, shiki, @mui/material and next equals the sum of their kept installs' file lengths, all 9 exactly (9,558 B to 324,130,007 B) |
+| K5. Speed | Pass under the amended bar (section above) |
+| K6. Contract and CI | Pass locally: `measured_at` in the report, `--schema`, the fixtures and the contract check; type check, lint, format, unit tests on Node and Bun (308), `ci/e2e.ts` on Bun and Node with its own cache per run and the new cache scenario, `ci/bundle-accuracy.ts` with `--no-cache` (0 failures). `eval/run.ts` passes `--no-cache`. A vitest global setup gives every test run its own `XDG_CACHE_HOME` and fails the run if the real cache directory changed (checked: a probe test that wrote there failed the run) |
+| #7's gates with `--no-cache` | Report-level: today's CLI and #8's give identical bundle facts, bundle reasons, cost and compatibility on the 41 reference packages (against #8's `--no-cache` and hit reports) and on all 54 cold pairs of #7's P1 (b) calls. `ci/bundle-accuracy.ts` passes (gate C). The pool code is unchanged; #7's P2 to P5 and iteration 1's and 2's gate F were not rerun as scorecards of their own |
+
+Found while building, and fixed: the eviction pass deleted another host's young staging (a shared
+cache directory would lose a running call's files); the rule is now "older than a day, or a dead
+call on this host".
+
+Code review (Codex gpt-6.1-sol, high effort, read-only), on the diff with the bar and this
+scorecard: two must-fix and two should-fix findings, all fixed with tests that fail without the
+fix: (1) a cache that failed after opening (its directory removed or unwritable) surfaced as an
+install failure; the call now takes the uncached path, and only for cache failures, so a genuine
+npm failure is not installed twice; (2) Vite's dependency closure walked logical paths, so a
+symlinked (pnpm-style) layout could miss a changed dependency in the identity; it now resolves
+real paths, as Node does; (3) after a subpath worker failure, `measured_at` was the failure's
+time; it is now the last completed build's; (4) the SIGKILL tests' child could exit on its own;
+it is now kept alive and the kill is asserted. A second review of the fixes found nothing
+must-fix; its three should-fix findings (the fallback scope, testing the fallback through its
+caller, a transitive symlink) were applied. Unit tests on Node and Bun (312), type check, lint,
+format and `ci/e2e.ts` pass after the fixes.

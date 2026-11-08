@@ -35,9 +35,23 @@ depfit node:sqlite better-sqlite3         # include a runtime builtin as an opti
 depfit hono --cwd apps/api                # run against another workspace
 depfit zod valibot --json                 # full report as JSON
 depfit --schema                           # what every JSON field means
+depfit zod --no-cache                     # install and measure again, ignoring the cache
 ```
 
 Output is a table in a terminal and JSON when piped, which is what agents get. Use `--table` or `--json` to force either.
+
+### Cache
+
+depfit keeps each install's facts and bundle measurements, keyed by the exact dependency tree npm
+resolves for the package, so a repeat call from any project skips the install and the builds. npm
+still resolves the tree on every call (`npm install --package-lock-only`), so a dependency range
+that floats to a new version is measured again; the registry, download, GitHub and vulnerability
+facts are fetched every time. `bundle.measured_at` says when a bundle number was measured.
+
+The cache lives in `$XDG_CACHE_HOME/depfit` when that is set, otherwise `~/Library/Caches/depfit`
+on macOS, `~/.cache/depfit` on Linux and `%LOCALAPPDATA%\depfit\Cache` on Windows. It holds up
+to 2 GiB of install directories and 128 MiB of results, least recently used removed first.
+Deleting the directory is always safe. `--no-cache` neither reads nor writes it.
 
 ## Example
 
@@ -101,7 +115,7 @@ Before adding, replacing, or choosing between npm dependencies, run `depfit <can
 - **Sizes are platform-specific.** Install sizes and native binaries are measured on the current OS and CPU.
 - **npm only.** It reads npm, pnpm, yarn v1, and bun lockfiles.
 - **Bundle facts cover the root entry point only.** Subpaths (`highlight.js/lib/core`, `gsap/Flip`) and framework entry points (`motion/react`) are not measured yet. The numbers are standalone builds, not the marginal cost given what your app already bundles. Measuring every export takes a few seconds for packages with hundreds of exports.
-- **Network calls on every run.** It queries the npm registry, the npm downloads API, OSV, and GitHub, and installs each candidate into a temp directory. Nothing in your repo is modified.
+- **Network calls on every run.** It queries the npm registry, the npm downloads API, OSV, and GitHub, and resolves each candidate's tree with npm; a candidate not in the cache is installed into a temp directory. Nothing in your repo is modified.
 
 ## Development
 

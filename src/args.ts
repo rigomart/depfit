@@ -11,6 +11,7 @@ export type Command =
       specs: string[];
       cwd: string | null;
       output: OutputMode | "auto";
+      cache: boolean;
     }
   | { kind: "usage-error"; message: string };
 
@@ -24,6 +25,8 @@ Options:
   --cwd <dir>             Project to compare against (default: current directory)
   --json                  Print the report as JSON (default when stdout is not a TTY)
   --table                 Print a table (default when stdout is a TTY)
+  --no-cache              Install and measure again; neither read nor write depfit's cache
+                          ($XDG_CACHE_HOME/depfit, else the platform's cache directory)
   --schema                Print a one-sentence description of every JSON field, then exit
   -h, --help              Show this help
   -v, --version           Show the version`;
@@ -57,6 +60,7 @@ export function parseCliArgs(argv: string[]): Command {
     specs: positionals,
     cwd: values.cwd ?? null,
     output: values.json ? "json" : values.table ? "table" : "auto",
+    cache: values["no-cache"] !== true,
   };
 }
 
@@ -70,6 +74,7 @@ function parse(argv: string[]) {
       json: { type: "boolean" },
       table: { type: "boolean" },
       schema: { type: "boolean" },
+      "no-cache": { type: "boolean" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
     },

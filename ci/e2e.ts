@@ -7,7 +7,7 @@
  *   bun ci/e2e.ts [--timings file]   # writes {"e2e.<runtime>.<run>": ms, ...} for ci/perf.ts
  */
 import { execFile } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { parseArgs } from "node:util";
@@ -22,13 +22,22 @@ const RUNTIME = process.versions.bun ? "bun" : `node${process.versions.node.spli
 
 type Run = { code: number; stdout: string; stderr: string; ms: number };
 
-function depfit(args: string[], env: NodeJS.ProcessEnv = process.env): Promise<Run> {
+/** SPEC.md, "Cache (#8)", K6: no scenario reads another's cache or touches the user's. */
+const CACHE_ROOT = await mkdtemp(join(tmpdir(), "depfit-e2e-cache-"));
+let cacheRuns = 0;
+const freshCacheHome = () => join(CACHE_ROOT, String(cacheRuns++));
+
+function depfit(
+  args: string[],
+  env: NodeJS.ProcessEnv = process.env,
+  cacheHome: string = freshCacheHome(),
+): Promise<Run> {
   const started = performance.now();
   return new Promise((resolve) => {
     execFile(
       process.execPath,
       [CLI, ...args],
-      { env, maxBuffer: 1 << 26, timeout: 300_000 },
+      { env: { ...env, XDG_CACHE_HOME: cacheHome }, maxBuffer: 1 << 26, timeout: 300_000 },
       (error, stdout, stderr) => {
         const code = error ? (typeof error.code === "number" ? error.code : 1) : 0;
         resolve({ code, stdout, stderr, ms: Math.round(performance.now() - started) });
@@ -151,6 +160,84 @@ async function scenarios(noToken: NodeJS.ProcessEnv): Promise<Scenario[]> {
   ];
 }
 
+/** The facts a hit must give byte for byte as the build it reuses (SPEC.md, gate K1). */
+function cachedFacts(report: Record<string, unknown>): string {
+  return JSON.stringify(
+    asArray(report.packages).map((value) => {
+      const pkg = asRecord(value);
+      const { measured_at: _measuredAt, ...bundle } = asRecord(pkg.bundle);
+      const compatibility = asRecord(pkg.compatibility);
+      return {
+        bundle,
+        reasons: asArray(pkg.unavailable).filter((entry) => String(entry).startsWith("bundle:")),
+        cost: pkg.cost,
+        types: [
+          compatibility.types_source,
+          compatibility.types_package,
+          compatibility.licenses_in_tree,
+        ],
+      };
+    }),
+  );
+}
+
+const measuredAt = (report: Record<string, unknown>) =>
+  asArray(report.packages).map((value) => asRecord(asRecord(value).bundle).measured_at ?? null);
+
+/** An `npm` for the front of PATH: appends its arguments to $DEPFIT_E2E_NPM_LOG, then runs the next npm on PATH. */
+const npmShimThatLogsAndForwards = () =>
+  `#!/bin/sh\necho "$*" >> "$DEPFIT_E2E_NPM_LOG"\nPATH="\${PATH#*${delimiter}}" exec npm "$@"\n`;
+
+/** SPEC.md, "Cache (#8)", K6: the browser workspace cold, then a hit, then --no-cache. */
+async function cacheScenario(): Promise<string[]> {
+  const cwd = join(FIXTURES, "browser-app");
+  const cacheHome = freshCacheHome();
+  const wrapperDir = await mkdtemp(join(tmpdir(), "depfit-e2e-npm-"));
+  const log = join(wrapperDir, "args.log");
+  await writeFile(join(wrapperDir, "npm"), npmShimThatLogsAndForwards(), { mode: 0o755 });
+  const env = (name: string) => ({
+    ...process.env,
+    PATH: `${wrapperDir}${delimiter}${process.env.PATH ?? ""}`,
+    DEPFIT_E2E_NPM_LOG: `${log}.${name}`,
+  });
+  const problems: string[] = [];
+  try {
+    const runs: Record<string, Record<string, unknown>> = {};
+    for (const [name, extra] of [
+      ["cold", []],
+      ["hit", []],
+      ["off", ["--no-cache"]],
+    ] as const) {
+      const run = await depfit(["clsx", "--json", "--cwd", cwd, ...extra], env(name), cacheHome);
+      timings[`e2e.${RUNTIME}.cache-${name}`] = run.ms;
+      if (run.code !== 0) problems.push(`${name}: exit code ${run.code}`);
+      runs[name] = asRecord(JSON.parse(run.stdout || "{}"));
+    }
+    const { cold = {}, hit = {}, off = {} } = runs;
+    if (cachedFacts(hit) !== cachedFacts(cold))
+      problems.push("the hit's facts differ from the cold call's");
+    if (cachedFacts(off) !== cachedFacts(cold))
+      problems.push("--no-cache's facts differ from the cold call's");
+    const [coldAt] = measuredAt(cold);
+    if (typeof coldAt !== "string") problems.push("the cold call has no measured_at");
+    if (measuredAt(hit)[0] !== coldAt)
+      problems.push("the hit does not keep the cold call's measured_at");
+    if (measuredAt(off)[0] === coldAt) problems.push("--no-cache kept the cached measured_at");
+    const hitNpm = (await readFile(`${log}.hit`, "utf8").catch(() => "")).trim().split("\n");
+    const materializing = hitNpm.filter(
+      (line) => /^(ci\b|install\b)/.test(line) && !line.startsWith("install --package-lock-only"),
+    );
+    if (materializing.length) problems.push(`the hit ran ${materializing.join("; ")}`);
+    if (!hitNpm.some((line) => line.startsWith("install --package-lock-only"))) {
+      problems.push("the hit did not resolve the tree with npm");
+    }
+  } finally {
+    await rm(wrapperDir, { recursive: true, force: true });
+  }
+  console.log(`${problems.length ? "FAIL" : "ok  "} cache (clsx: cold, hit, --no-cache)`);
+  return problems;
+}
+
 const { values } = parseArgs({ options: { timings: { type: "string" } } });
 const failures: string[] = [];
 const timings: Record<string, number> = {};
@@ -210,12 +297,14 @@ try {
     fail(label, problems);
     console.log(`${problems.length ? "FAIL" : "ok  "} ${label} ${run.ms} ms`);
   }
+  fail("cache", await cacheScenario());
   const table = await depfit(["zod", "--table", "--cwd", join(FIXTURES, "lockfile-npm")]);
   timings[`e2e.${RUNTIME}.table`] = table.ms;
   if (table.code !== 0 || !table.stdout.includes("zod"))
     fail("--table", [`exit ${table.code}, no table`]);
 } finally {
   await rm(gh.dir, { recursive: true, force: true });
+  await rm(CACHE_ROOT, { recursive: true, force: true });
 }
 
 timings[`e2e.${RUNTIME}.total`] = Object.values(timings).reduce((sum, ms) => sum + ms, 0);

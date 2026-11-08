@@ -46,7 +46,10 @@ async function main(argv: string[]): Promise<number> {
   const clear = progress(command.specs);
   let report: Report;
   try {
-    report = await collect(command.specs, { cwd: resolve(command.cwd ?? process.cwd()) });
+    report = await collect(command.specs, {
+      cwd: resolve(command.cwd ?? process.cwd()),
+      cache: command.cache,
+    });
   } catch (error) {
     clear();
     process.stderr.write(`depfit: ${error instanceof Error ? error.message : String(error)}\n`);
