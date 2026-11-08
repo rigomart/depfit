@@ -1052,23 +1052,26 @@ machine, `nice -n 10`, one call at a time, `test/fixtures/browser-app`, warm npm
 Medians, ms. Raw rows are kept with the author's evidence (local, gitignored).
 
 **Pair order matters on this machine.** The first runs alternated today then #8 in every pair, as
-the bar's protocol reads; #8 always ran second. They showed #8 0.03 to 0.55 s slower on cold calls
-(motion +0.29 s, four packages +0.55 s) and on zod's hit (+0.09 s). Swapping the order every round
-(today first in even rounds, #8 first in odd ones) removed every cold gap, and a three-way run
-(today, `--no-cache`, cold) gave the same 5.2 s for motion on all three. The numbers below use the
-swapped order, 6 rounds; the protocol change is for the user to approve.
+the bar's protocol reads; #8 always ran second. Under that protocol K5 (c) **failed**: cold calls
+measured −48 to +546 ms against today, motion +286 ms and four packages +546 ms over the +150 ms
+limit (the others: clsx −48, valibot +20, zod +4, `zod valibot` +41, `node:sqlite` −2, a missing
+name +17 ms). K5 (a) failed too (zod's hit +90 ms, motion 1.58 s). Swapping the order every round
+(today first in even rounds, #8 first in odd ones) removed every cold threshold failure; motion is
+still +35 ms. A three-way run of motion (today, `--no-cache`, cold; 4 rounds) printed 5.2 s for all
+three, but its output was not kept, so that figure is unverified. The numbers below use the
+swapped order, 6 rounds, before rounding.
 
 | Target | Result | Pass |
 |---|---|---|
-| K5 (a) hit, fresh npm cache: at most 1.5 s, and no slower than today with `DEPFIT_BUNDLE=0` | zod 1.31 against 1.27 (+0.03); valibot 1.06 against 1.06 (+0.01); motion **1.56** against 1.71; shiki 1.35 against 1.71; `zod valibot` 1.29 against 1.30 | **No:** motion is over 1.5 s; zod and valibot are 10 to 30 ms slower |
+| K5 (a) hit, fresh npm cache: at most 1.5 s, and no slower than today with `DEPFIT_BUNDLE=0` | medians new / today, ms: zod 1306.5 / 1274 (+32.5); valibot 1062 / 1057 (+5); motion **1564** / 1711; shiki 1350.5 / 1712.5; `zod valibot` 1294 / 1304.5 | **No:** motion is over 1.5 s; zod and valibot are 32.5 and 5 ms slower |
 | K5 (b) hit, stale npm cache (both calls from one restored snapshot older than 300 s): at most today's full call | zod 1.28 against 4.54; valibot 1.07 against 2.14; motion 3.00 against 6.86; shiki 3.23 against 7.14; `zod valibot` 1.29 against 5.30 | Yes |
-| K5 (c) cold, empty cache: at most today + 0.15 s | motion +0.04, date-fns −0.13, four packages −0.24 (swapped order); first runs, today first: clsx −0.05, valibot +0.02, zod 0.00, `zod valibot` +0.04, `node:sqlite` 0.00, a missing name +0.02 | Yes |
+| K5 (c) cold, empty cache: at most today + 0.15 s | swapped order: motion +35, date-fns −130, four packages −236.5 ms. The other six calls ran only under the first protocol (above) | **First protocol: failed. Balanced rerun of the three slowest: passed** |
 | K5 (c) cold, cache at its install limit (the oldest install, a real 14 MB copy, is evicted): at most + 0.3 s | zod +0.02, motion +0.02; evicted in every run | Yes |
 | K5 (d) changed tree: at most today + 0.6 s | zod +0.12, motion +0.14 | Yes |
-| K5 (e) depfit's CPU in the cache code | opening the cache 24 ms once per call (identity and settings, in process); hashing and reading both parts 0.3 to 1.1 ms per candidate; eviction 1.1 ms | Yes |
-| K5 (f) a workspace with no browser signal, hit: no slower than today | zod −0.01, valibot 0.00, motion −0.25, shiki −0.26, `zod valibot` −0.02 | Yes |
+| K5 (e) depfit's CPU in the cache code | opening the cache 24 ms once per call (identity and settings, in process); hashing and reading both parts 0.3 to 1.1 ms per candidate; eviction 1.1 ms (three runs of `cpu.ts`, output not kept; unverified) | Yes, unverified |
+| K5 (f) a workspace with no browser signal, hit: no slower than today | zod −6.5, valibot **+0.5**, motion −250, shiki −263.5, `zod valibot` −22.5 ms | **No, literally:** valibot is 0.5 ms slower and the gate has no tolerance |
 
-**Where a hit's time goes** (one traced call each). zod: the registry resolution ends at 0.64 s,
+**Where a hit's time goes** (temporary traces, output not kept, so unverified). zod: the registry resolution ends at 0.64 s,
 the cache's tree step (lock-only resolution and both parts read) at 0.80 s, and the live OSV
 lookup at 1.23 to 1.27 s, which ends the call; the same code with `--no-cache` and bundle facts off
 ends at the same time, its install finishing at 0.94 s. So for a package with no dependencies,
@@ -1079,3 +1082,15 @@ research simulation measured 0.3 to 0.45 s for it), ending at 1.41 to 1.52 s.
 K1 so far: on the first cold, hit and `--no-cache` calls of zod, `bundle` without `measured_at`,
 `unavailable` and `cost` were identical, and the hits kept the cold call's `measured_at`; every
 stale-cache hit kept its `measured_at`. The full K1 to K4 gates have not run.
+
+**Independent review of amendments K-1 and K-2** (Codex gpt-6.1-sol, high effort, read-only,
+2026-11-08), against the raw rows and the code: **K-1 agreed** (the fixed order confounded the
+change with its position; its wording now says the cause of the earlier gaps is unproven). **K-2
+disagreed as written:** dropping the absolute limit is defensible, but the 0.05 s margin was chosen
+after seeing a 32.5 ms gap, and the simulation's motion dependency OSV queries ranged 320 to 671 ms,
+so it had not simply mismeasured them. The review proposes setting the margin from a control
+experiment specified in advance (today's CLI against itself under the balanced protocol). Its other
+findings, applied above: K5 (f) and the first protocol's K5 (c) are recorded as failures, numbers
+are given in ms before rounding, and claims whose output was not kept are marked unverified. Still
+open from it: the balanced scripts kept neither full reports nor exit status, so the rerun must keep
+both. Work stopped here for the user's decision on K-2.

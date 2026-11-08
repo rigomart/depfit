@@ -992,15 +992,20 @@ in `STATUS.md`). The original text is in git history; the lines changed above sa
 2026-11-08".
 
 - **K-1. The pair order alternates.** The protocol ran today first in every pair, as #7's did, so #8
-  always ran second. Run that way, #8 measured 0.03 to 0.55 s slower on cold calls (motion +0.29 s,
-  four packages +0.55 s). Swapping the order every round removed every cold gap (motion +0.04 s,
-  date-fns −0.13 s, four packages −0.24 s), and a three-way run of motion (today, `--no-cache`,
-  cold) gave 5.2 s for all three. The fixed order favored whichever call ran first; it measured
-  the order, not the change.
-- **K-2. K5 (a) is relative to today, within 0.05 s, with the absolute times reported.** It said "at
+  always ran second. Run that way, cold calls measured −48 to +546 ms against today, and motion
+  (+286 ms) and four packages (+546 ms) failed K5 (c)'s +150 ms. Swapping the order every round
+  removed every cold threshold failure (motion +35 ms, date-fns −130 ms, four packages −236.5 ms).
+  The original protocol confounded the change with its position in the pair; the balanced rerun
+  passed the cold thresholds, and the cause of the earlier gaps is unproven. The independent review
+  agreed with this amendment.
+- **K-2. K5 (a) is relative to today, within 0.05 s, with the absolute times reported.**
+  **Disputed by the independent review, pending the user** (`STATUS.md`): it agreed that an
+  absolute end-to-end limit depends on services the cache does not control, but not with a 0.05 s
+  margin chosen after a 32.5 ms gap was seen, nor with the account of the simulation below, whose
+  motion dependency OSV queries ranged 320 to 671 ms. Not applied to any result until decided. It said "at
   most 1.5 s median, and no slower than today's same call with `DEPFIT_BUNDLE=0`". The 1.5 s rested
-  on a simulation of the hit path that measured the dependency OSV query at 0.3 to 0.45 s; on the
-  real path it took about 0.65 s (motion: resolution 0.52 s, lock-only 0.31 s, then that query),
+  on a simulation of the hit path whose dependency OSV queries for motion were mostly 0.32 to
+  0.47 s (one 0.67 s); on the traced real path it took about 0.65 s (motion: resolution 0.52 s, lock-only 0.31 s, then that query),
   and it needs the tree, so it cannot start earlier. A hit cannot end before the live lookups, and
   those decide both a hit and today's bundle-off call: for zod, both calls end on the OSV lookup at
   about 1.25 s, although the hit's tree is ready 140 ms earlier. "No slower" without a margin then
