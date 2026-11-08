@@ -1134,3 +1134,27 @@ rule gives in this window; they are wide, and the gate is correspondingly weak.
 The first attempt at the at-limit run stopped before any invocation (its victim install had been
 deleted by an earlier experiment's cleanup); its empty directory was removed and the run made from a
 fresh install. **K5 passes under the amended bar.**
+
+## Cache (#8): scorecard (2026-11-08)
+
+Built to the bar as amended (SPEC.md, "Cache (#8)"). Scored by `k1.mjs`, `k5.mjs` and
+`p1-today.mjs` and the unit tests; every invocation's report, stderr, exit code and npm and node
+arguments are kept with the author's evidence (local, gitignored). One call at a time, `nice -n 10`.
+Every run used an `XDG_CACHE_HOME` of its own; the user's own cache directory was never written
+(checked after each part).
+
+**Scorecard: passes.**
+
+| Gate | Result |
+|---|---|
+| K1. Same results | Pass. 41 reference packages on frozen trees, #7's 9 P1 (b) calls live, 3 calls with no browser signal: `--no-cache`, cold and repeat give identical `bundle` (without `measured_at`), `bundle:` reasons, `cost` and install-derived `compatibility`. 39 reference repeats and every live and non-browser repeat are hits: the cold call's `measured_at`, npm ran only `config list` and (live) one `install --package-lock-only` per package, and no Vite worker started (0 worker starts in hits, 158 and 41 in the cold calls). blessed (`PARSE_ERROR`) and better-sqlite3 (`UNLOADABLE_DEPENDENCY`) are kept out of the cache by the approved rule (pass-through bundler codes) and were measured again, with identical facts. No browser signal: no Vite worker in any run. A first run's no-worker check was vacuous (depfit starts workers with a cleaned environment, which dropped the wrapper's log path); it was fixed and the whole of K1 rerun |
+| K2. A changed tree is never served | Pass. (a) Unit tests: tree hash, keys, identity inputs (Vite's closure included). (b) Local test registry: a publish misses and measures the new tree; moving `latest` back hits the earlier tree; an unpublish misses; a change outside the tree still hits; an optional dependency that fails to download caches nothing and is measured again once it downloads; `omit=optional` gives another key and other facts. (c) 98 probe candidates and reference packages: step 2's lockfile and a full install's identical, whole file, 98 of 98. (d) Parts across workspaces and a measurement that crashed: tested |
+| K3. Concurrency and failure | Pass. Two cold CLI calls at once on one cache: both correct, one entry (both parts), one install. SIGKILL during the install (node_modules present, no worker yet) and during the builds: the next call is correct and leaves no staging of the dead call. SIGKILL between a part's write and its link, and between an install's size record and its rename (unit tests with a pausing child): nothing partial, staging removed. Truncated, garbage, wrong-key, wrong-part, wrong-version and wrong-checksum parts are misses and replaced; a part deleted before its read is a miss; a transient read failure (unreadable package directory) and a crashed measurement are not cached. An unwritable cache directory and a failing publish: exit 0, correct facts |
+| K4. Size and eviction | Pass. Policy unit tests (least recently used, both limits, oversized installs not kept, staging of dead calls and older than a day removed, a live call's and another host's young staging kept); repeated publication stays under the limit after every call. The size recorded for clsx, zod, valibot, date-fns, motion, react-hook-form, shiki, @mui/material and next equals the sum of their kept installs' file lengths, all 9 exactly (9,558 B to 324,130,007 B) |
+| K5. Speed | Pass under the amended bar (section above) |
+| K6. Contract and CI | Pass locally: `measured_at` in the report, `--schema`, the fixtures and the contract check; type check, lint, format, unit tests on Node and Bun (330), `ci/e2e.ts` on Bun and Node with its own cache per run and the new cache scenario, `ci/bundle-accuracy.ts` with `--no-cache` (0 failures). `eval/run.ts` passes `--no-cache`. A vitest global setup gives every test run its own `XDG_CACHE_HOME` and fails the run if the real cache directory changed (checked: a probe test that wrote there failed the run) |
+| #7's gates with `--no-cache` | Report-level: today's CLI and #8's give identical bundle facts, bundle reasons, cost and compatibility on the 41 reference packages (against #8's `--no-cache` and hit reports) and on all 54 cold pairs of #7's P1 (b) calls. `ci/bundle-accuracy.ts` passes (gate C). The pool code is unchanged; #7's P2 to P5 and iteration 1's and 2's gate F were not rerun as scorecards of their own |
+
+Found while building, and fixed: the eviction pass deleted another host's young staging (a shared
+cache directory would lose a running call's files); the rule is now "older than a day, or a dead
+call on this host".
