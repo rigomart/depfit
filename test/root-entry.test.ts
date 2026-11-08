@@ -565,28 +565,45 @@ describe("rootEntryBundle, the CLI's call", () => {
   it("times a measurement by its last completed build, not by a later subpath failure", async () => {
     const dir = await install();
     const script = fileURLToPath(
-      new URL("./fixtures/runner/slow-crash-on-subpath.mjs", import.meta.url),
+      new URL("./fixtures/runner/crash-on-subpath.mjs", import.meta.url),
     );
+    // A clock that counts its reads: tick n is the n-th build that completed.
+    let ticks = 0;
+    const now = () => ++ticks;
     try {
-      // In the serial order every subpath build comes after every root build, whatever the
-      // worker count (a pool may run a subpath build before the exports).
-      const started = Date.now();
       const result = await measureForReport(
         dir,
         "with-subpaths",
         {},
-        {
-          runnerScript: script,
-          serial: true,
-        },
+        { runnerScript: script, now },
       );
-      const returned = Date.now();
-      expect(Date.parse(result.measuredAt ?? "")).toBeGreaterThanOrEqual(started);
+      const { whole, names, singles, subpaths } = result.measurement;
       expect(result.crash).toBeNull();
-      expect(result.measurement.subpaths?.reason).toMatch(/^bundle: BUNDLER_ERROR/);
-      expect(result.measuredAt).not.toBeNull();
-      expect(returned - Date.parse(result.measuredAt ?? "")).toBeGreaterThanOrEqual(400);
+      expect(subpaths?.reason).toMatch(/^bundle: BUNDLER_ERROR/);
+      expect(whole.bytes).not.toBeNull();
+      // The root's builds that completed: the whole build, both listing builds, each export.
+      const rootBuilds = 1 + 2 + (singles?.length ?? 0);
+      expect(names).toEqual(["core", "default"]);
+      expect(ticks).toBe(rootBuilds);
+      expect(result.measuredAt).toBe(new Date(rootBuilds).toISOString());
       expect(cacheableMeasurement(result)).toBe(false);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("has no measurement time when no build completed", async () => {
+    const dir = await install();
+    const script = fileURLToPath(new URL("./fixtures/runner/exit-now.mjs", import.meta.url));
+    try {
+      const result = await measureForReport(
+        dir,
+        "with-subpaths",
+        {},
+        { runnerScript: script, now: () => 1 },
+      );
+      expect(result.crash).toMatch(/^bundle: BUNDLER_ERROR/);
+      expect(result.measuredAt).toBeNull();
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

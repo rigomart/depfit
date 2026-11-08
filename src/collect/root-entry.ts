@@ -590,13 +590,16 @@ export async function measureForReport(
     runnerScript?: string;
     pool?: VitePool;
     serial?: boolean;
+    /** Milliseconds since the epoch, read as each build completes (tests pass a fake clock). */
+    now?: () => number;
   } = {},
 ): Promise<ReportMeasurement> {
-  const { onSubpathPhase, runnerScript, pool, serial } = options;
+  const { onSubpathPhase, runnerScript, pool, serial, now = Date.now } = options;
   const externals = externalPackages(manifest);
   const listStarted = performance.now();
   const listed = await readListing(dir, candidate);
   const listMs = performance.now() - listStarted;
+  let completed = 0;
   let lastBuildMs = 0;
   try {
     const measurement = await measureRootEntry(dir, candidate, externals, {
@@ -608,10 +611,11 @@ export async function measureForReport(
       serial,
       onSubpathPhase: (ms) => onSubpathPhase?.(listMs + ms),
       onBuild: () => {
-        lastBuildMs = Date.now();
+        completed++;
+        lastBuildMs = now();
       },
     });
-    const measuredAt = lastBuildMs > 0 ? new Date(lastBuildMs).toISOString() : null;
+    const measuredAt = completed > 0 ? new Date(lastBuildMs).toISOString() : null;
     return { measurement, crash: null, measuredAt };
   } catch (error) {
     // manifest (a separate cause) keeps its own.
