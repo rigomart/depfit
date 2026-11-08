@@ -10,9 +10,14 @@ import {
   EXPORT_LIMIT,
   measureRootEntry,
   medianBytes,
+  readListing,
   type RootEntryMeasurement,
   rootEntryFacts,
+  REPORT_SUBPATH_LIMIT,
+  type SubpathMeasurement,
+  subpathDetail,
 } from "../src/collect/root-entry.ts";
+import { SUBPATH_LIMIT } from "../src/collect/subpaths.ts";
 import { browserProject } from "./reports.ts";
 
 const BUNDLER = "vite@8.3.4 (rolldown@1.2.14)";
@@ -87,6 +92,7 @@ describe("rootEntryFacts", () => {
       { name: "b", outcome: ok(300) },
       { name: "c", outcome: ok(200) },
     ],
+    subpaths: { exportsMap: true, listed: 0, patterns: [], subpaths: [], reason: null },
     ...rest,
   });
 
@@ -105,6 +111,10 @@ describe("rootEntryFacts", () => {
         exports_measured: 3,
         single_export_median_eager_js_gzip9_bytes: 200,
         external_packages: ["react"],
+        exports_map: true,
+        subpaths_listed: 0,
+        subpaths_whole_eager_js_gzip9_bytes: {},
+        subpath_patterns_unmeasured: [],
       },
       reasons: [],
     });
@@ -253,6 +263,171 @@ describe("rootEntryFacts", () => {
     expect(none.bundle.external_packages).toBeNull();
   });
 
+  const withSubpaths = (subpaths: Partial<SubpathMeasurement>, rest = {}) =>
+    measurement({
+      subpaths: {
+        exportsMap: true,
+        listed: subpaths.subpaths?.length ?? 0,
+        patterns: [],
+        subpaths: [],
+        reason: null,
+        ...subpaths,
+      },
+      ...rest,
+    });
+
+  it("maps each subpath to its whole eager gzip bytes and names each null key by code", () => {
+    const measured = withSubpaths({
+      patterns: ["./lang/*"],
+      subpaths: [
+        { key: "./core", outcome: ok(400, ["react"]) },
+        { key: "./node", outcome: failed("UNRESOLVED_IMPORT", "node:fs") },
+        { key: "./silent", outcome: { bytes: null, problems: [] } },
+        { key: "./tty", outcome: failed("UNRESOLVED_IMPORT", "node:tty") },
+      ],
+    });
+    const facts = rootEntryFacts(measured, BUNDLER);
+    expect(facts.bundle).toMatchObject({
+      external_packages: [],
+      exports_map: true,
+      subpaths_listed: 4,
+      subpaths_whole_eager_js_gzip9_bytes: {
+        "./core": 400,
+        "./node": null,
+        "./silent": null,
+        "./tty": null,
+      },
+      subpath_patterns_unmeasured: ["./lang/*"],
+    });
+    expect(Object.keys(facts.bundle.subpaths_whole_eager_js_gzip9_bytes ?? {})).toEqual([
+      "./core",
+      "./node",
+      "./silent",
+      "./tty",
+    ]);
+    expect(facts.reasons).toEqual([
+      "bundle: BUILD_ERROR in subpaths ./silent",
+      "bundle: UNRESOLVED_IMPORT in subpaths ./node, ./tty",
+    ]);
+    expect(subpathDetail(measured)).toEqual([
+      {
+        entry_point: "./core",
+        whole_eager_js_gzip9_bytes: 400,
+        whole_lazy_js_gzip9_bytes: 0,
+        external_packages: ["react"],
+        unmeasurable_codes: [],
+      },
+      {
+        entry_point: "./node",
+        whole_eager_js_gzip9_bytes: null,
+        whole_lazy_js_gzip9_bytes: null,
+        external_packages: null,
+        unmeasurable_codes: ["UNRESOLVED_IMPORT"],
+      },
+      {
+        entry_point: "./silent",
+        whole_eager_js_gzip9_bytes: null,
+        whole_lazy_js_gzip9_bytes: null,
+        external_packages: null,
+        unmeasurable_codes: ["BUILD_ERROR"],
+      },
+      {
+        entry_point: "./tty",
+        whole_eager_js_gzip9_bytes: null,
+        whole_lazy_js_gzip9_bytes: null,
+        external_packages: null,
+        unmeasurable_codes: ["UNRESOLVED_IMPORT"],
+      },
+    ]);
+  });
+
+  it("appends a subpath code to the root entry that already reports it, one entry per cause", () => {
+    const facts = rootEntryFacts(
+      withSubpaths(
+        {
+          subpaths: [
+            { key: "./a", outcome: failed("UNRESOLVED_IMPORT", "node:fs") },
+            { key: "./b", outcome: failed("NON_JS_IMPORT", "worker x.js") },
+            { key: "./c", outcome: failed("MISSING_EXPORT", "y") },
+            { key: "./d", outcome: ok(10) },
+          ],
+        },
+        {
+          whole: failed("UNRESOLVED_IMPORT", "node:path"),
+          singles: [
+            { name: "a", outcome: failed("MISSING_EXPORT", "z") },
+            { name: "b", outcome: ok(10) },
+            { name: "c", outcome: ok(10) },
+          ],
+        },
+      ),
+      BUNDLER,
+    );
+    expect(facts.reasons).toEqual([
+      "bundle: UNRESOLVED_IMPORT node:path; UNRESOLVED_IMPORT in subpaths ./a",
+      "bundle: 1 exports unmeasurable (MISSING_EXPORT); MISSING_EXPORT in subpaths ./c",
+      "bundle: NON_JS_IMPORT in subpaths ./b",
+    ]);
+    for (const code of ["UNRESOLVED_IMPORT", "MISSING_EXPORT", "NON_JS_IMPORT"]) {
+      expect(facts.reasons.filter((reason) => reason.includes(code))).toHaveLength(1);
+    }
+  });
+
+  it("gives each state of the subpaths its fields and at most one entry of its own", () => {
+    const state = (subpaths: Partial<SubpathMeasurement>) => {
+      const { bundle, reasons } = rootEntryFacts(withSubpaths(subpaths), BUNDLER);
+      return {
+        exports_map: bundle.exports_map,
+        listed: bundle.subpaths_listed,
+        map: bundle.subpaths_whole_eager_js_gzip9_bytes,
+        patterns: bundle.subpath_patterns_unmeasured,
+        reasons,
+      };
+    };
+    expect(state({ exportsMap: false, listed: 0, subpaths: null })).toEqual({
+      exports_map: false,
+      listed: 0,
+      map: null,
+      patterns: [],
+      reasons: [],
+    });
+    expect(state({ patterns: ["./x/*"] })).toEqual({
+      exports_map: true,
+      listed: 0,
+      map: {},
+      patterns: ["./x/*"],
+      reasons: [],
+    });
+    const over = `bundle: SUBPATH_LIMIT ${REPORT_SUBPATH_LIMIT + 1}`;
+    expect(state({ listed: REPORT_SUBPATH_LIMIT + 1, subpaths: null, reason: over })).toEqual({
+      exports_map: true,
+      listed: REPORT_SUBPATH_LIMIT + 1,
+      map: null,
+      patterns: [],
+      reasons: [over],
+    });
+    const unreadable = "bundle: SUBPATH_LIST_FAILED x/package.json ENOENT";
+    expect(
+      state({ exportsMap: null, listed: null, patterns: null, subpaths: null, reason: unreadable }),
+    ).toEqual({
+      exports_map: null,
+      listed: null,
+      map: null,
+      patterns: null,
+      reasons: [unreadable],
+    });
+  });
+
+  it("gives null subpath fields when the subpaths were not measured at all", () => {
+    const { bundle } = rootEntryFacts(measurement({ subpaths: null }), BUNDLER);
+    expect(bundle).toMatchObject({
+      exports_map: null,
+      subpaths_listed: null,
+      subpaths_whole_eager_js_gzip9_bytes: null,
+      subpath_patterns_unmeasured: null,
+    });
+  });
+
   it("takes the median of an even count as the rounded mean of the middle two", () => {
     expect(medianBytes([])).toBeNull();
     expect(medianBytes([5])).toBe(5);
@@ -262,7 +437,12 @@ describe("rootEntryFacts", () => {
 });
 
 describe("measureRootEntry on fixture packages", () => {
-  async function measure(name: string, packages: string[] = [name], externals: string[] = []) {
+  async function measure(
+    name: string,
+    packages: string[] = [name],
+    externals: string[] = [],
+    runnerScript?: string,
+  ) {
     const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
     try {
       await writeFile(join(dir, "package.json"), '{ "private": true }');
@@ -271,7 +451,7 @@ describe("measureRootEntry on fixture packages", () => {
           recursive: true,
         });
       }
-      return await measureRootEntry(dir, name, externals);
+      return await measureRootEntry(dir, name, externals, { subpaths: true, runnerScript });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -319,6 +499,138 @@ describe("measureRootEntry on fixture packages", () => {
     expect(result.whole).toEqual(failed("NO_ENTRY", "no-entry"));
     expect(result.names).toBeNull();
     expect(result.listProblems).toEqual([{ code: "NO_ENTRY", specifier: "no-entry" }]);
+  });
+
+  it("builds each listed subpath whole, once per file, and leaves patterns unbuilt", async () => {
+    const result = await measure("with-subpaths");
+    expect(result.subpaths?.exportsMap).toBe(true);
+    expect(result.subpaths?.patterns).toEqual(["./lang/*"]);
+    expect(result.subpaths?.reason).toBeNull();
+    const byKey = Object.fromEntries(
+      (result.subpaths?.subpaths ?? []).map((s) => [s.key, s.outcome]),
+    );
+    expect(Object.keys(byKey)).toEqual(["./core", "./core.js", "./node"]);
+    expect(byKey["./core"]?.bytes).not.toBeNull();
+    expect(byKey["./core.js"]).toBe(byKey["./core"]);
+    expect(byKey["./node"]).toEqual(failed("UNRESOLVED_IMPORT", "node:fs"));
+    expect(rootEntryFacts(result, "vite").reasons).toEqual([
+      "bundle: UNRESOLVED_IMPORT in subpaths ./node",
+    ]);
+  });
+
+  it("measures no subpath unless asked, as the CLI calls it", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
+    try {
+      const pkg = join(dir, "node_modules", "with-subpaths");
+      await cp(join(fixtures, "bundle", "with-subpaths"), pkg, { recursive: true });
+      const result = await measureRootEntry(dir, "with-subpaths", []);
+      expect(result.subpaths).toBeNull();
+      expect(result.whole.bytes).not.toBeNull();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("gives a package with no exports map no subpaths", async () => {
+    const result = await measure("named");
+    expect(result.subpaths).toEqual({
+      exportsMap: false,
+      listed: 0,
+      patterns: [],
+      subpaths: null,
+      reason: null,
+    });
+  });
+
+  it("keeps the root's results when the child fails during the subpath builds", async () => {
+    const script = fileURLToPath(
+      new URL("./fixtures/runner/crash-on-subpath.mjs", import.meta.url),
+    );
+    const result = await measure("with-subpaths", ["with-subpaths"], [], script);
+    expect(result.whole.bytes?.eager_js_gzip9_bytes).toBe(35);
+    expect(result.singles?.map((s) => s.name)).toEqual(["core", "default"]);
+    expect(result.subpaths).toMatchObject({
+      exportsMap: true,
+      patterns: ["./lang/*"],
+      subpaths: null,
+    });
+    expect(result.subpaths?.reason).toMatch(/^bundle: BUNDLER_ERROR vite build exited/);
+    const facts = rootEntryFacts(result, "vite");
+    expect(facts.bundle.whole_eager_js_gzip9_bytes).toBe(35);
+    expect(facts.bundle.exports_measured).toBe(2);
+    expect(facts.reasons).toEqual([result.subpaths?.reason]);
+    expect(facts.bundle.subpaths_whole_eager_js_gzip9_bytes).toBeNull();
+    expect(facts.bundle.subpaths_listed).toBe(3);
+  });
+
+  it("builds 100 listed subpaths and none of 101", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
+    const pkg = join(dir, "node_modules", "many");
+    // Every key aliases one file, so the 100 keys take one build.
+    const withKeys = async (count: number) => {
+      const keys = Array.from({ length: count }, (_, i) => [`./m${i}`, "./index.js"]);
+      const exports = { ".": "./index.js", ...Object.fromEntries(keys) };
+      await writeFile(join(pkg, "package.json"), JSON.stringify({ name: "many", exports }));
+      const { subpaths } = await measureRootEntry(dir, "many", [], { subpaths: true });
+      if (subpaths === null) throw new Error("subpaths were requested");
+      return subpaths;
+    };
+    try {
+      await cp(join(fixtures, "bundle", "named"), pkg, { recursive: true });
+      const atCap = await withKeys(SUBPATH_LIMIT);
+      expect(atCap.reason).toBeNull();
+      expect(atCap.subpaths).toHaveLength(SUBPATH_LIMIT);
+      expect(atCap.subpaths?.every((s) => s.outcome.bytes !== null)).toBe(true);
+      expect(await withKeys(SUBPATH_LIMIT + 1)).toEqual({
+        exportsMap: true,
+        listed: SUBPATH_LIMIT + 1,
+        patterns: [],
+        subpaths: null,
+        reason: `bundle: SUBPATH_LIMIT ${SUBPATH_LIMIT + 1}`,
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("builds at most the report's 30 when asked for that limit", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
+    const pkg = join(dir, "node_modules", "many");
+    const keys = Array.from({ length: REPORT_SUBPATH_LIMIT + 1 }, (_, i) => [
+      `./m${i}`,
+      "./index.js",
+    ]);
+    try {
+      await cp(join(fixtures, "bundle", "named"), pkg, { recursive: true });
+      const exports = { ".": "./index.js", ...Object.fromEntries(keys) };
+      await writeFile(join(pkg, "package.json"), JSON.stringify({ name: "many", exports }));
+      const options = { subpaths: true, subpathLimit: REPORT_SUBPATH_LIMIT };
+      const { subpaths } = await measureRootEntry(dir, "many", [], options);
+      expect(subpaths?.subpaths).toBeNull();
+      expect(subpaths?.reason).toBe(`bundle: SUBPATH_LIMIT ${REPORT_SUBPATH_LIMIT + 1}`);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reports an unreadable manifest as SUBPATH_LIST_FAILED without a temp path", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
+    try {
+      expect(await readListing(dir, "absent")).toEqual({
+        ok: false,
+        reason: "bundle: SUBPATH_LIST_FAILED absent/package.json ENOENT",
+      });
+      await cp(join(fixtures, "bundle", "named"), join(dir, "node_modules", "broken"), {
+        recursive: true,
+      });
+      await writeFile(join(dir, "node_modules", "broken", "package.json"), "{ not json");
+      expect(await readListing(dir, "broken")).toEqual({
+        ok: false,
+        reason: "bundle: SUBPATH_LIST_FAILED broken/package.json invalid JSON",
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   const imported = (m: Awaited<ReturnType<typeof measure>>) => ({

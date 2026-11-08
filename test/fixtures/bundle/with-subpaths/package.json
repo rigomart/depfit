@@ -1,0 +1,15 @@
+{
+  "name": "with-subpaths",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./core": "./core.js",
+    "./core.js": "./core.js",
+    "./node": "./node.js",
+    "./style.css": "./style.css",
+    "./types-only": { "types": "./types.d.ts" },
+    "./lang/*": "./lang/*.js",
+    "./package.json": "./package.json"
+  }
+}

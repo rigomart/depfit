@@ -1,0 +1,108 @@
+{
+  "rule": "Listed subpath nulls gate A accepts (SPEC.md, iteration 2, 'Expected nulls for gate A'): a listed subpath passes A only when its build is null with exactly the listed code, and every specifier of that code is a Node built-in (\"node-builtins\", node:module isBuiltin), a worker (\"worker\": NON_JS_IMPORT specifiers starting with \"worker \"), or one of the listed specifiers. Any other null in the B set or the probe packages fails A until it is reviewed and listed. The B-set entries are from fresh installs of their pinned versions, the probe-package entries from round 5's frozen trees.",
+  "reviewed": "Listed in SPEC.md's iteration-2 bar before any iteration-2 code (2026-11-06), reviewed with the bar (Codex gpt-6.1-sol, high effort, two rounds) and approved by the user on 2026-11-07.",
+  "nulls": [
+    {
+      "package": "vite",
+      "subpath": "./internal",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "vite",
+      "subpath": "./module-runner",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    },
+    {
+      "package": "htmlparser2",
+      "subpath": "./WritableStream",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    },
+    {
+      "package": "fflate",
+      "subpath": "./node",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["module"]
+    },
+    {
+      "package": "react-refresh",
+      "subpath": "./babel",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["crypto"]
+    },
+    {
+      "package": "@testing-library/jest-dom",
+      "subpath": "./jest-globals",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["@jest/globals"]
+    },
+    {
+      "package": "react-router",
+      "subpath": "./dom",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    },
+    {
+      "package": "react-router",
+      "subpath": "./internal/react-server-client",
+      "code": "IMPORT_OUTSIDE_BUNDLE",
+      "specifiers": ["import(…)"]
+    },
+    {
+      "package": "@formkit/auto-animate",
+      "subpath": "./angular",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["@angular/core"]
+    },
+    {
+      "package": "@formkit/auto-animate",
+      "subpath": "./nuxt",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["@nuxt/kit"]
+    },
+    {
+      "package": "@formkit/auto-animate",
+      "subpath": "./preact",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["preact/hooks"]
+    },
+    {
+      "package": "@formkit/auto-animate",
+      "subpath": "./react",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["react"]
+    },
+    {
+      "package": "@formkit/auto-animate",
+      "subpath": "./solid",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["solid-js"]
+    },
+    {
+      "package": "@formkit/auto-animate",
+      "subpath": "./vue",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["vue"]
+    },
+    {
+      "package": "fuse.js",
+      "subpath": "./worker",
+      "code": "NON_JS_IMPORT",
+      "specifiers": "worker"
+    },
+    {
+      "package": "micromark",
+      "subpath": "./stream",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": ["node:events"]
+    },
+    {
+      "package": "marked",
+      "subpath": "./bin/marked",
+      "code": "UNRESOLVED_IMPORT",
+      "specifiers": "node-builtins"
+    }
+  ]
+}

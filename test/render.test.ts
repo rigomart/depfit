@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderTable } from "../src/render/table.ts";
-import type { PackageReport } from "../src/report.ts";
+import type { Bundle, PackageReport } from "../src/report.ts";
 import {
   betterSqlite3,
   browserProject,
@@ -448,6 +448,41 @@ describe("renderTable", () => {
     expect(out.replace(ansi, "")).toBe(output);
   });
 
+  it("shows why a package has no subpath map, and counts what does not fit", () => {
+    const withBundle = (bundle: Partial<Bundle>, unavailable: string[] = []) => ({
+      ...valibotInBrowser,
+      unavailable,
+      bundle: { ...(valibotInBrowser.bundle as Bundle), ...bundle },
+    });
+    const ten = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`./m${i}`, 1000 + i]));
+    const out = renderTable(
+      report(
+        [
+          withBundle({ subpaths_listed: 10, subpaths_whole_eager_js_gzip9_bytes: ten }),
+          withBundle({ subpaths_listed: 739, subpaths_whole_eager_js_gzip9_bytes: null }, [
+            "bundle: SUBPATH_LIMIT 739",
+          ]),
+          withBundle(
+            {
+              exports_map: null,
+              subpaths_listed: null,
+              subpaths_whole_eager_js_gzip9_bytes: null,
+              subpath_patterns_unmeasured: null,
+            },
+            ["bundle: SUBPATH_LIST_FAILED x/package.json ENOENT"],
+          ),
+        ],
+        browserProject,
+      ),
+      { width: 200, color: false },
+    );
+    const cells = rowBlock(out, "Subpaths, whole eager gzip").join(" ").replace(/\s+/g, " ");
+    expect(cells).toContain("+2 more (--json)");
+    expect(cells).toContain("over 30 (739)");
+    expect(cells).toContain("not measured (SUBPATH_LIST_FAILED)");
+    expect(rowBlock(out, "Exports map")[0]).toMatch(/yes\s+yes\s+unknown$/);
+  });
+
   it("shows bundle facts and browser signals only for a browser workspace", () => {
     const out = renderTable(
       report([valibotInBrowser, sonnerInBrowser, hugeInBrowser], browserProject),
@@ -461,7 +496,21 @@ describe("renderTable", () => {
     expect(rowBlock(out, "Exports measured alone")[0]).toMatch(/320 of 320\s+2 of 3$/);
     expect(rowBlock(out, "Median one export, gzip")[0]).toMatch(/550 B\s+5\.1 KB$/);
     expect(out).toContain("- of 1204");
-    expect(out).toContain("zod: bundle: UNRESOLVED_IMPORT node:fs; bundle: EXPORT_LIMIT 1204");
+    expect(out).toContain(
+      "zod: bundle: UNRESOLVED_IMPORT node:fs; UNRESOLVED_IMPORT in subpaths ./node; bundle: EXPORT_LIMIT 1204; bundle: NON_JS_IMPORT in subpaths ./worker",
+    );
+    expect(out).toContain("Bundle (subpaths)");
+    const wide = renderTable(
+      report([valibotInBrowser, sonnerInBrowser, hugeInBrowser], browserProject),
+      { width: 200, color: false },
+    );
+    expect(rowBlock(wide, "Exports map")[0]).toMatch(/yes\s+no\s+yes$/);
+    expect(rowBlock(wide, "Subpaths, whole eager gzip")[0]).toMatch(
+      /none\s+not listed \(no exports map\)\s+\.\/mini 5\.3 KB, \.\/node -, \.\/worker -$/,
+    );
+    expect(rowBlock(wide, "Subpath patterns, not measured")[0]).toMatch(
+      /none\s+none\s+\.\/locales\/\*$/,
+    );
     expect(renderTable(report([valibot]), plain)).not.toContain("Bundle");
   });
 });

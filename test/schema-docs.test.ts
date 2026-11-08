@@ -24,7 +24,10 @@ import {
 } from "./reports.ts";
 
 /** Objects whose keys are data (runtime names), not schema fields. */
-const MAPS = new Set(["packages[].compatibility.engines"]);
+const MAPS = new Set([
+  "packages[].compatibility.engines",
+  "packages[].bundle.subpaths_whole_eager_js_gzip9_bytes",
+]);
 
 type Paths = { all: Set<string>; leaves: Set<string> };
 

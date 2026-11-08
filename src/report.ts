@@ -91,15 +91,15 @@ export type PackageReport = {
 };
 
 /**
- * Browser bundle facts for the package's root entry point, each number a standalone `vite build`
- * of a named import from `version`'s isolated install. A null number has its reason in
- * `unavailable` ("bundle: <CODE> ...").
+ * Browser bundle facts for the package's root entry point and the subpaths of its `exports` map,
+ * each number a standalone `vite build` of a named import from `version`'s isolated install. A
+ * null number has its reason in `unavailable` ("bundle: <CODE> ...").
  */
 export type Bundle = {
   /** e.g. "vite@8.3.4 (rolldown@1.2.14)". */
   bundler: string;
   target: "browser";
-  /** The entry point every number measures: always the root, ".". */
+  /** The entry point the root fields measure: always the root, ".". */
   entry_point: ".";
   /** `import * as m from "<name>"`, kept whole: the entry chunk plus its static imports. */
   whole_eager_js_min_bytes: number | null;
@@ -114,10 +114,22 @@ export type Bundle = {
   /** Median over measured exports of one export's eager gzip bytes, each in its own build. */
   single_export_median_eager_js_gzip9_bytes: number | null;
   /**
-   * Peers a measured build left out and still imports (by package name, a subpath counting as its
-   * package). null when no build gave bytes.
+   * Peers a measured root build left out and still imports (by package name, a subpath counting as
+   * its package). null when no root build gave bytes.
    */
   external_packages: string[] | null;
+  /** The package.json has an `exports` field Vite uses; null when it could not be read. */
+  exports_map: boolean | null;
+  /** How many `exports` keys name one JS module for the browser; null when unreadable. */
+  subpaths_listed: number | null;
+  /**
+   * Each listed subpath (e.g. "./lib/core") to the eager gzip bytes of that subpath alone, kept
+   * whole, in key order; a null value is named in `unavailable`. null when there is no map, more
+   * than 30 are listed, or none were built (the reason is in `unavailable`).
+   */
+  subpaths_whole_eager_js_gzip9_bytes: Record<string, number | null> | null;
+  /** Keys of the `exports` map containing `*`, verbatim; not expanded or measured. */
+  subpath_patterns_unmeasured: string[] | null;
 };
 
 /** Facts derived from the current project. null when there is no project. */

@@ -801,10 +801,14 @@ export const valibotInBrowser: PackageReport = {
     exports_measured: 320,
     single_export_median_eager_js_gzip9_bytes: 550,
     external_packages: [],
+    exports_map: true,
+    subpaths_listed: 0,
+    subpaths_whole_eager_js_gzip9_bytes: {},
+    subpath_patterns_unmeasured: [],
   },
 };
 
-/** sonner in a browser workspace: React left out, one export unmeasurable. */
+/** sonner in a browser workspace: React left out, one export unmeasurable, no exports map. */
 export const sonnerInBrowser: PackageReport = {
   ...sonner,
   unavailable: ["bundle: 1 exports unmeasurable (NON_JS_IMPORT)"],
@@ -820,13 +824,24 @@ export const sonnerInBrowser: PackageReport = {
     exports_measured: 2,
     single_export_median_eager_js_gzip9_bytes: 5120,
     external_packages: ["react", "react-dom"],
+    exports_map: false,
+    subpaths_listed: 0,
+    subpaths_whole_eager_js_gzip9_bytes: null,
+    subpath_patterns_unmeasured: [],
   },
 };
 
-/** A package whose whole build is unmeasurable, and whose export list is over the cap. */
+/**
+ * A package whose whole build is unmeasurable, whose export list is over the cap, and whose
+ * subpaths are measured: one alone, one null for the root's cause, one for a cause of its own.
+ */
 export const hugeInBrowser: PackageReport = {
   ...zod,
-  unavailable: ["bundle: UNRESOLVED_IMPORT node:fs", "bundle: EXPORT_LIMIT 1204"],
+  unavailable: [
+    "bundle: UNRESOLVED_IMPORT node:fs; UNRESOLVED_IMPORT in subpaths ./node",
+    "bundle: EXPORT_LIMIT 1204",
+    "bundle: NON_JS_IMPORT in subpaths ./worker",
+  ],
   bundle: {
     bundler: "vite@8.3.4 (rolldown@1.2.14)",
     target: "browser",
@@ -839,5 +854,9 @@ export const hugeInBrowser: PackageReport = {
     exports_measured: null,
     single_export_median_eager_js_gzip9_bytes: null,
     external_packages: null,
+    exports_map: true,
+    subpaths_listed: 3,
+    subpaths_whole_eager_js_gzip9_bytes: { "./mini": 5321, "./node": null, "./worker": null },
+    subpath_patterns_unmeasured: ["./locales/*"],
   },
 };

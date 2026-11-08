@@ -301,6 +301,55 @@ function bundleRows(): Row[] {
   ];
 }
 
+/** Subpaths shown in the table; the rest are counted ("+3 more (--json)"). */
+const SUBPATHS_SHOWN = 8;
+
+/** The first code among `codes` that the package's `bundle: <CODE> ...` entries report, or null. */
+function bundleCode(p: PackageReport, codes: string[]): string | null {
+  for (const entry of p.unavailable) {
+    const code = /^bundle: ([A-Z_]+)/.exec(entry)?.[1];
+    if (code && codes.includes(code)) return code;
+  }
+  return null;
+}
+
+/** "./core 35.9 KB, ./react -, +2 more (--json)", or why there is no map. */
+function subpathsCell(p: PackageReport, b: Bundle): Cell {
+  const map = b.subpaths_whole_eager_js_gzip9_bytes;
+  if (map === null) {
+    if (b.exports_map === false) return "not listed (no exports map)";
+    if (bundleCode(p, ["SUBPATH_LIMIT"])) return `over 30 (${b.subpaths_listed ?? NONE})`;
+    const code = bundleCode(p, ["SUBPATH_LIST_FAILED", "TOOLCHAIN_MISMATCH", "BUNDLER_ERROR"]);
+    return code ? `not measured (${code})` : NONE;
+  }
+  const entries = Object.entries(map);
+  if (entries.length === 0) return "none";
+  const shown = entries
+    .slice(0, SUBPATHS_SHOWN)
+    .map(([key, gzip]) => `${key} ${gzip === null ? NONE : formatBytes(gzip)}`);
+  const rest = entries.length - shown.length;
+  return { wrap: [...shown, ...(rest > 0 ? [`+${rest} more (--json)`] : [])].join(", ") };
+}
+
+function subpathRows(): Row[] {
+  const row = (label: string, render: (p: PackageReport, b: Bundle) => Cell): Row => ({
+    label,
+    value: (p) => section(p.bundle, (b) => render(p, b)),
+  });
+  const patterns = (b: Bundle): Cell => {
+    const list = b.subpath_patterns_unmeasured;
+    if (list === null) return "unknown";
+    return list.length === 0 ? "none" : { wrap: list.join(", ") };
+  };
+  return [
+    row("Exports map", (_, b) =>
+      b.exports_map === null ? "unknown" : b.exports_map ? "yes" : "no",
+    ),
+    row("Subpaths, whole eager gzip", subpathsCell),
+    row("Subpath patterns, not measured", (_, b) => patterns(b)),
+  ];
+}
+
 function groups(ctx: Context): Group[] {
   const description: Row = {
     label: "Description",
@@ -314,7 +363,12 @@ function groups(ctx: Context): Group[] {
     { title: "Compatibility", rows: compatibilityRows(ctx) },
     { title: "Maintenance", rows: maintenanceRows(ctx) },
     { title: "Security", rows: securityRows() },
-    ...(ctx.showBundle ? [{ title: "Bundle (root entry point)", rows: bundleRows() }] : []),
+    ...(ctx.showBundle
+      ? [
+          { title: "Bundle (root entry point)", rows: bundleRows() },
+          { title: "Bundle (subpaths)", rows: subpathRows() },
+        ]
+      : []),
   ];
 }
 
