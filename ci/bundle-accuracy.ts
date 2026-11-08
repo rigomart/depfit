@@ -17,6 +17,7 @@
  *   bun ci/bundle-accuracy.ts [--timings file]   # {"bundle.<step>.<name>": ms} for ci/perf.ts
  */
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { appendFile, copyFile, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { isBuiltin } from "node:module";
 import { tmpdir } from "node:os";
@@ -156,11 +157,17 @@ for (const ref of references) {
   );
 }
 for (const ref of subpathRefs) {
-  await freeze(
-    asString(ref.package) ?? "",
-    asString(ref.version) ?? "",
-    join(EVAL, "locks/wild", `${asString(ref.id) ?? ""}.json`),
-  );
+  const lock = join(EVAL, "locks/wild", `${asString(ref.id) ?? ""}.json`);
+  // The tree must be the one the reference was built from (subpath-reference.json records it).
+  const sha = createHash("sha256")
+    .update(await readFile(lock))
+    .digest("hex");
+  if (sha !== asString(ref.lock_sha256)) {
+    failures.push(
+      `${asString(ref.package)}: frozen tree differs from the reference's (lock_sha256)`,
+    );
+  }
+  await freeze(asString(ref.package) ?? "", asString(ref.version) ?? "", lock);
 }
 for (const c of nullCases) {
   await freeze(
