@@ -816,3 +816,38 @@ added 0.4 to 0.5 s to today's zod and motion and 0.25 s to the pool's; the ratio
 were run on 12 cores instead); worker counts above 4 after the restart
 (the 6- and 8-worker numbers above are from before it). The research scripts are kept with the
 author's notes (local, gitignored).
+
+## Parallel builds (#7): scorecard (2026-11-08)
+
+Built to the approved bar (SPEC.md, "Parallel builds (#7)"): `src/collect/vite-pool.ts` (the shared
+pool), `src/collect/children.ts` (every child stopped on SIGINT or SIGTERM), `root-entry.ts` (a
+candidate's builds at once, the result decided by today's order), `index.ts` (one pool per run).
+"Today" is c0e2a5d in a separate checkout, run alternately with #7 on the same machine (Apple M4
+Pro, 12 cores; default count 4) under `nice -n 10`. Scored by `eval/bundle/parallel-score.ts`;
+every run's output is kept with the author's evidence (local, gitignored).
+
+**Scorecard: passes.**
+
+| Gate | Result |
+|---|---|
+| P1 (a). Same results, reference packages | Pass: 41 packages (single-reference.json, the 8 root null cases of cases.json, subpath-reference.json, @storybook/addon-a11y with its 687,903 lazy bytes), 1,290 export builds and 102 subpath builds, the measurement call (cap 100) and the default report in full: identical to today in all 8 variants (default twice, 1, 2 and 4 workers, reversed at 1 and 4, serial) |
+| P1 (b). Full reports | Pass: 9 calls in `test/fixtures/browser-app` (clsx, valibot, zod, date-fns, motion, zod valibot, all four, `node:sqlite`, a missing name), 5 alternating pairs each, every #7 report identical to the today report before it apart from `generated_at`; and 32 probe calls through `eval/run.ts`, bundle facts identical, one GitHub count (`commits_last_year` 1864 to 1861) differing once and identical when the pair was run again |
+| P1 (c). Stock Vite (gate C) | Pass: `ci/bundle-accuracy.ts` at `DEPFIT_BUNDLE_WORKERS=2`, 10 whole, 8 null cases, 100 exports, 51 subpaths, 0 failures (today's code: the same) |
+| P1 (d). Earlier gate D | Pass: iteration 2 default reports over every probe, two #7 runs, 0 differences; the measurement call twice per probe package (88 packages), 0 differences; iteration 1 probe reports, 0 differences; iteration 1 reference singles, 0 differences. Iteration 1 A, B, C and iteration 2 A and E pass too |
+| P2. Speed (5 pairs, medians) | Pass: valibot 0.39x (3.18 to 1.22 s), zod 0.53x (6.30 to 3.34 s), date-fns 0.48x, motion 0.47x (9.69 to 4.56 s); zod valibot 0.69x; all four 0.90x; six 0.90x; zod at 1 worker 1.04x, zod valibot at 2 workers 0.96x. CLI: valibot 0.47x, zod 0.59x (7.36 to 4.31 s), date-fns 0.57x, motion 0.50x (10.10 to 5.08 s), zod valibot 0.69x (7.12 to 4.94 s), all four 0.89x, clsx 0.98x; `node:sqlite` and the missing name equal (9 pairs: 0.04 and 0.38 s both ways) and start no worker |
+| P3. Load and memory | Pass: CPU valibot 1.20x, zod 1.00x, date-fns 1.08x, motion 1.08x, clsx 0.50 against 0.24 s, zod valibot 1.02x, all four and six 1.03x, all inside 1.25x plus 0.1 s per allowed worker; workers started at most the allowed count plus one per 100 builds (all four: 16 for 1,211 builds); memory valibot 1.19 GiB (today 0.72), zod 2.41 (1.15), date-fns 2.48 (1.16), motion 2.88 (1.75), zod valibot 2.05 (1.55), all four 3.16 (3.32), six 3.12 (3.37), all inside their allowance; largest worker 705 MiB |
+| P4. Robustness | Pass: tests with stand-in runners for the timeout from dispatch, a timeout, a crash, an unreadable result, a worker that cannot start, a dropped queued build, a subpath failure while root builds run, two failures in either completion order, a worker ignoring the end of its input (killed after the grace period), and SIGINT or SIGTERM at start-up, during builds, during a recycle and during an install (every PID gone); no worker after a CLI run; no browser signal: 0 Vite or rolldown modules loaded |
+| P5. Contract and CI | Pass locally: no field, reason or schema change; type check, lint, format, unit tests on Node and Bun (265), `ci/e2e.ts`, `ci/bundle-accuracy.ts`. CI runs the measurement steps at 2 workers and the CLI step at the default; `ci/perf.ts` gates `bundle.subpaths.<package>` at a 2 s baseline |
+| Earlier cost gates | Pass: iteration 1 gate F, median 324 ms (max 1.5 s); iteration 2 gate F on the serial schedule, median 0 ms, p90 85 ms, max 915 ms (shiki); the default call's bound over 32 probe calls: none above 1.1x today's plus 0.2 s, median ratio 0.74 (total 144.6 to 81.9 s) |
+
+Decisions made while building, for review:
+
+- **The entry module is labeled by its file name** wherever it is written (`vite-build.mjs`), so a
+  worker's entry in `.depfit-w<n>/` under the install root is still recognized by the checks
+  (`NO_ENTRY`). For today's entry in the root the label was already the file name.
+- **An unreadable result now ends its worker**, as an exit or a timeout does; before, it failed that
+  one build and the root phase then threw anyway.
+- **A call measured without a pool** (the eval and CI scripts call `measureRootEntry` directly) uses
+  one of its own, `bundleWorkers(1)` workers, closed before it returns.
+- **Queued builds of a candidate are dropped** once its result is decided by a failure, so a package
+  whose builds all crash does not start a worker per build.
