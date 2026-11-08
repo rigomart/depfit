@@ -932,13 +932,13 @@ peers and similar. Adding every dependency and peer named in the installed manif
 of motion's and 1 of @mui/material's, so the bar takes the set from npm's own log:
 `--loglevel=http` prints one `npm http fetch` or `npm http cache` line per packument URL.
 
-**How often the recording rule applies** (one lock-only resolution per package with
-`--loglevel=http`, then a HEAD request for every logged URL, against the rule in SPEC.md): all 10
+**How often an ETag recording rule would apply** (historical: for the deferred ETag fast path,
+not part of the decided bar; one lock-only resolution per package with `--loglevel=http`, then a
+HEAD request for every logged URL, against the rule of the first draft): all 10
 packages of the table above qualify, every log line a `hit`. The youngest packument in any tree was
 typescript's, last modified 611 minutes earlier (an optional peer valibot's resolution reads; it
 publishes nightly), then playwright's at 798 minutes (motion, next). So a tree that reads
-typescript gets new validators about once a day, and its first call after that takes step 3.
-Run once, on one day; the preflight measures the rate on the full corpus.
+typescript would get new validators about once a day. Run once, on one day.
 
 **Probes, once per run:** `npm config list --json` 67 to 77 ms (170 keys, including `npm-version`,
 `registry`, `legacy-peer-deps`; identical from two different directories); `node -p` 25 ms.
@@ -983,7 +983,9 @@ install directory by `du`):
 | shiki | 54 | 10 | 12.9 KB (1.6) | 13.5 KB | 21.9 MB (2,432) |
 | @mui/material | 474 | over the cap | 98.7 KB (9.0) | 11.0 KB | 38.5 MB (5,428) |
 
-next's install is 337 MB (10,386 files). Renaming an install directory took 6 ms; deleting one,
+The install directory sizes are `du` (allocated blocks), measured after the builds and before
+removing depfit's build leftovers, so they slightly differ from what a kept install records (the
+sum of file lengths, leftovers removed). next's install is 337 MB (10,386 files). Renaming an install directory took 6 ms; deleting one,
 which today's code does at the end of every install, took 0.31 s (@mui/material), 0.28 s
 (date-fns) and 0.67 s (next).
 
@@ -1021,3 +1023,23 @@ first draft and the raw outputs: **not ready**, eleven findings, all applied in 
     and a seam, since the CLI resolves on npmjs. All three are now specified.
 11. Should-fix: STATUS claimed more lockfile equality than the script checked. Narrowed, and step 3
     now starts in a directory with no lockfile or `node_modules`.
+
+**Second independent review** (Codex gpt-6.1-sol, high effort, read-only, 2026-11-08), on the bar as
+decided by the user: **not ready**, seven findings, all applied; none changed a user decision or a
+threshold:
+
+1. Must-fix: a measurement was eligible by its codes alone, but an optional dependency that failed
+   to download leaves the lockfile unchanged and can change the build. Now nothing (facts,
+   measurement or install) is cached from an incomplete install, with a recovery test.
+2. Must-fix: K2 (b)'s mutation sequence expected a miss where a correct cache hits (moving `latest`
+   back reuses the first tree). Each step's tree and hit or miss is now stated, and unpublishing is
+   tested on its own.
+3. Should-fix: facts and measurement now have their own files, published and checked separately;
+   a call is a hit only when every part it needs is valid, with tests across workspaces.
+4. Should-fix: K1 and K6 now assert that a hit runs no `npm install` or `npm ci`.
+5. Should-fix: an install's size record is written inside it before its rename; interruption,
+   concurrent eviction and injected write failures are tested; sizes are file lengths.
+6. Should-fix: K5's targets without a direct measurement are labelled proposed, the preflight
+   covers all of K5, the 50 ms budget is CPU time with the probes reported apart, and stale-cache
+   pairs start from one restored snapshot.
+7. Nit: the ETag rate paragraph is labelled historical, and the size measurement's limits stated.
