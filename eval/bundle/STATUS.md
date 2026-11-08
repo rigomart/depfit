@@ -1102,3 +1102,35 @@ runner (simulation wording, frozen commands and environment, ordering, retries; 
 non-browser workspace, hit evidence where `bundle` is null, and an environment manifest). Each was
 fixed before anything ran. The third, on 0325b77: **agree**, no findings. The controls run only after
 that agreement.
+
+## Cache (#8): K5 under the amended bar (2026-11-08)
+
+Run by `k5.mjs` (kept with the author's evidence, local, gitignored) exactly as amendment K-2
+fixes it, in this order: both controls, then K5 (a) and (f), then (b), (c), (c) at the limit and
+(d), all under the balanced order, one invocation at a time, `nice -n 10`, a logging npm wrapper
+first on every arm's `PATH`. Every invocation's start time, wall time, exit code, stdout, stderr,
+npm arguments and `XDG_CACHE_HOME` are kept. No round was invalid in any experiment, and every
+timed #8 call in (a), (f) and (b) was proved a hit (npm ran only `config list` and one
+`install --package-lock-only` per package; in (a) and (b) every `measured_at` equals its priming
+call's). Medians in ms, unrounded in the record.
+
+**Controls (today's CLI against itself, 6 rounds).** The network was noisier than in the
+preflight: many calls took about 0.8 s longer, in both arms alike. Browser workspace with
+`DEPFIT_BUNDLE=0`: per-call `|median(A) − median(B)|` zod 76.1, valibot 511.2, motion 302.7, shiki
+364.2, `zod valibot` 171.2, so **`M_a` = 511.2 ms**. No browser signal: zod 332.5, valibot 800.5,
+motion 279.3, shiki 14.0, `zod valibot` 527.0, so **`M_f` = 800.45 ms**. These margins are what the
+rule gives in this window; they are wide, and the gate is correspondingly weak.
+
+| Gate | Result (median #8 against today, gap) | Pass |
+|---|---|---|
+| K5 (a) hit, fresh npm cache, ≤ today with `DEPFIT_BUNDLE=0` + `M_a` | zod 1306 / 1388 (−82.0); valibot 1296 / 1101 (+195.2); motion 1648 / 1792 (−143.8); shiki 1391 / 1702 (−310.8); `zod valibot` 1570 / 1287 (+282.6) | Yes |
+| K5 (f) no browser signal, hit, ≤ today + `M_f` | zod 1747 / 1409 (+337.9); valibot 1134 / 1079 (+54.3); motion 1594 / 1816 (−221.9); shiki 1757 / 1675 (+82.2); `zod valibot` 1595 / 1683 (−87.9) | Yes |
+| K5 (b) hit, stale npm cache, ≤ today's full call | zod 1739 / 4545; valibot 1074 / 2208; motion 3073 / 7063; shiki 3247 / 7357; `zod valibot` 1624 / 5444 | Yes |
+| K5 (c) cold, empty cache, ≤ today + 150 | clsx +1.2; valibot −26.2; zod −39.2; date-fns −194.8; motion +130.6; `zod valibot` −63.2; four packages −11.8; `node:sqlite` −2.4; a missing name −1.9 | Yes |
+| K5 (c) cache at its install limit (a real 14,253,810 B motion install as the oldest victim), ≤ today + 300 | zod +68.6, motion +68.4; the victim evicted in all 12 runs | Yes |
+| K5 (d) changed tree, ≤ today + 600 | zod +159.7, motion +143.9 | Yes |
+| K5 (e) depfit's CPU in the cache code, ≤ 50 ms per candidate | opening 23 to 25 ms per call, hashing and reading both parts 1.1 to 1.3 ms, eviction 0.7 to 0.9 ms (three runs, output kept); probes as measured earlier: `npm config list` 67 to 77 ms, `node -p` 25 ms elapsed | Yes |
+
+The first attempt at the at-limit run stopped before any invocation (its victim install had been
+deleted by an earlier experiment's cleanup); its empty directory was removed and the run made from a
+fresh install. **K5 passes under the amended bar.**
