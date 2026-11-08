@@ -489,9 +489,14 @@ describe("rootEntryBundle, the CLI's call", () => {
   it("gives a null map and only the root's entry after a toolchain mismatch", async () => {
     const dir = await install();
     try {
-      const facts = await rootEntryBundle(dir, "with-subpaths", {}, {
-        runnerScript: runner("other-toolchain.mjs"),
-      });
+      const facts = await rootEntryBundle(
+        dir,
+        "with-subpaths",
+        {},
+        {
+          runnerScript: runner("other-toolchain.mjs"),
+        },
+      );
       expect(facts.bundle).toMatchObject({
         exports_map: true,
         subpaths_listed: 3,
@@ -507,9 +512,14 @@ describe("rootEntryBundle, the CLI's call", () => {
   it("keeps the cap's entry beside the root's crash", async () => {
     const dir = await install(withKeys(REPORT_SUBPATH_LIMIT + 1));
     try {
-      const facts = await rootEntryBundle(dir, "with-subpaths", {}, {
-        runnerScript: runner("exit-now.mjs"),
-      });
+      const facts = await rootEntryBundle(
+        dir,
+        "with-subpaths",
+        {},
+        {
+          runnerScript: runner("exit-now.mjs"),
+        },
+      );
       expect(facts.bundle).toMatchObject({
         exports_map: true,
         subpaths_listed: REPORT_SUBPATH_LIMIT + 1,
@@ -526,9 +536,14 @@ describe("rootEntryBundle, the CLI's call", () => {
   it("keeps an unreadable manifest's entry beside the root's crash", async () => {
     const dir = await install(null);
     try {
-      const facts = await rootEntryBundle(dir, "with-subpaths", {}, {
-        runnerScript: runner("exit-now.mjs"),
-      });
+      const facts = await rootEntryBundle(
+        dir,
+        "with-subpaths",
+        {},
+        {
+          runnerScript: runner("exit-now.mjs"),
+        },
+      );
       expect(facts.bundle).toMatchObject({
         exports_map: null,
         subpaths_listed: null,

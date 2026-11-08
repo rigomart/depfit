@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T04:28:23.134Z",
+  "generated_at": "2026-11-08T05:50:24.206Z",
   "tools": {
     "node": "24.14.1",
     "rollup": "4.64.7",
@@ -21,6 +21,7 @@
       "id": "vite",
       "package": "vite",
       "version": "8.3.4",
+      "lock_sha256": "ee8da50bab23bd4dd6df49f5526889ecd6a17ff342642a289d9a7d451814e694",
       "external_packages": [
         "@types/node",
         "@vitejs/devtools",
@@ -94,6 +95,7 @@
       "id": "react",
       "package": "react",
       "version": "19.3.1",
+      "lock_sha256": "06131d2cfce4487c5c57111749baf84d337c13bc78ca172cf141f584059ab1e4",
       "external_packages": [],
       "subpaths": {
         "./compiler-runtime": {
@@ -189,6 +191,7 @@
       "id": "jose",
       "package": "jose",
       "version": "6.2.12",
+      "lock_sha256": "c71922c7e00014590602b590a6feb0cefa6f40ad8f7d6c8db46bcf9ccc853b0c",
       "external_packages": [],
       "subpaths": {
         "./base64url": {
@@ -284,6 +287,7 @@
       "id": "htmlparser2",
       "package": "htmlparser2",
       "version": "12.0.0",
+      "lock_sha256": "c8ec5fecf7291e0e9f8b10b7b45f1a625b2d73444e254b46eb7c7be95aac603d",
       "external_packages": [],
       "subpaths": {
         "./WebWritableStream": {
@@ -338,6 +342,7 @@
       "id": "fflate",
       "package": "fflate",
       "version": "0.8.3",
+      "lock_sha256": "04ac5037724515f87f3e4821c480308772d46e8537650654c865fa403e2ae8c7",
       "external_packages": [],
       "subpaths": {
         "./browser": {
@@ -392,6 +397,7 @@
       "id": "react-refresh",
       "package": "react-refresh",
       "version": "0.19.0",
+      "lock_sha256": "18efb8309f42962fa752ca6ad91f63e64ee41d9f393fc56dd9035ca062a8ea22",
       "external_packages": [],
       "subpaths": {
         "./babel": {
@@ -446,6 +452,7 @@
       "id": "opentelemetry__api",
       "package": "@opentelemetry/api",
       "version": "1.9.1",
+      "lock_sha256": "94acd3cb8619ee8e9c8284b531654a16d4c73f1e08e3ae99ae3536b415bf77fa",
       "external_packages": [],
       "subpaths": {
         "./experimental": {
@@ -483,6 +490,7 @@
       "id": "reflect.getprototypeof",
       "package": "reflect.getprototypeof",
       "version": "1.0.10",
+      "lock_sha256": "f9fd9b4940d0a2f5cdcfe815b3292f1a0fe49568624d638a13087e5583802cce",
       "external_packages": [],
       "subpaths": {
         "./auto": {
@@ -578,6 +586,7 @@
       "id": "dompurify",
       "package": "dompurify",
       "version": "3.4.17",
+      "lock_sha256": "5629ef2ccb83bcbdd794ea5b638381fed082344c867daf8089138d1c814f8e8b",
       "external_packages": [],
       "subpaths": {
         "./dist/purify.js": {
@@ -673,6 +682,7 @@
       "id": "testing-library__jest-dom",
       "package": "@testing-library/jest-dom",
       "version": "7.0.1",
+      "lock_sha256": "94677dae43c5d2a2030755e3fd8b671a4d72d0a6dba79428e02c45846f382ae4",
       "external_packages": ["@testing-library/dom", "vitest"],
       "subpaths": {
         "./jest-globals": {
@@ -750,6 +760,7 @@
       "id": "react-router",
       "package": "react-router",
       "version": "8.4.0",
+      "lock_sha256": "819515b5f2a2af01b49da48df4669f9c7b93739ca0e37085b65c6ff0c0728116",
       "external_packages": ["react", "react-dom"],
       "subpaths": {
         "./dom": {
@@ -845,6 +856,7 @@
       "id": "framer-motion",
       "package": "framer-motion",
       "version": "14.3.0",
+      "lock_sha256": "d953a8791107823de168aa6345bb64a7329c7967ac697a6fc9a47e95d1e402eb",
       "external_packages": ["react", "react-dom"],
       "subpaths": {
         "./animate-view": {
@@ -940,6 +952,7 @@
       "id": "react-redux",
       "package": "react-redux",
       "version": "9.3.0",
+      "lock_sha256": "dfafa8789a91f7d662d21ba6f653b75c14172555b370f21f40559953126e485a",
       "external_packages": ["@types/react", "react", "redux"],
       "subpaths": {
         "./alternate-renderers": {
@@ -977,6 +990,7 @@
       "id": "postcss-js",
       "package": "postcss-js",
       "version": "5.1.0",
+      "lock_sha256": "7f8a5ea42a2c6c57cd7d62870d87b4f357670b7a6d542c676541c49f38b0699c",
       "external_packages": ["postcss"],
       "subpaths": {
         "./async": {
@@ -1072,6 +1086,7 @@
       "id": "preact",
       "package": "preact",
       "version": "11.0.1",
+      "lock_sha256": "09cfe4dc42c801a67edcc9d8b419a1f83e396672e4d6d6b082b2f05c767b926b",
       "external_packages": ["preact-render-to-string"],
       "subpaths": {
         "./compat": {
@@ -1167,6 +1182,7 @@
       "id": "classnames",
       "package": "classnames",
       "version": "2.5.1",
+      "lock_sha256": "197568967a69758e9a3eef71bd9933123fd89a2bbca80032e6c28207707da0ee",
       "external_packages": [],
       "subpaths": {
         "./bind": {
@@ -1262,6 +1278,7 @@
       "id": "ua-parser-js",
       "package": "ua-parser-js",
       "version": "2.0.10",
+      "lock_sha256": "8e2ff07ce4cd0a775c67c7e5d9499d45b29c8b7d8843d0eea585c92b5b2a3e80",
       "external_packages": [],
       "subpaths": {
         "./bot-detection": {
@@ -1357,6 +1374,7 @@
       "id": "hastscript",
       "package": "hastscript",
       "version": "9.0.1",
+      "lock_sha256": "c810249d37d899e52a23bc0b696690e0be8274c2c2120f7a2873af943d717dfe",
       "external_packages": [],
       "subpaths": {
         "./jsx-dev-runtime": {
@@ -1452,6 +1470,7 @@
       "id": "reduxjs__toolkit",
       "package": "@reduxjs/toolkit",
       "version": "2.13.0",
+      "lock_sha256": "1b6a293cc957da6c2984d03fde6bd02b8e7b1932c2b4050105940431cbdec125",
       "external_packages": ["react", "react-redux"],
       "subpaths": {
         "./query": {
@@ -1547,6 +1566,7 @@
       "id": "cheerio",
       "package": "cheerio",
       "version": "1.2.0",
+      "lock_sha256": "dd1175bd41f731b6762413402ce9713d87b6853ed7776fa6385710a59e4beb3d",
       "external_packages": [],
       "subpaths": {
         "./slim": {
