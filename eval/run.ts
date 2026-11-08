@@ -15,8 +15,15 @@
  * revision recorded there (`[{ cwd, head, worktree_sha256 }]`, local). A project still at that
  * revision with the same working tree runs in place. A project that was clean then and has moved
  * since runs from a `git archive` of the recorded revision in a temp dir; the project itself is
- * only read. Anything else stops the run.
- *   bun eval/run.ts [--set <name>] [--out <dir>] [--locks <dir>] [--no-snippets] [--revisions <file>] [project...]
+ * only read. Anything else stops the run. `--record-revisions <file>` writes such a record (format 2,
+ * which also hashes untracked files' contents) for the selected probes and exits. A format-1 record
+ * (untracked file names only, the holdout-2 freeze) is still accepted, with a warning.
+ *
+ * `--pin <file>` (`{ "<name>": "<version>" }`) requests a pinned version for a probe candidate
+ * given by bare name, so every arm measures the version an earlier run resolved even after a new
+ * release. The pinned package's `requested` then reads `<name>@<version>`.
+ *   bun eval/run.ts [--set <name>] [--out <dir>] [--locks <dir>] [--no-snippets] [--revisions <file>] [--pin <file>] [project...]
+ *   bun eval/run.ts --record-revisions <file> [--set <name>] [project...]
  */
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -73,6 +80,8 @@ const { values, positionals: only } = parseArgs({
     locks: { type: "string" },
     "no-snippets": { type: "boolean", default: false },
     revisions: { type: "string" },
+    "record-revisions": { type: "string" },
+    pin: { type: "string" },
   },
 });
 const OUT = values.out;
@@ -113,16 +122,25 @@ const probes = all
 const cli = join(import.meta.dirname, "../src/cli.ts");
 
 /**
- * sha256 of a project's uncommitted state as the holdout-2 freeze recorded it: its diff against
- * HEAD, then the name of each untracked file (one per line). File contents of untracked files are
- * not part of it.
+ * sha256 of a project's uncommitted state: its diff against HEAD, then each untracked file. Format
+ * 1 (the holdout-2 freeze) has each untracked file's name only, one per line; format 2 has
+ * `JSON.stringify([name, sha256 of its contents])` per line, so an edit inside an untracked file
+ * changes it.
  */
-async function worktreeSha256(dir: string): Promise<string> {
+async function worktreeSha256(dir: string, format: 1 | 2): Promise<string> {
   const git = (args: string[]) => run("git", ["-C", dir, ...args], { maxBuffer: 1 << 28 });
   const hash = createHash("sha256");
   hash.update((await git(["diff", "HEAD"])).stdout);
   const untracked = (await git(["ls-files", "--others", "--exclude-standard", "-z"])).stdout;
-  for (const file of untracked.split("\0").filter(Boolean)) hash.update(`${file}\n`);
+  for (const file of untracked.split("\0").filter(Boolean)) {
+    if (format === 1) hash.update(`${file}\n`);
+    else {
+      const contents = createHash("sha256")
+        .update(await readFile(join(dir, file)))
+        .digest("hex");
+      hash.update(`${JSON.stringify([file, contents])}\n`);
+    }
+  }
   return hash.digest("hex");
 }
 
@@ -141,15 +159,18 @@ async function frozenCwd(cwd: string): Promise<string> {
     JSON.parse(await readFile(values.revisions, "utf8")) as Array<{
       cwd: string;
       head: string;
-      worktree_sha256: string;
+      worktree_sha256?: string;
+      worktree_sha256_v2?: string;
     }>
   ).find((entry) => entry.cwd.replace(/^~/, homedir()) === cwd);
   if (!recorded) throw new Error(`${cwd}: no recorded revision`);
+  const format = recorded.worktree_sha256_v2 ? 2 : 1;
+  const recordedSha = recorded.worktree_sha256_v2 ?? recorded.worktree_sha256 ?? "";
+  if (format === 1) console.warn(`${cwd}: format-1 record; untracked files' contents not covered`);
   const top = (await run("git", ["-C", cwd, "rev-parse", "--show-toplevel"])).stdout.trim();
   const head = (await run("git", ["-C", cwd, "rev-parse", "HEAD"])).stdout.trim();
-  if (head === recorded.head && (await worktreeSha256(cwd)) === recorded.worktree_sha256)
-    return cwd;
-  if (recorded.worktree_sha256 !== EMPTY_SHA256) {
+  if (head === recorded.head && (await worktreeSha256(cwd, format)) === recordedSha) return cwd;
+  if (recordedSha !== EMPTY_SHA256) {
     throw new Error(`${cwd}: moved since it was recorded, with uncommitted changes then`);
   }
   let root = exported.get(`${top} ${recorded.head}`);
@@ -175,6 +196,25 @@ async function frozenCwd(cwd: string): Promise<string> {
 }
 const timings: Array<{ project: string; n: number; packages: string[]; cli_ms: number }> = [];
 
+if (values["record-revisions"]) {
+  const cwds = [...new Set(probes.map(({ probe }) => probe.cwd))];
+  const records = [];
+  for (const cwd of cwds) {
+    const dir = cwd.replace(/^~/, homedir());
+    const head = (await run("git", ["-C", dir, "rev-parse", "HEAD"])).stdout.trim();
+    records.push({ cwd, head, worktree_sha256_v2: await worktreeSha256(dir, 2) });
+  }
+  await writeFile(values["record-revisions"], `${JSON.stringify(records, null, 2)}\n`);
+  console.log(`recorded ${records.length} workspaces in ${values["record-revisions"]}`);
+  process.exit(0);
+}
+
+const pins = values.pin
+  ? (JSON.parse(await readFile(values.pin, "utf8")) as Record<string, string>)
+  : {};
+/** A candidate given by bare name gets its pinned version, if any. */
+const pinned = (spec: string) => (pins[spec] ? `${spec}@${pins[spec]}` : spec);
+
 for (const { probe, n } of probes) {
   const snippets = values["no-snippets"] ? [] : snippetsOf(probe);
   // Fail on an invalid snippet before spending a CLI run on the probe.
@@ -183,7 +223,10 @@ for (const { probe, n } of probes) {
   const dir = join(OUT, probe.project);
   await mkdir(dir, { recursive: true });
   const started = performance.now();
-  const json = await run("bun", [cli, ...probe.packages, "--json"], { cwd, maxBuffer: 1 << 26 });
+  const json = await run("bun", [cli, ...probe.packages.map(pinned), "--json"], {
+    cwd,
+    maxBuffer: 1 << 26,
+  });
   const cliMs = Math.round(performance.now() - started);
   timings.push({ project: probe.project, n, packages: probe.packages, cli_ms: cliMs });
   const report = JSON.parse(json.stdout) as Report;

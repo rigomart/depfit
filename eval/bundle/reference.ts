@@ -13,6 +13,7 @@
  * Re-runs itself under Node when started with Bun, so gzip (node:zlib) is the same either way.
  */
 import { execFile, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { createRequire, isBuiltin } from "node:module";
 import { tmpdir } from "node:os";
@@ -873,10 +874,12 @@ async function referenceSubpaths(): Promise<void> {
           `${c.id} ${key}: rollup ${show(rollup)} | webpack ${show(webpack)} | vite ${show(vite)}`,
         );
       }
+      const lock = await readFile(lockFile(c.id));
       packages.push({
         id: c.id,
         package: name,
         version: c.version,
+        lock_sha256: createHash("sha256").update(lock).digest("hex"),
         external_packages: peers,
         subpaths,
       });

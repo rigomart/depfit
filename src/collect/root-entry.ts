@@ -468,8 +468,14 @@ export async function rootEntryBundle(
   dir: string,
   candidate: string,
   manifest: Record<string, unknown>,
-  onSubpathPhase?: (ms: number) => void,
+  options: {
+    /** Gate F's timing (see `measureRootEntry`), plus this call's own manifest read. */
+    onSubpathPhase?: (ms: number) => void;
+    /** A stand-in for vite-build.mjs (tests). */
+    runnerScript?: string;
+  } = {},
 ): Promise<{ bundle: Bundle; reasons: string[] }> {
+  const { onSubpathPhase, runnerScript } = options;
   const externals = externalPackages(manifest);
   const bundler = await bundlerName();
   const listStarted = performance.now();
@@ -480,6 +486,7 @@ export async function rootEntryBundle(
       subpaths: true,
       listing: listed,
       subpathLimit: REPORT_SUBPATH_LIMIT,
+      runnerScript,
       onSubpathPhase: (ms) => onSubpathPhase?.(listMs + ms),
     });
     return rootEntryFacts(measurement, bundler);

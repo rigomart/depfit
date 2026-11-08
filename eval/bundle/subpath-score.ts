@@ -6,7 +6,7 @@
  *   bun eval/bundle/subpath-score.ts listing     # L (ii): 288 manifests against resolve.exports 2.0.3
  *   bun eval/bundle/subpath-score.ts reference   # A, B, C, D on subpath-set.json (subpath-reference.json)
  *   bun eval/bundle/subpath-score.ts probes      # A and D on the probe packages; F's subpath time
- *   bun eval/bundle/subpath-score.ts report [--on dir] [--again dir] [--off dir]   # E, D, R
+ *   bun eval/bundle/subpath-score.ts report --measured <subpath-probes-*.json> [--on dir] [--again dir] [--off dir]   # E, D, R
  *   bun eval/bundle/subpath-score.ts comprehension   # H0 prompt and key (11 questions)
  *
  * `listing` fetches manifests from the npm registry. `reference` replays the frozen wild locks.
@@ -67,6 +67,22 @@ const HOLDOUT_SHA256: Record<string, string> = {
   "holdout-1": "f792fac58becfaed39b978a33e2e118526652b9cb6c9214b424d9cf2461f8466",
   "holdout-2": "c39c0792cdc4fc44b13b7e34b8202fe06307d6c64d468463903a0b73e34a3dde",
 };
+
+const fileSha256 = async (path: string): Promise<string | null> =>
+  readFile(path).then(
+    (data) => createHash("sha256").update(data).digest("hex"),
+    () => null,
+  );
+
+/**
+ * The code a measurement was made with: the git tree of `src/` at HEAD, or null when `src/` has
+ * uncommitted changes (then no identity can be claimed).
+ */
+async function sourceIdentity(): Promise<string | null> {
+  const status = (await run("git", ["-C", REPO, "status", "--porcelain", "--", "src"])).stdout;
+  if (status.trim()) return null;
+  return (await run("git", ["-C", REPO, "rev-parse", "HEAD:src"])).stdout.trim();
+}
 
 const readJson = async (path: string): Promise<unknown> =>
   JSON.parse(await readFile(path, "utf8").catch(() => "null"));
@@ -160,7 +176,7 @@ function independentListing(
     } catch {
       target = undefined;
     }
-    if (target !== undefined && /\.(?:m|c)?jsx?$/.test(target)) keys.push(key);
+    if (target !== undefined && /\.(?:js|mjs|cjs|jsx)$/.test(target)) keys.push(key);
   }
   return { exportsMap: true, keys, patterns };
 }
@@ -220,9 +236,14 @@ async function scoreListing(control: string): Promise<void> {
   const fromRule = (await loadWildPackages())
     .filter((p) => (listings.get(p.name) ?? []).length > 0)
     .slice(0, 20)
-    .map((p) => ({ package: p.name, subpaths: pickThree(listings.get(p.name) ?? []) }));
+    .map((p) => ({
+      package: p.name,
+      version: p.version,
+      subpaths: pickThree(listings.get(p.name) ?? []),
+    }));
   const frozen = set.map((p) => ({
     package: asString(p.package) ?? "",
+    version: asString(p.version) ?? "",
     subpaths: asStringArray(p.subpaths),
   }));
   const setMatches = JSON.stringify(fromRule) === JSON.stringify(frozen);
@@ -287,16 +308,39 @@ function nullProblem(
   return other.length ? `unexpected specifiers ${[...new Set(other)].join(", ")}` : null;
 }
 
+type Group = { code: string; keys: string[] };
+type ParsedReason = { free: string; groups: Group[]; errors: string[] };
+
 /**
- * The subpath groups of one `unavailable` entry (SPEC.md iteration 2): each
- * `<CODE> in subpaths <JSON array>`, found after `bundle: ` or `; `, its array parsed as JSON from
- * its `[` to the matching `]` (strings and escapes respected).
+ * One `bundle:` entry under SPEC.md's framing rule (iteration 2): free text, with `%`, `;` and `[`
+ * percent-encoded, then groups `<CODE> in subpaths <JSON array>`, either as the whole entry or
+ * appended after `; `. Each array is parsed as JSON from its `[` to the matching `]`, respecting
+ * strings and escapes, and scanning resumes after it. `errors` lists every break of the rule:
+ * unencoded framing characters, an unterminated or invalid array, non-string keys, keys or codes
+ * out of code-point order, and text after a group.
  */
-export function subpathGroups(entry: string): Array<{ code: string; keys: string[] }> {
-  const groups: Array<{ code: string; keys: string[] }> = [];
-  const head = /(?:^bundle: |; )([A-Z][A-Z_]*) in subpaths \[/g;
-  for (let match = head.exec(entry); match; match = head.exec(entry)) {
-    const start = match.index + match[0].length - 1;
+export function parseReason(entry: string): ParsedReason {
+  const errors: string[] = [];
+  const groups: Group[] = [];
+  const own = /^bundle: (?=[A-Z][A-Z_]* in subpaths \[)/.exec(entry);
+  let at: number;
+  let free: string;
+  if (own) {
+    free = "";
+    at = own[0].length;
+  } else {
+    const split = entry.indexOf("; ");
+    free = split < 0 ? entry : entry.slice(0, split);
+    at = split < 0 ? entry.length : split + 2;
+  }
+  if (/[;[]/.test(free)) errors.push(`unencoded ; or [ in "${free}"`);
+  while (at < entry.length) {
+    const head = /^([A-Z][A-Z_]*) in subpaths \[/.exec(entry.slice(at));
+    if (!head) {
+      errors.push(`no group at "${entry.slice(at, at + 40)}"`);
+      break;
+    }
+    const start = at + head[0].length - 1;
     let depth = 0;
     let inString = false;
     let end = -1;
@@ -312,24 +356,52 @@ export function subpathGroups(entry: string): Array<{ code: string; keys: string
         break;
       }
     }
-    if (end < 0) break;
-    groups.push({
-      code: match[1] ?? "",
-      keys: asStringArray(JSON.parse(entry.slice(start, end + 1))),
-    });
-    head.lastIndex = end + 1;
+    if (end < 0) {
+      errors.push(`unterminated array for ${head[1]}`);
+      break;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(entry.slice(start, end + 1));
+    } catch {
+      errors.push(`invalid JSON array for ${head[1]}`);
+      break;
+    }
+    const keys = Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed) || !keys.every((key) => typeof key === "string")) {
+      errors.push(`non-string keys for ${head[1]}`);
+    }
+    const strings = asStringArray(keys);
+    const sorted = [...new Set(strings)].sort(byCodePoint);
+    if (JSON.stringify(sorted) !== JSON.stringify(strings)) {
+      errors.push(`keys of ${head[1]} not unique and in code-point order`);
+    }
+    const previous = groups.at(-1);
+    if (previous && byCodePoint(previous.code, head[1] ?? "") >= 0) {
+      errors.push(`group ${head[1]} out of code-point order`);
+    }
+    groups.push({ code: head[1] ?? "", keys: strings });
+    at = end + 1;
+    if (at < entry.length) {
+      if (entry.startsWith("; ", at)) at += 2;
+      else {
+        errors.push(`text after the ${head[1]} group`);
+        break;
+      }
+    }
   }
-  return groups;
+  return { free, groups, errors };
 }
 
 /** Every reason code one `unavailable` entry reports: its leading code, a summary's, its groups'. */
 function entryCodes(entry: string): Set<string> {
+  const { free, groups } = parseReason(entry);
   const codes = new Set<string>();
-  const leading = /^bundle: ([A-Z][A-Z_]*)\b/.exec(entry)?.[1];
+  const leading = /^bundle: ([A-Z][A-Z_]*)\b/.exec(free)?.[1];
   if (leading) codes.add(leading);
-  const summary = /^bundle: \d+ exports unmeasurable \(([^)]*)\)/.exec(entry)?.[1];
+  const summary = /^bundle: \d+ exports unmeasurable \(([^)]*)\)/.exec(free)?.[1];
   for (const code of summary?.split(", ") ?? []) codes.add(code);
-  for (const group of subpathGroups(entry)) codes.add(group.code);
+  for (const group of groups) codes.add(group.code);
   return codes;
 }
 
@@ -342,27 +414,45 @@ function repeatedCodes(reasons: string[]): string[] {
   return [...counts].filter(([, n]) => n > 1).map(([code, n]) => `${n} entries report ${code}`);
 }
 
+/** Format errors of every entry (`parseReason`), labelled. */
+function framingProblems(reasons: string[]): string[] {
+  return reasons.flatMap((reason) =>
+    parseReason(reason).errors.map((error) => `${error} in "${reason.slice(0, 80)}"`),
+  );
+}
+
 /** The (key, code) pairs the entries name, each with how many times it is named. */
 function namedPairs(reasons: string[]): Map<string, number> {
   const pairs = new Map<string, number>();
   for (const reason of reasons) {
-    for (const { code, keys } of subpathGroups(reason)) {
-      for (const key of keys) pairs.set(`${key} ${code}`, (pairs.get(`${key} ${code}`) ?? 0) + 1);
+    for (const { code, keys } of parseReason(reason).groups) {
+      for (const key of keys) {
+        const pair = JSON.stringify([key, code]);
+        pairs.set(pair, (pairs.get(pair) ?? 0) + 1);
+      }
     }
   }
   return pairs;
 }
 
-/** Gate A (ii) and E (iv) for one null value: each of its codes named exactly once with its key. */
-function nullNamingProblems(reasons: string[], key: string, codes: string[]): string[] {
-  const pairs = namedPairs(reasons);
-  const problems = codes
-    .filter((code) => pairs.get(`${key} ${code}`) !== 1)
-    .map((code) => `${key} with ${code} named ${pairs.get(`${key} ${code}`) ?? 0} times`);
-  const extra = [...pairs.keys()].filter(
-    (pair) => pair.startsWith(`${key} `) && !codes.includes(pair.slice(key.length + 1)),
+/**
+ * Gate A (ii) and E (iii)-(iv): the named (key, code) pairs equal `expected` exactly, each named
+ * once. `expected` maps every null value's key to the codes of its failed build; any other pair
+ * (a measured key, a key not in the map, a wrong code) is a problem.
+ */
+function pairProblems(reasons: string[], expected: Map<string, string[]>): string[] {
+  const named = namedPairs(reasons);
+  const want = new Set(
+    [...expected].flatMap(([key, codes]) => codes.map((code) => JSON.stringify([key, code]))),
   );
-  return [...problems, ...extra.map((pair) => `${pair} named but not a code of its build`)];
+  const problems: string[] = [];
+  for (const pair of want) {
+    const n = named.get(pair) ?? 0;
+    if (n !== 1) problems.push(`${pair} named ${n} times`);
+  }
+  for (const pair of named.keys())
+    if (!want.has(pair)) problems.push(`${pair} named but not expected`);
+  return problems;
 }
 
 /** The facts gate D compares: per-subpath detail and the report's subpath fields and reasons. */
@@ -443,6 +533,10 @@ async function scoreReference(): Promise<void> {
       coverage.push(`${name}@${version}: no reference`);
       continue;
     }
+    const lock = await fileSha256(join(HERE, "locks", "wild", `${wildId(name)}.json`));
+    if (lock === null || lock !== asString(ref.lock_sha256)) {
+      coverage.push(`${name}@${version}: frozen lock differs from the one the reference used`);
+    }
     const dir = await installFrozen(wildId(name), name, version);
     try {
       const externals = externalPackages(await manifestIn(dir, name));
@@ -451,6 +545,13 @@ async function scoreReference(): Promise<void> {
       if (subpathState(first) !== subpathState(second)) dFail.push(`${name}: two runs differ`);
       const reasons = rootEntryFacts(first, "vite").reasons;
       for (const repeated of repeatedCodes(reasons)) aFail.push(`${name}: ${repeated}`);
+      for (const framing of framingProblems(reasons)) aFail.push(`${name}: ${framing}`);
+      const nullCodes = new Map(
+        (subpathDetail(first) ?? [])
+          .filter((d) => d.whole_eager_js_gzip9_bytes === null)
+          .map((d) => [d.entry_point, d.unmeasurable_codes]),
+      );
+      for (const naming of pairProblems(reasons, nullCodes)) aFail.push(`${name}: ${naming}`);
       const outcomes = new Map((first.subpaths?.subpaths ?? []).map((s) => [s.key, s.outcome]));
       for (const key of asStringArray(item.subpaths)) {
         const label = `${name} ${key}`;
@@ -463,10 +564,8 @@ async function scoreReference(): Promise<void> {
         if (!outcome.bytes) {
           const problem = nullProblem(expected, name, key, outcome.problems);
           const codes = [...new Set(outcome.problems.map((p) => p.code))].sort();
-          const naming = nullNamingProblems(reasons, key, codes.length ? codes : ["BUILD_ERROR"]);
-          if (problem || naming.length) {
-            aFail.push(`${label}: ${[problem, ...naming].filter(Boolean).join("; ")}`);
-          } else honestNulls.push(`${label}: ${codes.join(", ")}`);
+          if (problem) aFail.push(`${label}: ${problem}`);
+          else honestNulls.push(`${label}: ${codes.join(", ")}`);
           results.push({ name, key, problems: outcome.problems });
           continue;
         }
@@ -553,8 +652,13 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
         else honestNulls.push(`${spec} ${key}: ${codes.join(", ")}`);
       }
       measured[spec] = {
+        exports_map: first.subpaths?.exportsMap ?? null,
         listed: first.subpaths?.listed ?? null,
+        patterns: first.subpaths?.patterns ?? null,
         reason: first.subpaths?.reason ?? null,
+        lock_sha256: await fileSha256(
+          join(locks, `${name.replace("/", "__")}@${version}.package-lock.json`),
+        ),
         subpaths: subpathDetail(first),
         problems: Object.fromEntries(
           (first.subpaths?.subpaths ?? []).map(({ key, outcome }) => [key, outcome.problems]),
@@ -572,21 +676,24 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
       // The default report's call, the CLI's own (`rootEntryBundle`, cap 30): F's time, the
       // number of builds, and A (ii) on its reasons.
       let ms = 0;
-      const report = await rootEntryBundle(dir, name, await manifestIn(dir, name), (elapsed) => {
-        ms = elapsed;
+      const report = await rootEntryBundle(dir, name, await manifestIn(dir, name), {
+        onSubpathPhase: (elapsed) => {
+          ms = elapsed;
+        },
       });
       const map = report.bundle.subpaths_whole_eager_js_gzip9_bytes;
       const built = map ? Object.keys(map).length : 0;
       times.push({ spec, ms: Math.round(ms), count, built });
       for (const repeated of repeatedCodes(report.reasons)) aFail.push(`${spec}: ${repeated}`);
-      for (const detail of subpathDetail(first) ?? []) {
-        if (!map || map[detail.entry_point] !== null) continue;
-        const naming = nullNamingProblems(
-          report.reasons,
-          detail.entry_point,
-          detail.unmeasurable_codes,
-        );
-        for (const problem of naming) aFail.push(`${spec} (default report): ${problem}`);
+      for (const framing of framingProblems(report.reasons)) aFail.push(`${spec}: ${framing}`);
+      // A (ii): each null value of the default report's map, named once per code of its build.
+      const nullCodes = new Map(
+        (subpathDetail(first) ?? [])
+          .filter((d) => map !== null && map[d.entry_point] === null)
+          .map((d) => [d.entry_point, d.unmeasurable_codes]),
+      );
+      for (const problem of pairProblems(report.reasons, nullCodes)) {
+        aFail.push(`${spec} (default report): ${problem}`);
       }
     });
     const last = times.at(-1);
@@ -611,6 +718,7 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
   ];
   console.log(lines.join("\n"));
   await save("probes", {
+    source: await sourceIdentity(),
     coverage,
     aFail,
     honestNulls,
@@ -651,8 +759,10 @@ const bundleEntries = (pkg: Record<string, unknown>) =>
   asStringArray(pkg.unavailable).filter((entry) => entry.startsWith("bundle:"));
 
 type Measured = {
+  exports_map: boolean | null;
   listed: number | null;
-  reason: string | null;
+  patterns: string[] | null;
+  lock_sha256: string | null;
   subpaths: Array<{
     entry_point: string;
     whole_eager_js_gzip9_bytes: number | null;
@@ -660,37 +770,97 @@ type Measured = {
   }> | null;
 };
 
-/** The latest `probes` result: the measurement call's results per name@version (gate E (iii)). */
-async function latestMeasured(): Promise<Map<string, Measured>> {
-  const files = (await readdir(RESULTS_DIR).catch(() => []))
-    .filter((f) => f.startsWith("subpath-probes-") && f.endsWith(".json"))
-    .sort();
-  const last = files.at(-1);
-  if (!last) return new Map();
-  const measured = asRecord(asRecord(await readJson(join(RESULTS_DIR, last))).measured);
-  return new Map(
-    Object.entries(measured).map(([spec, value]) => {
-      const m = asRecord(value);
-      const subpaths = Array.isArray(m.subpaths)
-        ? m.subpaths.map(asRecord).map((d) => ({
-            entry_point: asString(d.entry_point) ?? "",
-            whole_eager_js_gzip9_bytes: asNumber(d.whole_eager_js_gzip9_bytes),
-            unmeasurable_codes: asStringArray(d.unmeasurable_codes),
-          }))
-        : null;
-      return [spec, { listed: asNumber(m.listed), reason: asString(m.reason), subpaths }];
-    }),
-  );
+/**
+ * The measurement call's results from a `probes` result file (gate E (iii)), named explicitly. It
+ * must have passed its coverage, have been made with the `src/` now checked out, and match the
+ * lockfiles now in `locks`; otherwise it proves nothing about these reports.
+ */
+async function loadMeasured(
+  file: string,
+  locks: string,
+): Promise<{ measured: Map<string, Measured>; problems: string[] }> {
+  const raw = asRecord(await readJson(file));
+  const problems: string[] = [];
+  if (!Object.keys(raw).length) return { measured: new Map(), problems: [`${file}: unreadable`] };
+  if (asArray(raw.coverage).length) problems.push(`${file}: its coverage failed`);
+  const source = await sourceIdentity();
+  if (source === null || asString(raw.source) !== source) {
+    problems.push(
+      `${file}: made with src/ ${asString(raw.source) ?? "?"}, now ${source ?? "uncommitted"}`,
+    );
+  }
+  const measured = new Map<string, Measured>();
+  for (const [spec, value] of Object.entries(asRecord(raw.measured))) {
+    const m = asRecord(value);
+    const at = spec.lastIndexOf("@");
+    const lock = await fileSha256(
+      join(
+        locks,
+        `${spec.slice(0, at).replace("/", "__")}@${spec.slice(at + 1)}.package-lock.json`,
+      ),
+    );
+    if (lock === null || lock !== asString(m.lock_sha256))
+      problems.push(`${spec}: lockfile changed`);
+    const subpaths = Array.isArray(m.subpaths)
+      ? m.subpaths.map(asRecord).map((d) => ({
+          entry_point: asString(d.entry_point) ?? "",
+          whole_eager_js_gzip9_bytes: asNumber(d.whole_eager_js_gzip9_bytes),
+          unmeasurable_codes: asStringArray(d.unmeasurable_codes),
+        }))
+      : null;
+    measured.set(spec, {
+      exports_map: typeof m.exports_map === "boolean" ? m.exports_map : null,
+      listed: asNumber(m.listed),
+      patterns: Array.isArray(m.patterns) ? asStringArray(m.patterns) : null,
+      lock_sha256: asString(m.lock_sha256),
+      subpaths,
+    });
+  }
+  return { measured, problems };
+}
+
+/**
+ * The members of every `subpaths_whole_eager_js_gzip9_bytes` object in a report's raw JSON text,
+ * in order of appearance, duplicates kept: null for a null map. JSON.parse would drop duplicate
+ * members, so gate E (ii) reads them from the text the CLI printed.
+ */
+export function rawMapKeys(text: string): Array<string[] | null> {
+  const maps: Array<string[] | null> = [];
+  const field = '"subpaths_whole_eager_js_gzip9_bytes": ';
+  for (let at = text.indexOf(field); at >= 0; at = text.indexOf(field, at + 1)) {
+    let i = at + field.length;
+    if (text.startsWith("null", i)) {
+      maps.push(null);
+      continue;
+    }
+    const keys: string[] = [];
+    i++; // "{"
+    for (;;) {
+      while (/\s|,/.test(text[i] ?? "")) i++;
+      if (text[i] === "}" || i >= text.length) break;
+      let end = i + 1;
+      while (end < text.length && text[end] !== '"') end += text[end] === "\\" ? 2 : 1;
+      keys.push(String(JSON.parse(text.slice(i, end + 1))));
+      i = end + 1;
+      while (text[i] !== "," && text[i] !== "}" && i < text.length) i++;
+    }
+    maps.push(keys);
+  }
+  return maps;
 }
 
 /**
  * Gate E for one package's bundle (SPEC.md iteration 2, amended 2026-11-07): (i) fields and the
- * states' precedence, (ii) the map's serialized member order, (iii) correspondence with the
- * measurement call on the same frozen tree, (iv) every (key, code) pair named once and every code
- * in one entry. JSON.parse keeps members in serialized order for keys that are not array indices,
- * and every key starts with "./", so Object.keys is the serialized order.
+ * states' precedence, the metadata equal to the measurement call's listing; (ii) the map's
+ * serialized members (`rawKeys`, from the printed JSON) unique and in code-point order; (iii)
+ * correspondence with the measurement call on the same frozen tree; (iv) every (key, code) pair
+ * named once, nothing else named, framing kept, and every code in one entry.
  */
-function contractProblems(pkg: Record<string, unknown>, measured: Measured | undefined): string[] {
+function contractProblems(
+  pkg: Record<string, unknown>,
+  measured: Measured | undefined,
+  rawKeys: string[] | null | undefined,
+): string[] {
   if (!("bundle" in pkg)) return ["no bundle key"];
   if (pkg.bundle === null) {
     if (pkg.error !== null || pkg.kind === "builtin" || pkg.cost === null) return [];
@@ -701,69 +871,94 @@ function contractProblems(pkg: Record<string, unknown>, measured: Measured | und
   const bundle = asRecord(pkg.bundle);
   const keys = Object.keys(bundle).sort();
   if (JSON.stringify(keys) !== JSON.stringify(BUNDLE_KEYS)) return [`keys ${keys.join(",")}`];
-  const problems: string[] = [];
   const reasons = bundleEntries(pkg);
+  const problems: string[] = [...repeatedCodes(reasons), ...framingProblems(reasons)];
   const map = bundle.subpaths_whole_eager_js_gzip9_bytes;
   const listed = bundle.subpaths_listed;
   const exportsMap = bundle.exports_map;
   const patterns = bundle.subpath_patterns_unmeasured;
-  problems.push(...repeatedCodes(reasons));
-  // (i) Metadata comes from the listing alone; the map follows the first state that applies.
+  const noPairs = () => {
+    if (namedPairs(reasons).size) problems.push("subpath keys named, but the map has no values");
+  };
+  if (!measured) return [...problems, "no measurement-call result for this package"];
+  // Metadata comes from the listing alone, so it must equal the measurement call's listing.
+  if (exportsMap !== measured.exports_map)
+    problems.push(`exports_map ${String(exportsMap)} vs measured ${String(measured.exports_map)}`);
+  if (listed !== measured.listed)
+    problems.push(`subpaths_listed ${String(listed)} vs measured ${String(measured.listed)}`);
+  if (JSON.stringify(patterns) !== JSON.stringify(measured.patterns))
+    problems.push("patterns differ from the measurement");
+  // (i) The first state that applies.
+  const rootFailed = reasons.some((r) => /^bundle: (TOOLCHAIN_MISMATCH|BUNDLER_ERROR)\b/.test(r));
   if (exportsMap === null) {
     if (listed !== null || map !== null || patterns !== null)
       problems.push("unknown listing, non-null fields");
     if (!reasons.some((r) => r.startsWith("bundle: SUBPATH_LIST_FAILED"))) {
       problems.push("unknown listing without SUBPATH_LIST_FAILED");
     }
+    noPairs();
     return problems;
   }
   if (typeof exportsMap !== "boolean") problems.push("exports_map is not a boolean");
   if (typeof listed !== "number") return [...problems, "subpaths_listed is not a number"];
   if (!Array.isArray(patterns)) problems.push("patterns not a list");
-  const rootFailed = reasons.some((r) => /^bundle: (TOOLCHAIN_MISMATCH|BUNDLER_ERROR)\b/.test(r));
   if (exportsMap === false) {
     if (map !== null || listed !== 0) problems.push("no map, yet subpaths");
-  } else if (listed === 0) {
+    noPairs();
+    return problems;
+  }
+  if (listed === 0) {
     if (!isRecord(map) || Object.keys(map).length) problems.push("empty listing, map not {}");
-  } else if (listed > REPORT_SUBPATH_LIMIT) {
+    noPairs();
+    return problems;
+  }
+  if (listed > REPORT_SUBPATH_LIMIT) {
     if (map !== null) problems.push("over the cap, map not null");
     if (!reasons.includes(`bundle: SUBPATH_LIMIT ${listed}`)) {
       problems.push(`over the cap without bundle: SUBPATH_LIMIT ${listed}`);
     }
-  } else if (map === null) {
-    if (!rootFailed) problems.push("null map without a reason");
-  } else if (!isRecord(map)) problems.push("map is not an object");
-  else {
-    // (ii) Serialized order and unique keys.
-    const mapKeys = Object.keys(map);
-    if (JSON.stringify(mapKeys) !== JSON.stringify([...mapKeys].sort(byCodePoint))) {
-      problems.push("map members not in code-point order");
-    }
-    if (mapKeys.length !== listed)
-      problems.push(`map has ${mapKeys.length} keys, listed ${listed}`);
-    // (iii) Correspondence with the measurement call.
-    if (!measured?.subpaths) problems.push("no measurement-call result to compare");
-    else {
-      const expectedKeys = measured.subpaths.map((d) => d.entry_point);
-      if (JSON.stringify(mapKeys) !== JSON.stringify(expectedKeys)) {
-        problems.push(`keys ${mapKeys.join(" ")} vs measured ${expectedKeys.join(" ")}`);
-      }
-      for (const detail of measured.subpaths) {
-        const value = map[detail.entry_point];
-        if (value !== detail.whole_eager_js_gzip9_bytes) {
-          problems.push(
-            `${detail.entry_point}: ${String(value)} vs measured ${String(detail.whole_eager_js_gzip9_bytes)}`,
-          );
-        }
-        // (iv) and A (ii): a null value's codes, each named once with its key, and nothing else.
-        const codes = value === null ? detail.unmeasurable_codes : [];
-        problems.push(...nullNamingProblems(reasons, detail.entry_point, codes));
-      }
-    }
+    noPairs();
+    return problems;
   }
-  if (map === null || !isRecord(map)) {
-    if ([...namedPairs(reasons).keys()].length) problems.push("keys named without a map");
+  if (rootFailed) {
+    if (map !== null) problems.push("the root failed, map not null");
+    noPairs();
+    return problems;
   }
+  if (map === null) {
+    problems.push("null map without a reason of its own");
+    noPairs();
+    return problems;
+  }
+  if (!isRecord(map)) return [...problems, "map is not an object"];
+  // (ii) Serialized members, duplicates kept.
+  const members = rawKeys ?? [];
+  if (rawKeys === undefined || rawKeys === null)
+    problems.push("map members not found in the JSON text");
+  if (new Set(members).size !== members.length) problems.push("duplicate map members");
+  if (JSON.stringify(members) !== JSON.stringify([...members].sort(byCodePoint))) {
+    problems.push("map members not in code-point order");
+  }
+  if (members.length !== listed)
+    problems.push(`map has ${members.length} members, listed ${listed}`);
+  // (iii) Correspondence with the measurement call: keys, values, and each null's codes.
+  if (!measured.subpaths) return [...problems, "measurement call built no subpaths"];
+  const expectedKeys = measured.subpaths.map((d) => d.entry_point);
+  if (JSON.stringify(members) !== JSON.stringify(expectedKeys)) {
+    problems.push(`keys ${members.join(" ")} vs measured ${expectedKeys.join(" ")}`);
+  }
+  const nullCodes = new Map<string, string[]>();
+  for (const detail of measured.subpaths) {
+    const value = map[detail.entry_point];
+    if (value !== detail.whole_eager_js_gzip9_bytes) {
+      problems.push(
+        `${detail.entry_point}: ${String(value)} vs measured ${String(detail.whole_eager_js_gzip9_bytes)}`,
+      );
+    }
+    if (value === null) nullCodes.set(detail.entry_point, detail.unmeasurable_codes);
+  }
+  // (iv) The named pairs are exactly the null values' codes, each once.
+  problems.push(...pairProblems(reasons, nullCodes));
   return problems;
 }
 
@@ -894,7 +1089,14 @@ function scoreCandidate(
   return { L, U, uncovered, bracketed, miss_class: missClass };
 }
 
-async function scoreReports(options: { on: string; again: string; off: string }): Promise<void> {
+async function scoreReports(options: {
+  on: string;
+  again: string;
+  off: string;
+  measured: string | undefined;
+  locks: string;
+  control: string;
+}): Promise<void> {
   const files = await probeFiles(options.on);
   const coverage: string[] = [];
   const probes = asArray(await readJson(join(REPO, "eval", "probes.json"))).map(asRecord);
@@ -907,8 +1109,12 @@ async function scoreReports(options: { on: string; again: string; off: string })
     coverage.push(`${files.length} probe reports, not ${PROBE_COUNT}`);
   const sets = await probeSets();
   const expected = await loadExpectedNulls();
-  const measured = await latestMeasured();
-  if (!measured.size) coverage.push("no subpath-probes result (run `probes` first)");
+  if (!options.measured) coverage.push("no --measured <subpath-probes result> given");
+  const loaded = options.measured
+    ? await loadMeasured(options.measured, options.locks)
+    : { measured: new Map<string, Measured>(), problems: [] };
+  const { measured } = loaded;
+  coverage.push(...loaded.problems);
   const eFail: string[] = [];
   const eDiffs: string[] = [];
   const eFlakes: string[] = [];
@@ -918,18 +1124,32 @@ async function scoreReports(options: { on: string; again: string; off: string })
   const overCap: string[] = [];
   for (const { project, base } of files) {
     const id = `${project}/${base}`;
-    const on = asRecord(await readJson(join(options.on, project, `${base}.json`)));
+    const onText = await readFile(join(options.on, project, `${base}.json`), "utf8");
+    const on = asRecord(JSON.parse(onText));
+    // The raw map members of each package with a bundle, in package order (gate E (ii)).
+    const raw = rawMapKeys(onText);
+    let withMap = 0;
     const again = asRecord(await readJson(join(options.again, project, `${base}.json`)));
     const off = await readJson(join(options.off, project, `${base}.json`));
     const onPackages = asArray(on.packages).map(asRecord);
     const againPackages = asArray(again.packages).map(asRecord);
+    // Every arm measures the same frozen versions as the control run (gate H, the freeze).
+    const control = asRecord(await readJson(join(options.control, project, `${base}.json`)));
+    const controlVersions = asArray(control.packages).map((p) => asString(asRecord(p).version));
+    const versions = onPackages.map((p) => asString(p.version));
+    if (JSON.stringify(versions) !== JSON.stringify(controlVersions)) {
+      coverage.push(
+        `${id}: versions ${versions.join(" ")} vs control ${controlVersions.join(" ")}`,
+      );
+    }
     for (const [i, pkg] of onPackages.entries()) {
       const other = againPackages[i] ?? {};
       const a = JSON.stringify([pkg.version, pkg.bundle, bundleEntries(pkg).sort()]);
       const b = JSON.stringify([other.version, other.bundle, bundleEntries(other).sort()]);
       if (a !== b) dFail.push(`${id} ${asString(pkg.name)}: two runs differ`);
       const spec = `${asString(pkg.name)}@${asString(pkg.version)}`;
-      for (const problem of contractProblems(pkg, measured.get(spec))) {
+      const rawKeys = pkg.bundle === null ? undefined : raw[withMap++];
+      for (const problem of contractProblems(pkg, measured.get(spec), rawKeys)) {
         eFail.push(`${id} ${spec}: ${problem}`);
       }
     }
@@ -1153,6 +1373,7 @@ const { values, positionals } = parseArgs({
     off: { type: "string", default: join(REPO, "eval/results/v7-off") },
     control: { type: "string", default: join(REPO, "eval/results/v7-control") },
     locks: { type: "string", default: join(REPO, "eval/results/v7/locks") },
+    measured: { type: "string" },
   },
 });
 switch (positionals[0]) {
@@ -1166,7 +1387,14 @@ switch (positionals[0]) {
     await scoreProbePackages(values.locks, values.control);
     break;
   case "report":
-    await scoreReports({ on: values.on, again: values.again, off: values.off });
+    await scoreReports({
+      on: values.on,
+      again: values.again,
+      off: values.off,
+      measured: values.measured,
+      locks: values.locks,
+      control: values.control,
+    });
     break;
   case "comprehension":
     await writeComprehension();

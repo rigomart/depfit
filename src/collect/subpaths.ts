@@ -12,7 +12,8 @@ export const SUBPATH_LIMIT = 100;
 /** The conditions Vite matches for a production browser `import` (with `unsafe: true`). */
 const CONDITIONS = new Set(["default", "module", "browser", "production", "import"]);
 
-const JS_FILE = /\.(?:m|c)?jsx?$/;
+/** The JS extensions the listing rule admits: .js, .mjs, .cjs and .jsx, nothing else. */
+const JS_FILE = /\.(?:js|mjs|cjs|jsx)$/;
 
 export type ListedSubpath = {
   /** The `exports` key, e.g. "./lib/core". */

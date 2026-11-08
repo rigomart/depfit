@@ -67,6 +67,19 @@ describe("listSubpaths", () => {
     expect(keys(exports)).toEqual(["./ok", "./ui"]);
   });
 
+  it("admits exactly .js, .mjs, .cjs and .jsx targets", () => {
+    const exports = {
+      "./a": "./a.js",
+      "./b": "./b.mjs",
+      "./c": "./c.cjs",
+      "./d": "./d.jsx",
+      "./e": "./e.mjsx",
+      "./f": "./f.cjsx",
+      "./g": "./g.ts",
+    };
+    expect(keys(exports)).toEqual(["./a", "./b", "./c", "./d"]);
+  });
+
   it("leaves out the root, ./package.json and folder keys, and lists aliases of one file", () => {
     const exports = {
       ".": "./index.js",

@@ -12,6 +12,7 @@ import {
   medianBytes,
   readListing,
   type RootEntryMeasurement,
+  rootEntryBundle,
   rootEntryFacts,
   REPORT_SUBPATH_LIMIT,
   type ListingResult,
@@ -461,6 +462,109 @@ describe("rootEntryFacts", () => {
     expect(medianBytes([5])).toBe(5);
     expect(medianBytes([4, 1, 2, 3])).toBe(3);
     expect(medianBytes([10, 1, 4])).toBe(4);
+  });
+});
+
+describe("rootEntryBundle, the CLI's call", () => {
+  const runner = (name: string) =>
+    fileURLToPath(new URL(`./fixtures/runner/${name}`, import.meta.url));
+  /** A temp install of `with-subpaths`, its package.json replaced when `manifest` is given. */
+  async function install(manifest?: Record<string, unknown> | null) {
+    const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
+    const pkg = join(dir, "node_modules", "with-subpaths");
+    await cp(join(fixtures, "bundle", "with-subpaths"), pkg, { recursive: true });
+    if (manifest === null) await rm(join(pkg, "package.json"));
+    else if (manifest) await writeFile(join(pkg, "package.json"), JSON.stringify(manifest));
+    return dir;
+  }
+  const withKeys = (count: number) => ({
+    name: "with-subpaths",
+    type: "module",
+    exports: {
+      ".": "./index.js",
+      ...Object.fromEntries(Array.from({ length: count }, (_, i) => [`./m${i}`, "./core.js"])),
+    },
+  });
+
+  it("gives a null map and only the root's entry after a toolchain mismatch", async () => {
+    const dir = await install();
+    try {
+      const facts = await rootEntryBundle(dir, "with-subpaths", {}, {
+        runnerScript: runner("other-toolchain.mjs"),
+      });
+      expect(facts.bundle).toMatchObject({
+        exports_map: true,
+        subpaths_listed: 3,
+        subpaths_whole_eager_js_gzip9_bytes: null,
+        subpath_patterns_unmeasured: ["./lang/*"],
+      });
+      expect(facts.reasons).toEqual(["bundle: TOOLCHAIN_MISMATCH vite@0.0.0 rolldown@0.0.0"]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps the cap's entry beside the root's crash", async () => {
+    const dir = await install(withKeys(REPORT_SUBPATH_LIMIT + 1));
+    try {
+      const facts = await rootEntryBundle(dir, "with-subpaths", {}, {
+        runnerScript: runner("exit-now.mjs"),
+      });
+      expect(facts.bundle).toMatchObject({
+        exports_map: true,
+        subpaths_listed: REPORT_SUBPATH_LIMIT + 1,
+        subpaths_whole_eager_js_gzip9_bytes: null,
+      });
+      expect(facts.reasons).toHaveLength(2);
+      expect(facts.reasons[0]).toMatch(/^bundle: BUNDLER_ERROR /);
+      expect(facts.reasons[1]).toBe(`bundle: SUBPATH_LIMIT ${REPORT_SUBPATH_LIMIT + 1}`);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps an unreadable manifest's entry beside the root's crash", async () => {
+    const dir = await install(null);
+    try {
+      const facts = await rootEntryBundle(dir, "with-subpaths", {}, {
+        runnerScript: runner("exit-now.mjs"),
+      });
+      expect(facts.bundle).toMatchObject({
+        exports_map: null,
+        subpaths_listed: null,
+        subpaths_whole_eager_js_gzip9_bytes: null,
+        subpath_patterns_unmeasured: null,
+      });
+      expect(facts.reasons).toHaveLength(2);
+      expect(facts.reasons[1]).toBe(
+        "bundle: SUBPATH_LIST_FAILED with-subpaths/package.json ENOENT",
+      );
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("maps 30 listed subpaths and none of 31", async () => {
+    for (const [count, mapped] of [
+      [REPORT_SUBPATH_LIMIT, true],
+      [REPORT_SUBPATH_LIMIT + 1, false],
+    ] as const) {
+      const dir = await install(withKeys(count));
+      try {
+        const facts = await rootEntryBundle(dir, "with-subpaths", {});
+        const map = facts.bundle.subpaths_whole_eager_js_gzip9_bytes;
+        expect(facts.bundle.subpaths_listed).toBe(count);
+        if (mapped) {
+          expect(Object.keys(map ?? {})).toHaveLength(count);
+          expect(Object.values(map ?? {}).every((v) => typeof v === "number")).toBe(true);
+        } else {
+          expect(map).toBeNull();
+          expect(facts.reasons).toContain(`bundle: SUBPATH_LIMIT ${count}`);
+        }
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    }
   });
 });
 
