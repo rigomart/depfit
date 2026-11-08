@@ -180,9 +180,10 @@ const cliCases: CliCase[] = [
       check: (pkg: Record<string, unknown>) => {
         const bundle = asRecord(pkg.bundle);
         const diffs = byteDiffs((key) => bundle[WHOLE_FIELDS[key]], ref.whole_vite);
-        return diffs.length
-          ? [...diffs, `unavailable: ${asStringArray(pkg.unavailable).join("; ")}`]
-          : [];
+        const unavailable = asStringArray(pkg.unavailable);
+        return diffs.length && unavailable.length
+          ? [...diffs, `unavailable: ${unavailable.join("; ")}`]
+          : diffs;
       },
     })),
   ...nullCases.map((c) => {
