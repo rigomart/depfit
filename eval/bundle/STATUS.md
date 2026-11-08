@@ -1094,3 +1094,11 @@ findings, applied above: K5 (f) and the first protocol's K5 (c) are recorded as 
 are given in ms before rounding, and claims whose output was not kept are marked unverified. Still
 open from it: the balanced scripts kept neither full reports nor exit status, so the rerun must keep
 both. Work stopped here for the user's decision on K-2.
+
+**Amendment K-2 as decided by the user** (a margin from a control run of today's CLI against
+itself): three reviews of its text (Codex gpt-6.1-sol, high effort, read-only). The first two
+disagreed as written: no threshold was fitted to the results, but the protocol left choices to the
+runner (simulation wording, frozen commands and environment, ordering, retries; then the
+non-browser workspace, hit evidence where `bundle` is null, and an environment manifest). Each was
+fixed before anything ran. The third, on 0325b77: **agree**, no findings. The controls run only after
+that agreement.
