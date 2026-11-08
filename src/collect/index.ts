@@ -39,7 +39,7 @@ import {
   weeklyDownloads,
 } from "./registry.ts";
 import { manifestDeclaresTypes, shipsTypes } from "./types.ts";
-import { asRecord, asString, asStringRecord, errorMessage } from "./util.ts";
+import { asRecord, asString, asStringRecord, errorMessage, reasonText } from "./util.ts";
 
 type Settled<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -106,7 +106,7 @@ async function bundleFacts(
     return await rootEntryBundle(dir, resolved.name, resolved.manifest);
   } catch (error) {
     // Never fails the install: cost and the other install facts stay as they are.
-    return { bundle: null, reasons: [`bundle: BUNDLER_ERROR ${errorMessage(error)}`] };
+    return { bundle: null, reasons: [`bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`] };
   }
 }
 

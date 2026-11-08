@@ -516,6 +516,7 @@ describe("measureRootEntry on fixture packages", () => {
     packages: string[] = [name],
     externals: string[] = [],
     runnerScript?: string,
+    onSubpathPhase?: (ms: number) => void,
   ) {
     const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
     try {
@@ -525,7 +526,11 @@ describe("measureRootEntry on fixture packages", () => {
           recursive: true,
         });
       }
-      return await measureRootEntry(dir, name, externals, { subpaths: true, runnerScript });
+      return await measureRootEntry(dir, name, externals, {
+        subpaths: true,
+        runnerScript,
+        onSubpathPhase,
+      });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -635,6 +640,15 @@ describe("measureRootEntry on fixture packages", () => {
     expect(facts.reasons).toEqual([result.subpaths?.reason]);
     expect(facts.bundle.subpaths_whole_eager_js_gzip9_bytes).toBeNull();
     expect(facts.bundle.subpaths_listed).toBe(3);
+  });
+
+  it("reports the manifest time alone when the root phase aborts", async () => {
+    const script = fileURLToPath(new URL("./fixtures/runner/exit-now.mjs", import.meta.url));
+    const times: number[] = [];
+    await expect(
+      measure("with-subpaths", ["with-subpaths"], [], script, (ms) => times.push(ms)),
+    ).rejects.toThrow();
+    expect(times).toHaveLength(1);
   });
 
   it("builds 100 listed subpaths and none of 101", async () => {

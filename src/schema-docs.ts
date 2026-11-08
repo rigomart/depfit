@@ -12,7 +12,7 @@ const NULL_SECTION = 'null when error is set or kind is "builtin"';
 
 const BUNDLE_CODES =
   'UNRESOLVED_IMPORT (an import, often a Node built-in, does not resolve for the browser), MISSING_EXPORT (an imported name is not exported), IMPORT_OUTSIDE_BUNDLE (the output still imports a module that is neither one of its chunks nor an external peer, such as import("https://…") or a computed import(), so that code would load at runtime and is not in the bytes), NO_ENTRY (the package has no root entry point), NON_JS_IMPORT (Vite emitted a file besides JS, such as CSS, a large asset or wasm, or built a worker, inline or not; what Vite inlines into the JS is counted, and files loaded by a path at runtime are not), PEER_IN_BUNDLE (code from a peer dependency was bundled, imported through an alias), TOOLCHAIN_MISMATCH (the installed Vite or rolldown is not the version depfit was evaluated with), BUNDLER_ERROR (the build process failed), SUBPATH_LIMIT (the exports map lists more than 30 subpaths, so none was built for this report), SUBPATH_LIST_FAILED (the package.json could not be read), or another bundler error code';
-const WHOLE_NULL = `null when the whole build is unmeasurable, with the reason in unavailable as one "bundle: <CODE> [names]" entry per code, listing the first three names and counting the rest: ${BUNDLE_CODES}`;
+const WHOLE_NULL = `null when the whole build is unmeasurable, with the reason in unavailable as one "bundle: <CODE> [names]" entry per code, listing the first three names and counting the rest (in names and messages of bundle entries, %, ; and [ are percent-encoded as %25, %3B and %5B): ${BUNDLE_CODES}`;
 
 export const FIELD_DESCRIPTIONS: Record<string, string> = {
   schema_version:

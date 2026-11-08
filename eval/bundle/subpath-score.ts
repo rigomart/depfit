@@ -28,6 +28,7 @@ import {
   measureRootEntry,
   REPORT_SUBPATH_LIMIT,
   type RootEntryMeasurement,
+  rootEntryBundle,
   rootEntryFacts,
   subpathDetail,
 } from "../../src/collect/root-entry.ts";
@@ -547,29 +548,24 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
         reason: first.subpaths?.reason ?? null,
         subpaths: subpathDetail(first),
       };
-      // The default report's call, cap 30: F's time and the number of builds.
+      // The default report's call, the CLI's own (`rootEntryBundle`, cap 30): F's time, the
+      // number of builds, and A (ii) on its reasons.
       let ms = 0;
-      const report = await measureRootEntry(dir, name, externals, {
-        subpaths: true,
-        subpathLimit: REPORT_SUBPATH_LIMIT,
-        onSubpathPhase: (elapsed) => {
-          ms = elapsed;
-        },
+      const report = await rootEntryBundle(dir, name, await manifestIn(dir, name), (elapsed) => {
+        ms = elapsed;
       });
-      const built = report.subpaths?.subpaths?.length ?? 0;
+      const map = report.bundle.subpaths_whole_eager_js_gzip9_bytes;
+      const built = map ? Object.keys(map).length : 0;
       times.push({ spec, ms: Math.round(ms), count, built });
-      const reasons = rootEntryFacts(report, "vite").reasons;
-      for (const repeated of repeatedCodes(reasons)) aFail.push(`${spec}: ${repeated}`);
-      for (const { key, outcome } of report.subpaths?.subpaths ?? []) {
-        if (outcome.bytes) continue;
-        const codes = [...new Set(outcome.problems.map((p) => p.code))].sort();
-        for (const naming of nullNamingProblems(
-          reasons,
-          key,
-          codes.length ? codes : ["BUILD_ERROR"],
-        )) {
-          aFail.push(`${spec} (default report): ${naming}`);
-        }
+      for (const repeated of repeatedCodes(report.reasons)) aFail.push(`${spec}: ${repeated}`);
+      for (const detail of subpathDetail(first) ?? []) {
+        if (!map || map[detail.entry_point] !== null) continue;
+        const naming = nullNamingProblems(
+          report.reasons,
+          detail.entry_point,
+          detail.unmeasurable_codes,
+        );
+        for (const problem of naming) aFail.push(`${spec} (default report): ${problem}`);
       }
     });
     const last = times.at(-1);

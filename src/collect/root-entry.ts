@@ -32,7 +32,7 @@ import {
   type SubpathListing,
   subpathSpecifier,
 } from "./subpaths.ts";
-import { errorMessage, isRecord } from "./util.ts";
+import { errorMessage, isRecord, reasonText } from "./util.ts";
 
 /** More exports than this are not built one by one: `bundle: EXPORT_LIMIT <count>`. */
 export const EXPORT_LIMIT = 1000;
@@ -105,14 +105,14 @@ export async function readListing(dir: string, candidate: string): Promise<Listi
     text = await readFile(join(dir, "node_modules", file), "utf8");
   } catch (error) {
     const code = isRecord(error) && typeof error.code === "string" ? error.code : "read error";
-    return { ok: false, reason: `bundle: SUBPATH_LIST_FAILED ${file} ${code}` };
+    return { ok: false, reason: `bundle: SUBPATH_LIST_FAILED ${reasonText(`${file} ${code}`)}` };
   }
   try {
     const manifest: unknown = JSON.parse(text);
     if (!isRecord(manifest)) throw new Error("not an object");
     return { ok: true, listing: listSubpaths(manifest) };
   } catch {
-    return { ok: false, reason: `bundle: SUBPATH_LIST_FAILED ${file} invalid JSON` };
+    return { ok: false, reason: `bundle: SUBPATH_LIST_FAILED ${reasonText(file)} invalid JSON` };
   }
 }
 
@@ -237,19 +237,24 @@ export async function measureRootEntry(
   externals: string[],
   options: {
     subpaths?: boolean;
+    /** The listing, when the caller has read it already (the CLI does, before any build). */
+    listing?: ListingResult;
     /** At most this many listed subpaths are built (SUBPATH_LIMIT, the measurement's own cap). */
     subpathLimit?: number;
     runnerScript?: string;
     /**
-     * Called with the subpath phase's wall time: reading the manifest, plus the root's last build
-     * to the subpaths' final state.
+     * Called with the subpath phase's wall time (SPEC.md gate F): reading the manifest here (0
+     * when `listing` is given), plus the end of the root phase to the subpaths' final state; when
+     * the root phase throws, called with the manifest time alone before the error propagates.
      */
     onSubpathPhase?: (ms: number) => void;
   } = {},
 ): Promise<RootEntryMeasurement> {
   const listStarted = performance.now();
-  const listing = options.subpaths ? await readListing(dir, candidate) : null;
-  const listMs = performance.now() - listStarted;
+  const listing = options.subpaths
+    ? (options.listing ?? (await readListing(dir, candidate)))
+    : null;
+  const listMs = options.listing ? 0 : performance.now() - listStarted;
   const runner = startViteRunner(dir, options.runnerScript);
   try {
     const build = (source: string, exports = false) =>
@@ -258,7 +263,10 @@ export async function measureRootEntry(
       outcomeOf(await build(entryModuleSource(entry)), externals, candidate);
     const measure = (name: string | null) => measureEntry(entryFor(candidate, name));
 
-    const root = await measureRoot(build, measure, externals, candidate);
+    const root = await measureRoot(build, measure, externals, candidate).catch((error: unknown) => {
+      if (listing !== null) options.onSubpathPhase?.(listMs);
+      throw error;
+    });
     if (listing === null) return { ...root, subpaths: null };
     const started = performance.now();
     const limit = Math.min(options.subpathLimit ?? SUBPATH_LIMIT, SUBPATH_LIMIT);
@@ -269,7 +277,7 @@ export async function measureRootEntry(
       isToolchainMismatch(root.whole),
       limit,
     ).catch((error: unknown) =>
-      unbuiltSubpaths(listing, limit, `bundle: BUNDLER_ERROR ${errorMessage(error)}`),
+      unbuiltSubpaths(listing, limit, `bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`),
     );
     options.onSubpathPhase?.(listMs + performance.now() - started);
     return { ...root, subpaths };
@@ -460,14 +468,19 @@ export async function rootEntryBundle(
   dir: string,
   candidate: string,
   manifest: Record<string, unknown>,
+  onSubpathPhase?: (ms: number) => void,
 ): Promise<{ bundle: Bundle; reasons: string[] }> {
   const externals = externalPackages(manifest);
   const bundler = await bundlerName();
+  const listStarted = performance.now();
   const listed = await readListing(dir, candidate);
+  const listMs = performance.now() - listStarted;
   try {
     const measurement = await measureRootEntry(dir, candidate, externals, {
       subpaths: true,
+      listing: listed,
       subpathLimit: REPORT_SUBPATH_LIMIT,
+      onSubpathPhase: (ms) => onSubpathPhase?.(listMs + ms),
     });
     return rootEntryFacts(measurement, bundler);
   } catch (error) {
@@ -481,6 +494,7 @@ export async function rootEntryBundle(
       subpaths: unbuiltSubpaths(listed, REPORT_SUBPATH_LIMIT),
     };
     const { bundle, reasons } = rootEntryFacts(crashed, bundler);
-    return { bundle, reasons: [`bundle: BUNDLER_ERROR ${errorMessage(error)}`, ...reasons] };
+    const crash = `bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`;
+    return { bundle, reasons: [crash, ...reasons] };
   }
 }
