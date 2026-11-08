@@ -32,12 +32,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+        id: setup
         with:
           node-version: ${{ matrix.node }}
+      # Each check runs even when an earlier one failed, so one run reports them all.
       - run: bun run check-types
       - run: npx oxlint
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
       - run: npx oxfmt --check
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
       - name: Unit tests
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         run: ${{ matrix.test }}
 
   e2e:
