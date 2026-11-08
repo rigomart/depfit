@@ -761,29 +761,50 @@ build, export names, listing problems as a set, each export). clsx's pool starte
 for 5 builds, which is the cost on-demand start removes. Scripts and every run's output are kept with
 the author's notes (local, gitignored).
 
-**Second alternating runs** (after the second review; quiet machine, load average 2 to 16 from these
-runs themselves, `nice -n 10`). The pool now starts a worker only when a build waits and every live
-worker is busy, and waits for a worker retiring after 100 builds to exit before starting its
-replacement. Memory covers depfit's own process and everything it started. Each run's JSON and its
-`/usr/bin/time -l` output are kept (52 runs; every outcome identical within each call). Medians:
+**Second alternating runs** (after the second review, before #9 merged; quiet machine, load average 2
+to 16 from these runs themselves, `nice -n 10`). The pool now starts a worker only when a build waits
+and every live worker is busy, and waits for a worker retiring after 100 builds to exit before
+starting its replacement. Memory covers depfit's own process and everything it started. Each run's
+JSON and its `/usr/bin/time -l` output are kept (52 runs; every outcome identical within each call).
+Time and CPU are medians; each pool experiment is compared with the today runs alternated with it;
+memory is the largest sampled peak (GiB, from `ps` RSS):
 
-| Call (builds) | Pairs | Today, wall | Pool, wall | Ratio | CPU, today / pool | Ratio | Memory, today / pool (largest pool process) | Workers started (most live) |
-|---|---|---|---|---|---|---|---|---|
-| clsx (5), 4 workers | 3 | 0.11 s | 0.19 s | | 0.21 / 0.33 s | 1.57x | 181 / 183 MB (114) | 2 (2) |
-| valibot (323), 4 | 3 | 2.94 s | 1.10 s | 0.38x | 5.09 / 6.27 s | 1.23x | 0.73 / 1.25 GB (295 MB) | 4 (4) |
-| zod (263), 4 | 3 | 5.66 s | 3.13 s | 0.55x | 20.4 / 20.6 s | 1.01x | 1.06 / 2.28 GB (554 MB) | 4 (4) |
-| date-fns (253), 4 | 3 | 5.75 s | 2.69 s | 0.47x | 24.6 / 26.9 s | 1.09x | 1.16 / 2.50 GB (604 MB) | 4 (4) |
-| motion (353), 4 | 3 | 9.18 s | 4.28 s | 0.47x | 40.9 / 43.9 s | 1.07x | 1.71 / 2.74 GB (639 MB) | 4 (4) |
-| zod valibot (586), 4 | 3 | 5.83 s | 4.02 s | 0.69x | 26.2 / 26.9 s | 1.03x | 1.58 / 1.96 GB (450 MB) | 8 (4) |
-| all four (1192), 4 | 3 | 12.13 s | 10.75 s | 0.89x | 95.0 / 97.2 s | 1.02x | 3.40 / 3.02 GB (682 MB) | 12 (4) |
-| zod valibot, 2 workers | 3 | 5.83 s | 5.66 s | 0.97x | 26.2 / 26.5 s | 1.01x | 1.58 / 1.41 GB (573 MB) | 6 (2) |
-| zod, 1 worker | 2 | 5.66 s | 5.89 s | 1.04x | 20.4 / 20.6 s | 1.01x | 1.06 / 0.83 GB (589 MB) | 3 (1) |
+| Call, workers | Pairs | Wall, today / pool | Ratio | CPU, today / pool | Ratio | Memory, today / pool (largest worker, MiB) | Started (most live) |
+|---|---|---|---|---|---|---|---|
+| clsx, 4 | 3 | 0.11 / 0.19 s | | 0.21 / 0.33 s | 1.57x | 0.18 / 0.18 (114) | 2 (2) |
+| valibot, 4 | 3 | 2.94 / 1.10 s | 0.38x | 5.09 / 6.27 s | 1.23x | 0.71 / 1.22 (295) | 4 (4) |
+| zod, 4 | 3 | 5.66 / 3.13 s | 0.55x | 20.5 / 20.6 s | 1.01x | 1.04 / 2.23 (554) | 4 (4) |
+| date-fns, 4 | 3 | 5.75 / 2.69 s | 0.47x | 24.6 / 26.9 s | 1.09x | 1.13 / 2.44 (604) | 4 (4) |
+| motion, 4 | 3 | 9.18 / 4.28 s | 0.47x | 40.9 / 43.9 s | 1.07x | 1.67 / 2.67 (639) | 4 (4) |
+| zod valibot, 4 | 3 | 5.82 / 4.02 s | 0.69x | 26.1 / 26.9 s | 1.03x | 1.53 / 1.91 (450) | 8 (4) |
+| all four, 4 | 3 | 12.13 / 10.75 s | 0.89x | 95.0 / 97.2 s | 1.02x | 3.32 / 2.95 (682) | 12 (4) |
+| zod valibot, 2 | 3 | 5.86 / 5.66 s | 0.97x | 26.2 / 26.5 s | 1.01x | 1.55 / 1.38 (573) | 6 (2) |
+| zod, 1 | 2 | 5.72 / 5.89 s | 1.03x | 20.3 / 20.6 s | 1.02x | 1.03 / 0.81 (589) | 3 (1) |
 
-Today's memory includes one process per candidate (motion's: 1.4 to 1.5 GB). The last two rows stand
-in for a small machine, where the rule gives as many workers as candidates. Waiting for retiring
-workers moved the four-candidate ratio from 0.87x to 0.89x.
+**Third alternating runs, as merged in #9** (c0e2a5d, after rebasing; same method). Today is
+`measureRootEntry` with the default report's subpaths (`subpaths: true`, at most 30), as the CLI
+calls it; the pool queues each listed subpath's whole build (once per target file) as soon as the
+whole build has passed the toolchain check, alongside the exports. Subpaths built: clsx 1, zod 9,
+motion 10, preact 12 targets; valibot and react-hook-form none; date-fns lists 739, over the cap, so
+none. 40 runs, every outcome identical within each call, subpaths included:
 
-**Not measured:** a machine with 1 or 2 CPUs, and CI's 4-vCPU runners (worker counts 1 and 2 were run
-on 12 cores instead); subpath builds under a pool (iteration 2 is not merged); worker counts above 4 after the restart
+| Call, workers | Pairs | Wall, today / pool | Ratio | CPU, today / pool | Ratio | Memory, today / pool (largest worker, MiB) | Started (most live) |
+|---|---|---|---|---|---|---|---|
+| clsx, 4 | 3 | 0.12 / 0.20 s | | 0.23 / 0.47 s | 2.04x | 0.18 / 0.18 (115) | 3 (3) |
+| zod, 4 | 3 | 6.04 / 3.38 s | 0.56x | 21.2 / 21.6 s | 1.02x | 1.11 / 2.32 (543) | 4 (4) |
+| motion, 4 | 3 | 9.67 / 4.49 s | 0.46x | 42.4 / 45.7 s | 1.08x | 1.74 / 2.76 (660) | 4 (4) |
+| zod valibot, 4 | 3 | 6.32 / 4.30 s | 0.68x | 27.2 / 28.0 s | 1.03x | 1.55 / 1.98 (462) | 8 (4) |
+| all four, 4 | 3 | 12.69 / 11.32 s | 0.89x | 97.6 / 100.7 s | 1.03x | 3.35 / 3.00 (701) | 16 (4) |
+| all four, react-hook-form, preact, 4 | 2 | 12.87 / 11.34 s | 0.88x | 98.7 / 101.3 s | 1.03x | 3.30 / 3.02 (690) | 16 (4) |
+| zod valibot, 2 | 3 | 6.36 / 6.11 s | 0.96x | 27.1 / 27.8 s | 1.03x | 1.56 / 1.40 (578) | 7 (2) |
+| zod, 1 | 2 | 6.21 / 6.41 s | 1.03x | 21.3 / 21.7 s | 1.02x | 1.13 / 0.87 (613) | 3 (1) |
+
+Today's memory includes one process per candidate (motion's: 1.4 to 1.5 GiB). The 1- and 2-worker
+rows stand in for a small machine, where the rule gives as many workers as candidates. Subpaths
+added 0.4 to 0.5 s to today's zod and motion and 0.25 s to the pool's; the ratios moved by at most
+0.01. Valibot and date-fns build no subpaths, so their second-set numbers stand.
+
+**Not measured:** a machine with 1 to 4 CPUs, including CI's 4-vCPU runners (worker counts 1 and 2
+were run on 12 cores instead); worker counts above 4 after the restart
 (the 6- and 8-worker numbers above are from before it). The research scripts are kept with the
 author's notes (local, gitignored).
