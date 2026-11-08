@@ -221,7 +221,6 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
     version,
     version_source: resolved.version_source,
     latest_version: resolved.latest_version,
-    description: asString(manifest.description),
     keywords: keywordsOf(manifest),
     error: null,
     unavailable,

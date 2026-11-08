@@ -336,7 +336,7 @@
         }
       },
       "whole_vite": {
-        "min_bytes": 58822,
+        "min_bytes": 58823,
         "gzip_bytes": 18570,
         "lazy_min_bytes": 0,
         "lazy_gzip_bytes": 0,

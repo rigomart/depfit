@@ -105,6 +105,7 @@ export async function measureRootEntry(
     const build = (source: string, exports = false) =>
       buildEntrySource(runner, dir, source, externals, exports);
     const measure = async (name: string | null) =>
+      (await new Promise((r) => setTimeout(r, 150))) ??
       outcomeOf(await build(entryModuleSource(entryFor(candidate, name))), externals, candidate);
 
     const whole = await measure(null);

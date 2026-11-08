@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { asNumber, asRecord } from "../src/collect/util.ts";
 
 const BASELINE = join(import.meta.dirname, "perf-baseline.json");
-const FAIL_RATIO = 2;
+const FAIL_RATIO   =   2;
 const GATED_MIN_MS = 2000;
 
 const gated = (metric: string, baseline: number) =>
