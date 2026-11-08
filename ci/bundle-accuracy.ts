@@ -158,7 +158,6 @@ for (const ref of references) {
 }
 for (const ref of subpathRefs) {
   const lock = join(EVAL, "locks/wild", `${asString(ref.id) ?? ""}.json`);
-  // The tree must be the one the reference was built from (subpath-reference.json records it).
   const sha = createHash("sha256")
     .update(await readFile(lock))
     .digest("hex");

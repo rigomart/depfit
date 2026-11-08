@@ -468,7 +468,6 @@ describe("rootEntryFacts", () => {
 describe("rootEntryBundle, the CLI's call", () => {
   const runner = (name: string) =>
     fileURLToPath(new URL(`./fixtures/runner/${name}`, import.meta.url));
-  /** A temp install of `with-subpaths`, its package.json replaced when `manifest` is given. */
   async function install(manifest?: Record<string, unknown> | null) {
     const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
     const pkg = join(dir, "node_modules", "with-subpaths");
@@ -619,8 +618,10 @@ describe("unbuiltSubpaths", () => {
       reason: "bundle: SUBPATH_LIMIT 31",
     });
     expect(unbuiltSubpaths(listing(5), 30, crash)).toMatchObject({ listed: 5, reason: crash });
-    // A root failure: its own entry explains the null map.
-    expect(unbuiltSubpaths(listing(5), 30)).toMatchObject({
+    expect(
+      unbuiltSubpaths(listing(5), 30),
+      "a root failure leaves the reason to the root's entry",
+    ).toMatchObject({
       listed: 5,
       patterns: ["./x/*"],
       subpaths: null,
@@ -773,8 +774,7 @@ describe("measureRootEntry on fixture packages", () => {
   it("builds 100 listed subpaths and none of 101", async () => {
     const dir = await mkdtemp(join(tmpdir(), "depfit-root-test-"));
     const pkg = join(dir, "node_modules", "many");
-    // Every key aliases one file, so the 100 keys take one build.
-    const withKeys = async (count: number) => {
+    const measureKeysOnOneFile = async (count: number) => {
       const keys = Array.from({ length: count }, (_, i) => [`./m${i}`, "./index.js"]);
       const exports = { ".": "./index.js", ...Object.fromEntries(keys) };
       await writeFile(join(pkg, "package.json"), JSON.stringify({ name: "many", exports }));
@@ -784,11 +784,11 @@ describe("measureRootEntry on fixture packages", () => {
     };
     try {
       await cp(join(fixtures, "bundle", "named"), pkg, { recursive: true });
-      const atCap = await withKeys(SUBPATH_LIMIT);
+      const atCap = await measureKeysOnOneFile(SUBPATH_LIMIT);
       expect(atCap.reason).toBeNull();
       expect(atCap.subpaths).toHaveLength(SUBPATH_LIMIT);
       expect(atCap.subpaths?.every((s) => s.outcome.bytes !== null)).toBe(true);
-      expect(await withKeys(SUBPATH_LIMIT + 1)).toEqual({
+      expect(await measureKeysOnOneFile(SUBPATH_LIMIT + 1)).toEqual({
         exportsMap: true,
         listed: SUBPATH_LIMIT + 1,
         patterns: [],

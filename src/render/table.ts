@@ -301,10 +301,8 @@ function bundleRows(): Row[] {
   ];
 }
 
-/** Subpaths shown in the table; the rest are counted ("+3 more (--json)"). */
 const SUBPATHS_SHOWN = 8;
 
-/** The first code among `codes` that the package's `bundle: <CODE> ...` entries report, or null. */
 function bundleCode(p: PackageReport, codes: string[]): string | null {
   for (const entry of p.unavailable) {
     const code = /^bundle: ([A-Z_]+)/.exec(entry)?.[1];
@@ -313,7 +311,6 @@ function bundleCode(p: PackageReport, codes: string[]): string | null {
   return null;
 }
 
-/** "./core 35.9 KB, ./react -, +2 more (--json)", or why there is no map. */
 function subpathsCell(p: PackageReport, b: Bundle): Cell {
   const map = b.subpaths_whole_eager_js_gzip9_bytes;
   if (map === null) {

@@ -80,10 +80,6 @@ type RootMeasurement = Omit<RootEntryMeasurement, "subpaths">;
 
 const LOCAL = "m";
 
-/**
- * The entry module of one measured build: the namespace, the default, or one named export of
- * `source` (the candidate itself, or one of its subpaths).
- */
 function entryFor(candidate: string, name: string | null, source = candidate): BundleEntry {
   const clause =
     name === null
@@ -146,11 +142,6 @@ export function unbuiltSubpaths(
   return { ...state, subpaths: null, reason };
 }
 
-/**
- * Builds each listed subpath whole (`import * as m from "<name>/<subpath>"`, kept), once per
- * target file, unless there is no map, the root's toolchain check failed, or the list is over
- * `limit`. Throws when the child fails (the caller keeps the root's results).
- */
 async function measureSubpaths(
   measure: (source: string) => Promise<BundleOutcome>,
   candidate: string,
@@ -237,7 +228,7 @@ export async function measureRootEntry(
   externals: string[],
   options: {
     subpaths?: boolean;
-    /** The listing, when the caller has read it already (the CLI does, before any build). */
+    /** The listing, when the caller has read it already. */
     listing?: ListingResult;
     /** At most this many listed subpaths are built (SUBPATH_LIMIT, the measurement's own cap). */
     subpathLimit?: number;
@@ -336,7 +327,6 @@ export type SubpathDetail = {
   unmeasurable_codes: string[];
 };
 
-/** The codes of a failed build; BUILD_ERROR when it recorded no problem. */
 function failureCodes(outcome: BundleOutcome): string[] {
   const codes = outcome.problems.map((problem) => problem.code);
   return codes.length ? [...new Set(codes)].sort() : ["BUILD_ERROR"];
@@ -355,21 +345,13 @@ export function subpathDetail(measurement: RootEntryMeasurement): SubpathDetail[
   );
 }
 
-/** An `unavailable` entry and the reason codes it reports, so a later cause can join it. */
-type Reason = { text: string; codes: string[] };
+type Reason = { text: string; joinableCodes: string[] };
 
-/** `bundle: <CODE> ...` entries, one per code (`bundleReasons`), with their codes. */
 const perCode = (problems: BundleProblem[]): Reason[] =>
-  bundleReasons(problems).map((text) => ({ text, codes: [text.split(" ")[1] ?? ""] }));
+  bundleReasons(problems).map((text) => ({ text, joinableCodes: [text.split(" ")[1] ?? ""] }));
 
-/**
- * The subpaths' `unavailable` entries, one per cause: the reason none were built, and for each
- * code of a null subpath one group `<CODE> in subpaths <keys>`, `<keys>` a compact JSON array in
- * code-point order. A code a root entry already reports gets its group appended to that entry
- * (`; <group>`); any other gets its own entry, `bundle: <group>`. Codes go in code-point order.
- */
 function addSubpathReasons(reasons: Reason[], subpaths: SubpathMeasurement): void {
-  if (subpaths.reason) reasons.push({ text: subpaths.reason, codes: [] });
+  if (subpaths.reason) reasons.push({ text: subpaths.reason, joinableCodes: [] });
   const keysByCode = new Map<string, string[]>();
   for (const { key, outcome } of subpaths.subpaths ?? []) {
     if (outcome.bytes) continue;
@@ -378,13 +360,12 @@ function addSubpathReasons(reasons: Reason[], subpaths: SubpathMeasurement): voi
   }
   for (const code of [...keysByCode.keys()].sort(byCodePoint)) {
     const keys = JSON.stringify(keysByCode.get(code) ?? []);
-    const covering = reasons.find((reason) => reason.codes.includes(code));
+    const covering = reasons.find((reason) => reason.joinableCodes.includes(code));
     if (covering) covering.text += `; ${code} in subpaths ${keys}`;
-    else reasons.push({ text: `bundle: ${code} in subpaths ${keys}`, codes: [code] });
+    else reasons.push({ text: `bundle: ${code} in subpaths ${keys}`, joinableCodes: [code] });
   }
 }
 
-/** The report's compact subpath fields (SPEC.md amendment 6); all null when none were asked for. */
 function compactSubpaths(subpaths: SubpathMeasurement | null) {
   const map = subpaths?.subpaths
     ? Object.fromEntries(
@@ -425,7 +406,7 @@ export function rootEntryFacts(
     if (!reasons.some((known) => known.text === reason.text)) reasons.push(reason);
   }
   if (names !== null && names.length > EXPORT_LIMIT) {
-    reasons.push({ text: `bundle: EXPORT_LIMIT ${names.length}`, codes: [] });
+    reasons.push({ text: `bundle: EXPORT_LIMIT ${names.length}`, joinableCodes: [] });
   }
   // A failed build that recorded no problem is still reported, as BUILD_ERROR.
   const codesOf = ({ outcome }: ExportOutcome) =>
@@ -435,7 +416,7 @@ export function rootEntryFacts(
     const codes = [...new Set(otherCause.flatMap(codesOf))].sort();
     reasons.push({
       text: `bundle: ${otherCause.length} exports unmeasurable (${codes.join(", ")})`,
-      codes,
+      joinableCodes: codes,
     });
   }
   if (measurement.subpaths) addSubpathReasons(reasons, measurement.subpaths);
@@ -491,7 +472,6 @@ export async function rootEntryBundle(
     });
     return rootEntryFacts(measurement, bundler);
   } catch (error) {
-    // The root phase failed, so no subpath was built: the crash is one entry, and an unreadable
     // manifest (a separate cause) keeps its own.
     const crashed: RootEntryMeasurement = {
       whole: { bytes: null, problems: [] },

@@ -816,8 +816,6 @@ async function referenceSingles(): Promise<void> {
   console.log(`wrote ${resolve(REFERENCE_FILE)}`);
 }
 
-// --- subpaths (iteration 2, gates B and C) -------------------------------------------------------
-
 /**
  * The frozen subpath reference set (subpath-set.json, SPEC.md iteration 2 gate B): each subpath
  * built whole and alone (`import * as __depfit_0 from "<name>/<subpath>"`, kept) with rollup +

@@ -121,12 +121,7 @@ const probes = all
   );
 const cli = join(import.meta.dirname, "../src/cli.ts");
 
-/**
- * sha256 of a project's uncommitted state: its diff against HEAD, then each untracked file. Format
- * 1 (the holdout-2 freeze) has each untracked file's name only, one per line; format 2 has
- * `JSON.stringify([name, sha256 of its contents])` per line, so an edit inside an untracked file
- * changes it.
- */
+/** Format 1 is the holdout-2 freeze's record format: untracked files by name only. */
 async function worktreeSha256(dir: string, format: 1 | 2): Promise<string> {
   const git = (args: string[]) => run("git", ["-C", dir, ...args], { maxBuffer: 1 << 28 });
   const hash = createHash("sha256");
@@ -144,15 +139,16 @@ async function worktreeSha256(dir: string, format: 1 | 2): Promise<string> {
   return hash.digest("hex");
 }
 
+/** One directory per project and revision, the same on every run (it becomes project.root). */
+function stableExportDir(top: string, head: string): string {
+  const id = createHash("sha256").update(top).digest("hex").slice(0, 12);
+  return join(tmpdir(), "depfit-frozen", `${id}-${head.slice(0, 12)}`);
+}
+
 const EMPTY_SHA256 = createHash("sha256").update("").digest("hex");
 const exported = new Map<string, string>();
 const scratch: string[] = [];
 
-/**
- * Where to run a probe: its own directory when the project is at its recorded revision with the
- * same working tree; else, for a project that was clean when recorded, the same directory inside a
- * `git archive` of that revision.
- */
 async function frozenCwd(cwd: string): Promise<string> {
   if (!values.revisions) return cwd;
   const recorded = (
@@ -175,9 +171,7 @@ async function frozenCwd(cwd: string): Promise<string> {
   }
   let root = exported.get(`${top} ${recorded.head}`);
   if (!root) {
-    // A fixed path per project and revision, so every run reports the same project.root.
-    const id = createHash("sha256").update(top).digest("hex").slice(0, 12);
-    root = join(tmpdir(), "depfit-frozen", `${id}-${recorded.head.slice(0, 12)}`);
+    root = stableExportDir(top, recorded.head);
     await rm(root, { recursive: true, force: true });
     await mkdir(root, { recursive: true });
     scratch.push(root);
@@ -212,7 +206,6 @@ if (values["record-revisions"]) {
 const pins = values.pin
   ? (JSON.parse(await readFile(values.pin, "utf8")) as Record<string, string>)
   : {};
-/** A candidate given by bare name gets its pinned version, if any. */
 const pinned = (spec: string) => (pins[spec] ? `${spec}@${pins[spec]}` : spec);
 
 for (const { probe, n } of probes) {

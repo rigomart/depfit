@@ -1,9 +1,8 @@
 import { byCodePoint } from "../../src/collect/subpaths.ts";
-/**
- * The `unavailable` entry format of SPEC.md's iteration 2 (bar amendment 6), parsed strictly for the
- * gates that check it (eval/bundle/subpath-score.ts).
- */
 import { asStringArray } from "../../src/collect/util.ts";
+
+/** A % that does not start one of the escapes `reasonText` writes (%25, %3B, %5B). */
+const UNESCAPED_PERCENT = /%(?!25|3B|5B)/;
 
 export type Group = { code: string; keys: string[] };
 export type ParsedReason = { free: string; groups: Group[]; errors: string[] };
@@ -32,9 +31,7 @@ export function parseReason(entry: string): ParsedReason {
     if (split >= 0 && at >= entry.length) errors.push("a separator with no group after it");
   }
   if (/[;[]/.test(free)) errors.push(`unencoded ; or [ in "${free}"`);
-  // Every % in free text starts one of the three escapes depfit writes.
-  if (/%(?!25|3B|5B)/.test(free)) errors.push(`unencoded % in "${free}"`);
-  // An appended group must report a code the entry's own text already reports.
+  if (UNESCAPED_PERCENT.test(free)) errors.push(`unencoded % in "${free}"`);
   const ownCodes = new Set<string>();
   const leading = /^bundle: ([A-Z][A-Z_]*)\b/.exec(free)?.[1];
   if (leading) ownCodes.add(leading);

@@ -32,7 +32,7 @@ import {
   rootEntryFacts,
   subpathDetail,
 } from "../../src/collect/root-entry.ts";
-import { byCodePoint, listSubpaths } from "../../src/collect/subpaths.ts";
+import { byCodePoint, listSubpaths, SUBPATH_LIMIT } from "../../src/collect/subpaths.ts";
 import {
   asArray,
   asNumber,
@@ -75,10 +75,6 @@ const fileSha256 = async (path: string): Promise<string | null> =>
     () => null,
   );
 
-/**
- * The code a measurement was made with: the git tree of `src/` at HEAD, or null when `src/` has
- * uncommitted changes (then no identity can be claimed).
- */
 async function sourceIdentity(): Promise<string | null> {
   const status = (await run("git", ["-C", REPO, "status", "--porcelain", "--", "src"])).stdout;
   if (status.trim()) return null;
@@ -96,11 +92,8 @@ async function save(gate: string, data: unknown): Promise<void> {
   console.log(`\nwrote ${out}`);
 }
 
-// --- L: listing ---------------------------------------------------------------------------------
-
 type Spec = { name: string; version: string; source: string };
 
-/** The npm packages of every probe report in `dir`, as name@version, with their count per probe. */
 async function probeSpecs(dir: string): Promise<Map<string, Spec & { count: number }>> {
   const specs = new Map<string, Spec & { count: number }>();
   for (const { project, base } of await probeFiles(dir)) {
@@ -129,7 +122,7 @@ async function fetchManifest(name: string, version: string): Promise<Record<stri
 
 type ResolveExports = (pkg: unknown, entry: string, options: unknown) => string[] | undefined;
 
-/** resolve.exports 2.0.3, the resolver Vite 8.3.4 bundles, installed into a temp dir. */
+/** resolve.exports 2.0.3, the resolver Vite 8.3.4 bundles. */
 async function loadResolveExports(): Promise<{ resolve: ResolveExports; dir: string }> {
   const dir = await mkdtemp(join(tmpdir(), "depfit-resolve-exports-"));
   await writeFile(join(dir, "package.json"), '{ "private": true }');
@@ -230,7 +223,6 @@ async function scoreListing(control: string): Promise<void> {
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
-  // Gate B's frozen set must be what this listing gives under the rule.
   const set = asArray(asRecord(await readJson(join(HERE, "subpath-set.json"))).packages).map(
     asRecord,
   );
@@ -260,13 +252,10 @@ async function scoreListing(control: string): Promise<void> {
   await save("listing", { coverage, differences, fromRule, setMatches });
 }
 
-// --- A, B, C, D on the reference set -----------------------------------------------------------
-
 type ExpectedNull = { package: string; subpath: string; code: string; specifiers: unknown };
 
 async function loadExpectedNulls(): Promise<ExpectedNull[]> {
   const raw = asRecord(await readJson(join(HERE, "subpath-nulls.json")));
-  // Each entry carries its own review; an unreviewed or pending entry waives nothing.
   const isReviewed = (item: unknown) => {
     const reviewed = asString(asRecord(item).reviewed) ?? "";
     return reviewed !== "" && !reviewed.startsWith("pending");
@@ -286,7 +275,6 @@ async function loadExpectedNulls(): Promise<ExpectedNull[]> {
 
 type Problem = { code: string; specifier: string | null };
 
-/** Why a subpath null fails gate A, or null when it is a listed null with its listed reason. */
 function nullProblem(
   expected: ExpectedNull[],
   pkg: string,
@@ -309,7 +297,6 @@ function nullProblem(
   return other.length ? `unexpected specifiers ${[...new Set(other)].join(", ")}` : null;
 }
 
-/** Every reason code one `unavailable` entry reports: its leading code, a summary's, its groups'. */
 function entryCodes(entry: string): Set<string> {
   const { free, groups } = parseReason(entry);
   const codes = new Set<string>();
@@ -330,14 +317,12 @@ function repeatedCodes(reasons: string[]): string[] {
   return [...counts].filter(([, n]) => n > 1).map(([code, n]) => `${n} entries report ${code}`);
 }
 
-/** Format errors of every entry (`parseReason`), labelled. */
 function framingProblems(reasons: string[]): string[] {
   return reasons.flatMap((reason) =>
     parseReason(reason).errors.map((error) => `${error} in "${reason.slice(0, 80)}"`),
   );
 }
 
-/** The (key, code) pairs the entries name, each with how many times it is named. */
 function namedPairs(reasons: string[]): Map<string, number> {
   const pairs = new Map<string, number>();
   for (const reason of reasons) {
@@ -405,7 +390,7 @@ function conformance(depfitBytes: Bytes, vite: unknown): string | null {
   return null;
 }
 
-/** Installs a frozen wild lock as reference.ts does (`npm ci`, peers left out). */
+/** Installs a frozen wild lock with `npm ci --legacy-peer-deps`, peers left out. */
 async function installFrozen(id: string, name: string, version: string): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "depfit-subpath-score-"));
   const lock = await readFile(join(HERE, "locks", "wild", `${id}.json`), "utf8");
@@ -536,8 +521,6 @@ async function scoreReference(): Promise<void> {
   await save("reference", { coverage, aFail, honestNulls, bFail, bGross, cFail, dFail, results });
 }
 
-// --- A, D and F's subpath time on the probe packages ---------------------------------------------
-
 async function scoreProbePackages(locks: string, control: string): Promise<void> {
   process.env.DEPFIT_LOCK_DIR = locks;
   const expected = await loadExpectedNulls();
@@ -551,12 +534,10 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
     coverage.push(`${specs.size} packages and ${candidates} candidates, not 88 and 94`);
   }
   const times: Array<{ spec: string; ms: number; count: number; built: number }> = [];
-  /** Per package, the measurement call's results (cap 100), for gate E's correspondence. */
-  const measured: Record<string, unknown> = {};
+  const measured: Record<string, SavedMeasurement> = {};
   for (const [spec, { name, version, count }] of specs) {
     await withIsolatedInstall(name, version, async ({ dir }) => {
       const externals = externalPackages(await manifestIn(dir, name));
-      // (i) The measurement call, cap 100, twice: A's coverage and D.
       const first = await measureRootEntry(dir, name, externals, { subpaths: true });
       const second = await measureRootEntry(dir, name, externals, { subpaths: true });
       if (subpathState(first) !== subpathState(second)) dFail.push(`${spec}: two runs differ`);
@@ -580,16 +561,14 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
           (first.subpaths?.subpaths ?? []).map(({ key, outcome }) => [key, outcome.problems]),
         ),
       };
-      // Coverage: every listed key is built when the measurement call can build them all.
       const listedCount = first.subpaths?.listed ?? null;
       const builtCount = first.subpaths?.subpaths?.length ?? 0;
       const buildable =
-        first.subpaths?.exportsMap === true && listedCount !== null && listedCount <= 100;
+        first.subpaths?.exportsMap === true && listedCount !== null && listedCount <= SUBPATH_LIMIT;
       const rootFailed = first.whole.problems.some((p) => p.code === "TOOLCHAIN_MISMATCH");
       if (buildable && !rootFailed && builtCount !== listedCount) {
         coverage.push(`${spec}: ${builtCount} of ${listedCount} listed subpaths built`);
       }
-      // The default report's call, the CLI's own (`rootEntryBundle`, cap 30): F's time, the
       // number of builds, and A (ii) on its reasons.
       let ms = 0;
       const report = await rootEntryBundle(dir, name, await manifestIn(dir, name), {
@@ -602,7 +581,6 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
       times.push({ spec, ms: Math.round(ms), count, built });
       for (const repeated of repeatedCodes(report.reasons)) aFail.push(`${spec}: ${repeated}`);
       for (const framing of framingProblems(report.reasons)) aFail.push(`${spec}: ${framing}`);
-      // A (ii): each null value of the default report's map, named once per code of its build.
       const nullCodes = new Map(
         (subpathDetail(first) ?? [])
           .filter((d) => map !== null && map[d.entry_point] === null)
@@ -648,8 +626,6 @@ async function scoreProbePackages(locks: string, control: string): Promise<void>
   });
 }
 
-// --- E, D and R on the reports ----------------------------------------------------------------------
-
 type ProbeFile = { project: string; base: string };
 
 async function probeFiles(dir: string): Promise<ProbeFile[]> {
@@ -674,6 +650,8 @@ const BUNDLE_KEYS = Object.keys(FIELD_DESCRIPTIONS)
 const bundleEntries = (pkg: Record<string, unknown>) =>
   asStringArray(pkg.unavailable).filter((entry) => entry.startsWith("bundle:"));
 
+type SavedMeasurement = Measured & { reason: string | null; problems: Record<string, Problem[]> };
+
 type Measured = {
   exports_map: boolean | null;
   listed: number | null;
@@ -686,11 +664,6 @@ type Measured = {
   }> | null;
 };
 
-/**
- * The measurement call's results from a `probes` result file (gate E (iii)), named explicitly. It
- * must have passed its coverage, have been made with the `src/` now checked out, and match the
- * lockfiles now in `locks`; otherwise it proves nothing about these reports.
- */
 async function loadMeasured(
   file: string,
   locks: string,
@@ -750,7 +723,7 @@ export function rawMapKeys(text: string): Array<string[] | null> {
       continue;
     }
     const keys: string[] = [];
-    i++; // "{"
+    i++;
     for (;;) {
       while (/\s|,/.test(text[i] ?? "")) i++;
       if (text[i] === "}" || i >= text.length) break;
@@ -797,14 +770,12 @@ function contractProblems(
     if (namedPairs(reasons).size) problems.push("subpath keys named, but the map has no values");
   };
   if (!measured) return [...problems, "no measurement-call result for this package"];
-  // Metadata comes from the listing alone, so it must equal the measurement call's listing.
   if (exportsMap !== measured.exports_map)
     problems.push(`exports_map ${String(exportsMap)} vs measured ${String(measured.exports_map)}`);
   if (listed !== measured.listed)
     problems.push(`subpaths_listed ${String(listed)} vs measured ${String(measured.listed)}`);
   if (JSON.stringify(patterns) !== JSON.stringify(measured.patterns))
     problems.push("patterns differ from the measurement");
-  // (i) The first state that applies.
   const rootFailed = reasons.some((r) => /^bundle: (TOOLCHAIN_MISMATCH|BUNDLER_ERROR)\b/.test(r));
   if (exportsMap === null) {
     if (listed !== null || map !== null || patterns !== null)
@@ -847,7 +818,6 @@ function contractProblems(
     return problems;
   }
   if (!isRecord(map)) return [...problems, "map is not an object"];
-  // (ii) Serialized members, duplicates kept.
   const members = rawKeys ?? [];
   if (rawKeys === undefined || rawKeys === null)
     problems.push("map members not found in the JSON text");
@@ -857,7 +827,6 @@ function contractProblems(
   }
   if (members.length !== listed)
     problems.push(`map has ${members.length} members, listed ${listed}`);
-  // (iii) Correspondence with the measurement call: keys, values, and each null's codes.
   if (!measured.subpaths) return [...problems, "measurement call built no subpaths"];
   const expectedKeys = measured.subpaths.map((d) => d.entry_point);
   if (JSON.stringify(members) !== JSON.stringify(expectedKeys)) {
@@ -873,7 +842,6 @@ function contractProblems(
     }
     if (value === null) nullCodes.set(detail.entry_point, detail.unmeasurable_codes);
   }
-  // (iv) The named pairs are exactly the null values' codes, each once.
   problems.push(...pairProblems(reasons, nullCodes));
   return problems;
 }
@@ -885,7 +853,7 @@ const failedIn = (report: unknown) =>
     ),
   );
 
-/** Gate R's miss classes (SPEC.md iteration 2), from the snippet's shape and the listing. */
+/** Framework entry points: gate R's miss class 3 (SPEC.md iteration 2). */
 const FRAMEWORK_SUBPATH = /\/(react|preact|vue|svelte|solid|angular)$/;
 
 type Candidate = {
@@ -919,10 +887,7 @@ async function probeSets(): Promise<Map<string, string>> {
   return sets;
 }
 
-/**
- * Gate R's algorithm (SPEC.md iteration 2): the numbers for the entry points real usage imports.
- * Returns L, U, the uncovered entry points, and the miss class when out of range.
- */
+/** Gate R's algorithm (SPEC.md iteration 2). */
 function scoreCandidate(
   pkg: Record<string, unknown>,
   snippet: string,
@@ -1042,14 +1007,16 @@ async function scoreReports(options: {
     const id = `${project}/${base}`;
     const onText = await readFile(join(options.on, project, `${base}.json`), "utf8");
     const on = asRecord(JSON.parse(onText));
-    // The raw map members of each package with a bundle, in package order (gate E (ii)).
     const raw = rawMapKeys(onText);
+    const withBundle = asArray(on.packages).filter((p) => asRecord(p).bundle !== null).length;
+    if (raw.length !== withBundle) {
+      coverage.push(`${id}: ${raw.length} subpath maps in the text, ${withBundle} bundles`);
+    }
     let withMap = 0;
     const again = asRecord(await readJson(join(options.again, project, `${base}.json`)));
     const off = await readJson(join(options.off, project, `${base}.json`));
     const onPackages = asArray(on.packages).map(asRecord);
     const againPackages = asArray(again.packages).map(asRecord);
-    // Every arm measures the same frozen versions as the control run (gate H, the freeze).
     const control = asRecord(await readJson(join(options.control, project, `${base}.json`)));
     const controlVersions = asArray(control.packages).map((p) => asString(asRecord(p).version));
     const versions = onPackages.map((p) => asString(p.version));
@@ -1111,7 +1078,6 @@ async function scoreReports(options: {
       }
       const scored = scoreCandidate(pkg, snippet, real);
       candidates.push({ ...base, ...scored });
-      // R (c): every imported subpath the listing rule admits, of a package with at most 30
       // listed keys, is a key of the map, and a null one is a listed null under A.
       const imported = [...snippet.matchAll(/(?:from\s+|import\s+)"([^"]+)"/g)]
         .map((m) => m[1] ?? "")
@@ -1156,7 +1122,6 @@ async function scoreReports(options: {
       const [ra, rb] = [a.real ?? 0, b.real ?? 0];
       if (Math.max(ra, rb) < 1.1 * Math.min(ra, rb)) continue;
       const agrees = sign(ra - rb) === way;
-      // A disagreeing pair is classified by its candidates' miss classes (as in iteration 1).
       const missClass = agrees ? null : (a.miss_class ?? b.miss_class);
       pairs.push({ probe: a.probe, a: a.name, b: b.name, agrees, miss_class: missClass });
     }
@@ -1210,8 +1175,6 @@ async function scoreReports(options: {
     overCap,
   });
 }
-
-// --- H0: comprehension ------------------------------------------------------------------------------
 
 /** Gate H0's questions (SPEC.md): iteration 1's five, then six on subpaths (amended 2026-11-07). */
 const H0_QUESTIONS = [
