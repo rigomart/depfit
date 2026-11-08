@@ -873,7 +873,11 @@ fixes change only what happens to a worker that does not exit on its own, which 
 
 ## Cache (#8): measurements for the bar (2026-11-08)
 
-**Bar drafted and revised after review, pending the user's approval.** Measured for SPEC.md "Cache (#8)" on an Apple M4 Pro
+**Bar drafted, revised after review, then decided by the user (2026-11-08):** the tree is resolved
+by npm (`--package-lock-only`) on every repeat, and the ETag fast path is deferred, since a
+validator that does not match what npm read would serve a stale tree. The conditional-request and
+recording-rule measurements below are kept as the basis for that deferred option. The user approved
+the other recommendations as drafted (SPEC.md, "Decided by the user"). Measured for SPEC.md "Cache (#8)" on an Apple M4 Pro
 (12 cores), Node 24.14.1, Bun 1.3.14, npm 11.11.0, at 573991c, every command under `nice -n 10`,
 one at a time, at most 4 Vite workers, over the real registry from a home network. Research scripts
 are outside the repo and reuse depfit's own functions (`resolvePackage`, `advisories`,

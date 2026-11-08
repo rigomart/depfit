@@ -759,11 +759,12 @@ is no tolerance and no exception list for #7.
 
 ## Cache (#8): acceptance bar
 
-Drafted 2026-11-08 before any #8 code, then revised after an independent review (verdict in
-`STATUS.md`), for the user's approval. The measurements behind every target are in `STATUS.md`
-("Cache (#8): measurements for the bar"). #8 makes a repeat overview of a package version depfit has
-already measured, from any project, skip the npm install and every build. Live facts are fetched
-again on every call. No number, reason or existing field changes; one field is added.
+Drafted 2026-11-08 before any #8 code and revised after an independent review (verdict in
+`STATUS.md`). The user decided its open choices on 2026-11-08 (below); a second independent review
+follows. The measurements behind every target are in `STATUS.md` ("Cache (#8): measurements for the
+bar"). #8 makes a repeat overview of a package version depfit has already measured, from any
+project, skip the npm install and every build. Live facts are fetched again on every call. No
+number, reason or existing field changes; one field is added.
 
 ### Settled in #8
 
@@ -776,6 +777,19 @@ again on every call. No number, reason or existing field changes; one field is a
 - A hit gives byte-identical bundle facts to a fresh build, and a changed dependency tree is never
   served from the cache.
 
+### Decided by the user (2026-11-08)
+
+- **The tree is resolved by npm on every call** (`npm install --package-lock-only`), not checked
+  through packument ETags. A hit is a lockfile whose hash is already cached.
+- Install facts are cached in every workspace; the measurement in browser workspaces.
+- Limits: 2 GiB of install directories and 128 MiB of entries, least recently used evicted first,
+  no setting.
+- Only measurements whose codes depend on the package alone are cached.
+- Any change under `src/collect/` invalidates every entry.
+- `measured_at` is the only new field.
+- An unusable cache adds no `unavailable` entry.
+- `$XDG_CACHE_HOME` is honored on every platform.
+
 ### What is cached
 
 | Stored | Holds | Read by |
@@ -783,7 +797,6 @@ again on every call. No number, reason or existing field changes; one field is a
 | **Measurement** | The candidate's `RootEntryMeasurement` as the default report measures it: the whole build, the export names (the export list), the listing problems, each export's outcome, each listed subpath's outcome (default cap of 30), and the subpath state. Plus `measured_at`. | The overview, which recomputes `bundle` and its `unavailable` entries from it with today's code (`rootEntryFacts`); #10 later. |
 | **Install facts** | The tree as `readTree` gives it (path, version, edges, installed, disk bytes, install script, native files, license per package) and whether the package ships its own types (`shipsTypes`). | `cost` and `compatibility`, so a hit needs no install. |
 | **Install directory** | npm's output for the tree, with depfit's build leftovers (`.depfit-w<n>/`, `.depfit-vite-cache`) removed before it is kept. | #10 only. No #8 run reads a kept install: a miss measures in its own staging directory before publishing, and a hit reads only the entry. |
-| **Tree index** | Per `name@version` and npm settings (below): the lockfile last resolved for it, and its validators. | Finding the tree without an install. |
 
 - **Install facts are cached in every workspace,** and the measurement only in a browser
   workspace, where it is measured. A workspace with no browser signal reads and writes install
@@ -807,17 +820,18 @@ again on every call. No number, reason or existing field changes; one field is a
 
 - **Tree hash:** sha256 of the canonical JSON (keys sorted) of the whole lockfile npm wrote for the
   isolated install: `lockfileVersion` and every entry of `packages`, the root entry included.
-- **npm settings:** sha256 of `npm config list --json`, run in an empty directory. It covers npm's
-  version, the registry, peer handling, `omit` and `include`, and every other public setting. It
-  leaves out private settings such as registry credentials, which npm omits from that output; the
-  validator rule below handles them.
+- **npm settings:** sha256 of `npm config list --json`, run once per call in an empty directory. It
+  covers npm's version, the registry, peer handling, `omit` and `include`, and every other public
+  setting. It leaves out private settings such as registry credentials, which npm omits from that
+  output. Credentials can only change which tree npm resolves, and the resolution runs on every
+  call with the user's own npm, so they never need to be in the key.
 - **Measurement identity:** the cache format version; sha256 of every file under depfit's
   `src/collect/` and its `package.json` (any edit there invalidates, so no change is ever missed,
   at the cost of rebuilding after unrelated edits); `name@version` of every package in the
   dependency closure of the Vite that depfit loads, read from the installed manifests (not only
   Vite and rolldown, since Vite's own dependencies have ranges); the version of the runtime running
   depfit; the Node and zlib versions of the `node` that runs the workers (gzip happens there), read
-  once per run with `node -p`; platform, architecture and, on Linux, libc. `DEPFIT_BUNDLE_WORKERS`
+  once per call with `node -p`; platform, architecture and, on Linux, libc. `DEPFIT_BUNDLE_WORKERS`
   is not part of it: #7's P1 showed results do not depend on the count.
 - **Entry key:** sha256 of the measurement identity, the npm settings hash, the tree hash, the name
   and the version. The npm settings are in it because one lockfile can install different packages:
@@ -825,114 +839,90 @@ again on every call. No number, reason or existing field changes; one field is a
   measurement are stored under the key separately. A kept install's directory is named by the same
   key without the measurement identity.
 
-### Finding the tree without an install
+### Finding the tree
 
 For each npm candidate, after the live registry resolution gives its version:
 
-1. **No tree index for `name@version` and these npm settings:** today's `npm install`, run in a
-   new staging directory with `--loglevel=http` added so depfit can read which packuments npm
-   fetched. The tree hash comes from the lockfile it wrote.
-2. **An index with validators:** each validator is checked with a conditional GET (its ETag, the
-   `Accept` header npm sends for installs, no credentials), all at once. When every one is
-   unchanged, the indexed lockfile is the tree.
-3. **Otherwise** (no validators, one changed, or a request failed):
-   `npm install --package-lock-only --loglevel=http <name>@<version>` in a new staging directory
+1. **Nothing cached for `name@version`** (no entry directory for it): a cold call. Today's
+   `npm install <name>@<version>` in a new staging directory. The tree hash comes from the lockfile
+   it wrote. This keeps a first call at today's cost, with no extra npm run.
+2. **Otherwise:** `npm install --package-lock-only <name>@<version>` in a new staging directory
    that holds only the minimal manifest (no lockfile, no `node_modules`, so npm cannot keep an old
-   resolution). Its lockfile is the tree.
-4. **The entry for the key exists and is valid:** a hit. Otherwise `npm ci` from that lockfile in
+   resolution), with the call's own npm settings. Its lockfile's hash, with the identity and the
+   npm settings, gives the key.
+3. **The entry for the key exists and is valid:** a hit. Otherwise `npm ci` from that lockfile in
    its staging directory, so the installed tree is the hashed one by construction. Then measure and
    publish.
 
-With `DEPFIT_LOCK_DIR` replaying a frozen lockfile, that lockfile is the tree, and steps 1 to 3 are
-skipped.
+With `DEPFIT_LOCK_DIR` replaying a frozen lockfile, that lockfile is the tree: step 2 is skipped,
+and a miss replays it as today.
 
-**Why a floating range is never served stale.** npm's resolution depends on the packuments it
-reads and on its settings. Step 3 runs the same npm, with the same settings and local cache, that a
-fresh install would use at that moment, and only the dependency on `name@version`. A range floats
-only when a packument npm reads changes: a new version, a moved dist-tag, a deprecation or an
-unpublish. Any such change changes that packument's ETag, so step 2 fails and step 3 runs. The
-validators are every URL npm itself fetched in the resolution, read from its own log, not derived
-from the tree: npm reads packuments outside the final tree (motion's resolution read 14, for a
-tree of 5, including its optional peers).
+**Why a floating range is never served stale.** Step 2 runs the same npm, with the same settings
+and local cache, that a fresh install would use at that moment, for the same single dependency. Its
+lockfile is what that install would write: in every measured case the two were identical. A range
+that floats gives a different lockfile, so a different key, so a miss. Like npm, depfit sees the
+registry through npm's own cache and the registry's CDN: a publish younger than npm's cache
+freshness (300 s on npmjs) is seen by neither. "A changed tree is never served" means: never a tree
+other than the one `npm install` would install at that moment. Every registry, with or without
+credentials, takes this same path.
 
-**When validators are recorded.** They must describe what npm read, not something newer. After a
-resolution in step 1 or 3 that started at server time `S` (the `Date` header of the candidate's
-registry response), depfit sends a HEAD request for each logged URL. It records the ETags only when
-all of these hold:
-
-- Every URL is on `https://registry.npmjs.org/` and answers without credentials. Any other
-  registry, or a scope with its own registry or credentials, records nothing. npm's credentials are
-  private settings that the npm settings hash does not see, and this keeps them out of the rule.
-- Every line of npm's log for those URLs is a network fetch or a cache status of `hit`,
-  `revalidated` or `updated`. A `stale` status, which npm logs when it serves its cached copy
-  because a revalidation failed, records nothing.
-- Every response has an ETag, a `Last-Modified` and a `Cache-Control` max-age `M`, and every
-  `Last-Modified` is at or before `S − (2M + 60 s)`, which is 11 minutes on npmjs (M = 300 s). npm
-  reuses a fresh cached packument for at most `M`, and the CDN serves one at most `M` old, so a
-  packument that last changed before that window was read by npm as it is now.
-- npm's settings do not set `offline`, `prefer-offline` or `before`, and its log names a URL for
-  every package in the tree.
-
-Otherwise nothing is recorded, and the next call takes step 3, which is correct but slower. The HEAD
-requests run alongside the builds.
-
-**The boundary.** Like npm, depfit sees the registry through its CDN, and neither sees a publish
-younger than about `M`. "A changed tree is never served" means: never a tree other than the one
-`npm install` would install at that moment.
+**Deferred: an ETag fast path.** Checking the packuments npm read with conditional requests would
+take 0.09 to 0.15 s against step 2's 0.65 to 2.9 s once npm's cache is stale (measured, `STATUS.md`).
+It is left out because its correctness rests on recording validators that match what npm actually
+read, and a mismatch would serve a stale tree: a silent wrong number. Add it later only if real use
+shows that repeats across sessions, past npm's cache freshness, matter, under a bar of its own.
 
 ### Concurrency and failure
 
-- **Layout:** `<cache dir>/v1/`, holding `entries/`, `index/`, `installs/` and `tmp/`. Every install
-  and file is staged in `tmp/` of the same directory, so publishing is a rename on one filesystem
-  (on Linux `/tmp` is often a separate one). Staging names start with the host name and the PID of
-  the run. The cache directory is `$XDG_CACHE_HOME/depfit` when `XDG_CACHE_HOME` is set, on any
-  platform, so tests and CI can isolate it; otherwise `~/Library/Caches/depfit` on macOS,
-  `~/.cache/depfit` on Linux, `%LOCALAPPDATA%\depfit\Cache` on Windows.
+- **Layout:** `<cache dir>/v1/`, holding `entries/<name>@<version>/<key>.json`, `installs/` and
+  `tmp/`. Every install and file is staged in `tmp/` of the same directory, so publishing is a
+  rename on one filesystem (on Linux `/tmp` is often a separate one). Staging names start with the
+  host name and the PID of the call. The cache directory is `$XDG_CACHE_HOME/depfit` when
+  `XDG_CACHE_HOME` is set, on any platform, so tests and CI can isolate it; otherwise
+  `~/Library/Caches/depfit` on macOS, `~/.cache/depfit` on Linux, `%LOCALAPPDATA%\depfit\Cache` on
+  Windows.
 - **Writes:** an entry is written to `tmp/`, then hard-linked into place, and the first writer wins
   (as `recordLock` does), so `measured_at` stays the first measurement's. An install directory is
   renamed into `installs/`; when one is already there, the rename fails and the copy is deleted.
-  The tree index is replaced by rename (last writer wins). It is only a hint: whatever it points to
-  is checked.
 - **Reads:** an entry counts only when its JSON parses, its format version matches, its stored key
   equals the computed key, and the sha256 of its body matches the one stored with it. Anything else
   is a miss: the file is moved to `tmp/` and deleted, and the measurement is rebuilt. An entry
   deleted between finding it and reading it is also a miss.
-- **No locks.** Two runs that miss on the same package at once both install and build (with the
+- **No locks.** Two calls that miss on the same package at once both install and build (with the
   same results), and one entry stands. No lock can be left stale by a crash.
-- **A crashed run** leaves partial state only in `tmp/`. An eviction pass deletes a staging item
-  when its run is no longer alive on this host, or when it is older than 24 hours. On SIGINT or
+- **A crashed call** leaves partial state only in `tmp/`. An eviction pass deletes a staging item
+  when its call is no longer alive on this host, or when it is older than 24 hours. On SIGINT or
   SIGTERM, `children.ts` stops every child as today.
-- **An unusable cache** (no permission, a full disk, a read-only directory): the run measures
+- **An unusable cache** (no permission, a full disk, a read-only directory): the call measures
   everything fresh, as with `--no-cache`, and exits normally. No `unavailable` entry is added,
   since no fact is missing.
 - **A hit starts no Vite worker.** The pool starts only when some candidate misses.
 
 ### Size limit and eviction
 
-- **Two limits:** install directories 2 GiB; everything in `entries/` and `index/` 128 MiB.
-  Measured sizes: install directories 0.1 MB (clsx) to 38.5 MB (@mui/material), 16 MB median over
-  9 packages, and 337 MB for next (its native SWC binary). A measurement is 0.8 to 98.7 KB and
-  install facts 0.2 to 13.5 KB, so an entry is about 110 KB at most for the measured packages. An
-  index file holds a lockfile (0.5 to 31.7 KB) and its validators, about 35 KB at most. 128 MiB
-  holds about 900 packages at the largest of both.
+- **Two limits:** install directories 2 GiB; everything in `entries/` 128 MiB. Measured sizes:
+  install directories 0.1 MB (clsx) to 38.5 MB (@mui/material), 16 MB median over 9 packages, and
+  337 MB for next (its native SWC binary). A measurement is 0.8 to 98.7 KB and install facts 0.2 to
+  13.5 KB, so an entry is about 110 KB at most for the measured packages, and 128 MiB holds more
+  than 1,100 of the largest.
 - **Least recently used first.** An entry's last use is its mtime, touched on every hit; an
   install's is its publish time until #10 reads installs.
-- **When:** at the end of every run that opened the cache. Victims are taken least recently used
-  first until each part is under its limit; nothing published is exempt, since no #8 run reads an
+- **When:** at the end of every call that opened the cache. Victims are taken least recently used
+  first until each part is under its limit; nothing published is exempt, since no #8 call reads an
   item after publishing it. Victims are renamed into `tmp/`, then deleted. An install larger than
   its limit on its own is not kept. Sizes are recorded at publish time, so eviction does not walk
   the trees.
-- **The limits are soft only by work in flight:** a live run's staging directories, and leftovers
+- **The limits are soft only by work in flight:** a live call's staging directories, and leftovers
   waiting for the next eviction pass.
-- **#10 must define how a run takes hold of a kept install before reading it,** so eviction cannot
-  delete it under that run. #8 reads none, so it needs no such protocol.
-- **No setting** for the limits in #8. The README says where the cache is, and that deleting it is
+- **#10 must define how a call takes hold of a kept install before reading it,** so eviction cannot
+  delete it under that call. #8 reads none, so it needs no such protocol.
+- **No setting** for the limits. The README says where the cache is, and that deleting it is
   always safe.
 
 ### `--no-cache`
 
 Reads nothing, writes nothing, evicts nothing. It is today's path: the install goes to the system
-temp directory and is deleted afterwards. The report still has `measured_at`, from this run. The
+temp directory and is deleted afterwards. The report still has `measured_at`, from this call. The
 help text gains one line for it.
 
 ### Contract: one new field
@@ -941,9 +931,9 @@ help text gains one line for it.
 |---|---|
 | `packages[].bundle.measured_at` | ISO 8601 UTC time at which the measurement behind this section finished; null when no build behind it completed |
 
-- It is the stored measurement's time, whether the section was measured during this run or read
-  from the cache. It makes no claim about its order relative to `generated_at`: a concurrent run
-  can publish a measurement after this run starts.
+- It is the stored measurement's time, whether the section was measured during this call or read
+  from the cache. It makes no claim about its order relative to `generated_at`: a concurrent call
+  can publish a measurement after this call starts.
 - It is null when no build behind the section completed (a worker failure in the root phase, whose
   `BUNDLER_ERROR` entry explains it). A measurement whose subpath phase failed reports the time its
   last completed build finished. Neither is cached.
@@ -958,23 +948,23 @@ help text gains one line for it.
 
 "Today" is main at #8's parent commit (573991c, or the main it is rebased on), run alternately with
 #8 on the same machine and day, as in #7: at least 5 pairs, medians, `nice -n 10`, no other build
-running, warm npm cache, `test/fixtures/browser-app` unless a gate names another workspace. Every
-run's time, report and cache state are kept with the scorecard.
+running, `test/fixtures/browser-app` unless a gate names another workspace. Every call's time,
+report and cache state are kept with the scorecard. **Fresh npm cache** means npm resolved the same
+packages less than 300 s earlier (a repeat a few minutes later, the agent-loop case); **stale** means
+more than 300 s earlier, so npm revalidates every packument.
 
-**Preflight before code, as in #7.** K5's targets rest on a simulation of the hit path, since no
-cache code exists. Before any #8 code, a preflight measures on the implementation's first working
-path: the hit and its bookkeeping for each K5 (a) call, `zod valibot` included; how many probe
-candidates and reference packages get validators recorded (the recording rule's rate); the cold
-path's extra work; and an eviction pass. If a target is not met, the work goes back to the user,
+**Preflight on the first working code, as in #7.** K5's targets rest on the measured cost of each
+step, not on a run of the cache, which does not exist yet. A preflight measures K5 (a) to (c) on the
+first working path, `zod valibot` included. If a target is not met, the work goes back to the user,
 and targets are not moved to fit.
 
 | Gate | Pass condition |
 |---|---|
-| **K1. Same results** | Three runs per case: `--no-cache`, cold with an empty cache, and a hit. In each, the serialized report's `bundle` (without `measured_at`), its `bundle:` entries in `unavailable`, `cost`, and the install-derived fields of `compatibility` (`types_source`, `types_package`, `licenses_in_tree`) are identical byte for byte. The hit's `measured_at` equals the cold run's. The hit ran no build and started no worker (pool stats). Cases: every reference package (`single-reference.json`, the root cases of `cases.json`, `subpath-reference.json`, @storybook/addon-a11y) on its frozen tree through `DEPFIT_LOCK_DIR`, and #7's P1 (b) calls, live. Live fields may differ only under P1 (b)'s re-run rule. In a workspace with no browser signal, the install facts are identical and Vite is never loaded. |
-| **K2. A changed tree is never served** | (a) **Unit tests:** the tree hash changes with any entry's version, `resolved`, `integrity`, path or flags, the root entry's dependency, and a package added or removed; it ignores key order. The entry key changes with each identity input, with the npm settings hash, and with a package in Vite's closure changed while Vite's and rolldown's versions stay the same. (b) **A local test registry**, driving the tree check (steps 1 to 4) directly with the registry URL injected, since the CLI's own resolution reads npmjs. The test registry sets `Last-Modified`, ETags and `max-age=0`, so npm revalidates on every resolution, and npm's cache is a test directory. `fixture-a@1.0.0` depends on `fixture-b@^1.0.0`. After a first run, each of these makes the next run take step 3 and measure the new tree (a miss; the tree facts show the new version): publishing `fixture-b@1.1.0`; then moving `latest` back to 1.0.0 (npm prefers `latest` when it satisfies the range); then unpublishing 1.1.0. A change to the packument of an optional peer outside the tree takes step 3 and is still a hit. A `Last-Modified` inside the window, a missing ETag or max-age, a URL on another registry, or a 500 during step 3 with a stale npm cache (logged `stale`) records no validators, and the next run takes step 3. The same lockfile with `omit=optional` gives another entry key and other install facts. Each test asserts which step ran. (c) **Real registry,** every probe candidate and reference package: the tree depfit accepts through its validators equals the tree of `npm install --package-lock-only --prefer-online` run right after, in a fresh directory, with 0 differences; the validators cover every URL in npm's log of that run. |
-| **K3. Concurrency and failure** | Tests: two CLI runs at once on the same cold package and cache directory both pass K1, and leave one entry and one install. SIGKILL during the install, the builds, or between the write to `tmp/` and the link: the next run passes K1, and the next eviction pass removes the dead run's staging. A truncated, garbage, wrong-key, wrong-version or wrong-checksum entry is a miss, rebuilt and replaced. An entry deleted between the index lookup and its read is a miss. A transient failure (an unreadable manifest that gives `SUBPATH_LIST_FAILED`, an unreadable package directory during `readTree`, a worker crash) is not cached, and the next run measures again and caches the result. An unwritable cache directory: exit 0, a correct report. #7's P4 (d) (every child stops) still passes, with a run that publishes. |
-| **K4. Size and eviction** | Unit tests of the policy as a pure function (items with sizes and last use in, victims out): least recently used first, both limits, an install over its limit not kept. On the real file system, with test limits passed to the cache module: repeated publication leaves each part under its limit after every run; an oversized install is not kept; staging of a dead PID and of a 25-hour-old item is deleted and a live run's is not. The size recorded at publish is within 1% of `du` for the 9 measured packages. |
-| **K5. Speed** (provisional until the preflight) | (a) **Hit:** `zod`, `valibot`, `motion`, `shiki` and `zod valibot`, each at most 1.2 s median and no slower than today's same call with `DEPFIT_BUNDLE=0` (which still installs). (b) **depfit's own work for the cache on a hit,** that is its CPU and file time for the index read, the validator bookkeeping and the entry read and checks, excluding network waits and the dependency OSV lookup: at most 50 ms per candidate. (c) **Cold,** empty cache: each of #7's P1 (b) calls at most today's median + 0.15 s; with a cache at its install limit, so the call evicts at least one install of similar size, at most + 0.3 s; eviction time reported. (d) **Changed tree** (validators fail, a new tree): at most today's + 0.6 s. (e) **Validators changed, same tree:** still a hit; time reported for a fresh and a stale npm cache. (f) A workspace with no browser signal, on a hit: no slower than today. |
+| **K1. Same results** | Three calls per case: `--no-cache`, cold with an empty cache, and a hit. In each, the serialized report's `bundle` (without `measured_at`), its `bundle:` entries in `unavailable`, `cost`, and the install-derived fields of `compatibility` (`types_source`, `types_package`, `licenses_in_tree`) are identical byte for byte. The hit's `measured_at` equals the cold call's. The hit ran no build and started no worker (pool stats). Cases: every reference package (`single-reference.json`, the root cases of `cases.json`, `subpath-reference.json`, @storybook/addon-a11y) on its frozen tree through `DEPFIT_LOCK_DIR`, and #7's P1 (b) calls, live. Live fields may differ only under P1 (b)'s re-run rule. In a workspace with no browser signal, the install facts are identical and Vite is never loaded. |
+| **K2. A changed tree is never served** | (a) **Unit tests:** the tree hash changes with any entry's version, `resolved`, `integrity`, path or flags, the root entry's dependency, and a package added or removed; it ignores key order. The entry key changes with each identity input, with the npm settings hash, and with a package in Vite's closure changed while Vite's and rolldown's versions stay the same. (b) **A local test registry**, driving the tree step (steps 1 to 3) directly, with npm pointed at it through its settings, since the CLI's own version resolution reads npmjs. The registry sends `max-age=0`, so npm revalidates every resolution, and npm's cache is a test directory. `fixture-a@1.0.0` depends on `fixture-b@^1.0.0`. After a first call, each of these makes the next call miss and measure the new tree (the tree facts show the new version): publishing `fixture-b@1.1.0`; then moving `latest` back to 1.0.0 (npm prefers `latest` when it satisfies the range); then unpublishing 1.1.0. A change to the packument of an optional peer outside the tree is still a hit. The same lockfile with `omit=optional` gives another key and other install facts. Each test asserts which step ran. (c) **Real registry:** for every probe candidate and reference package, step 2's lockfile equals, whole file, the lockfile of a full `npm install` run right after it in a fresh directory, with 0 differences, so a cold call's key and a repeat's agree. |
+| **K3. Concurrency and failure** | Tests: two CLI calls at once on the same cold package and cache directory both pass K1, and leave one entry and one install. SIGKILL during the install, the builds, or between the write to `tmp/` and the link: the next call passes K1, and the next eviction pass removes the dead call's staging. A truncated, garbage, wrong-key, wrong-version or wrong-checksum entry is a miss, rebuilt and replaced. An entry deleted between finding it and its read is a miss. A transient failure (an unreadable manifest that gives `SUBPATH_LIST_FAILED`, an unreadable package directory during `readTree`, a worker crash) is not cached, and the next call measures again and caches the result. An unwritable cache directory: exit 0, a correct report. #7's P4 (d) (every child stops) still passes, with a call that publishes. |
+| **K4. Size and eviction** | Unit tests of the policy as a pure function (items with sizes and last use in, victims out): least recently used first, both limits, an install over its limit not kept. On the real file system, with test limits passed to the cache module: repeated publication leaves each part under its limit after every call; an oversized install is not kept; staging of a dead PID and of a 25-hour-old item is deleted and a live call's is not. The size recorded at publish is within 1% of `du` for the 9 measured packages. |
+| **K5. Speed** (provisional until the preflight) | (a) **Hit, fresh npm cache:** `zod`, `valibot`, `motion`, `shiki` and `zod valibot`, each at most 1.5 s median, and no slower than today's same call with `DEPFIT_BUNDLE=0`: the hit's lock-only resolution (measured 0.12 to 0.53 s) replaces that call's install (0.14 to 2.2 s), so it does less work. (b) **Hit, stale npm cache:** each of (a)'s calls at most today's same call with bundle facts on, which installs and builds (measured 1.8 to 5.2 s), and its time reported; lock-only then took 0.65 to 2.9 s. The `DEPFIT_BUNDLE=0` comparison does not hold here: a stale cache costs that call's install the same revalidation, and which of the two pays it first decides the pair, so it is reported, not gated. (c) **Cold,** empty cache: each of #7's P1 (b) calls at most today's median + 0.15 s; with a cache at its install limit, so the call evicts at least one install of similar size, at most + 0.3 s; eviction time reported. (d) **Changed tree** (a lockfile not yet cached, for a version already cached): at most today's + 0.6 s (step 2 and `npm ci` against today's install: measured + 0.12 to 0.14 s on a fresh npm cache). (e) **depfit's own work for the cache on a hit,** its CPU and file time for the settings and identity probes, hashing, and the entry read and checks, excluding the npm resolution, network waits and the dependency OSV lookup: at most 50 ms per candidate. (f) A workspace with no browser signal, on a hit: no slower than today. |
 | **K6. Contract and CI** | `measured_at` is in `report.ts`, `schema-docs` and the typed fixtures, and `ci/contract.ts` checks it. Type check, lint, unit tests, `ci/e2e.ts` on Bun and Node 22, and `ci/bundle-accuracy.ts` pass. CI: every `ci/e2e.ts` scenario runs with its own empty `XDG_CACHE_HOME`, and a new scenario runs the browser workspace twice and then with `--no-cache` (the second keeps the first's `measured_at` and passes K1; the third has a new one). `ci/bundle-accuracy.ts` runs its CLI step with `--no-cache` and an empty `XDG_CACHE_HOME`, so `bundle.cli.*` keeps timing builds; its measurement steps call `measureRootEntry` directly and never touch the cache. No `actions/cache` step includes depfit's cache directory. `eval/run.ts` and the gate scripts pass `--no-cache` unless a gate tests the cache. |
 
 #7's P1 to P5, iteration 1's gate F and iteration 2's gate F are rerun with `--no-cache` and must
@@ -987,11 +977,10 @@ the one npm would install, stops the work. There is no tolerance and no exceptio
 
 ### Out of scope
 
-- The follow-up flags (#10), and builds in a kept install. #10 must define how a run takes hold of
-  a kept install, and give each run's workers their own entry directories there, since two runs
+- The follow-up flags (#10), and builds in a kept install. #10 must define how a call takes hold of
+  a kept install, and give each call's workers their own entry directories there, since two calls
   can share one install.
 - A shared or hosted cache.
-- Caching live facts beyond one run.
-- Validators for registries other than npmjs, or with credentials (those take step 3 on every
-  call).
+- Caching live facts beyond one call.
+- The ETag fast path (deferred, above).
 - A cache command (clear, list) or a size setting.
