@@ -23,6 +23,8 @@ import {
   treeCost,
 } from "./facts.ts";
 import { type GithubFacts, githubFacts, githubToken, NO_GITHUB } from "./github.ts";
+import type { Cache } from "./cache.ts";
+import { cachedInstallFacts } from "./cached-install.ts";
 import { withIsolatedInstall } from "./install.ts";
 import { advisories, dependencyVulnerabilities } from "./osv.ts";
 import { loadProject, type Project } from "./project.ts";
@@ -40,6 +42,7 @@ import {
 } from "./registry.ts";
 import { manifestDeclaresTypes, shipsTypes } from "./types.ts";
 import { asRecord, asString, asStringRecord, errorMessage, reasonText } from "./util.ts";
+import type { ReportMeasurement } from "./root-entry.ts";
 import type { VitePool } from "./vite-pool.ts";
 
 type Settled<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -64,6 +67,8 @@ type Context = {
    * the module that runs Vite is never imported then.
    */
   bundlePool: (() => Promise<VitePool>) | null;
+  /** depfit's cache, opened once per call; null with `--no-cache` or when it cannot be used. */
+  cache: Promise<Cache | null>;
 };
 
 function failedReport(spec: string, name: string, error: string, unavailable: string[]) {
@@ -99,23 +104,18 @@ async function githubSection(
   return { ...(await settle(githubFacts(repo.owner, repo.repo, auth))), repository };
 }
 
+type BundleFacts = { bundle: Bundle | null; reasons: string[] };
+
+const bundlerError = (error: unknown): BundleFacts => ({
+  bundle: null,
+  reasons: [`bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`],
+});
+
 /**
- * Bundle facts for the root entry point. The module that runs Vite is imported only here, so a
- * workspace with no browser signal never loads Vite or rolldown.
+ * The module that runs Vite is imported only here, so a workspace with no browser signal never
+ * loads Vite or rolldown.
  */
-async function bundleFacts(
-  dir: string,
-  resolved: Resolved,
-  pool: () => Promise<VitePool>,
-): Promise<{ bundle: Bundle | null; reasons: string[] }> {
-  try {
-    const { rootEntryBundle } = await import("./root-entry.ts");
-    return await rootEntryBundle(dir, resolved.name, resolved.manifest, { pool: await pool() });
-  } catch (error) {
-    // Never fails the install: cost and the other install facts stay as they are.
-    return { bundle: null, reasons: [`bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`] };
-  }
-}
+const rootEntry = () => import("./root-entry.ts");
 
 /** Starts one worker as an install starts, so Vite's start-up overlaps the install. */
 function warmDuringInstall(pool: () => Promise<VitePool>): void {
@@ -125,14 +125,89 @@ function warmDuringInstall(pool: () => Promise<VitePool>): void {
   );
 }
 
-/** Everything that needs the isolated install of the candidate itself. */
-async function treeFacts(resolved: Resolved, pool: (() => Promise<VitePool>) | null) {
+type TreeFacts = {
+  tree: TreePackage[];
+  vulnerabilities: Settled<string[]>;
+  bundledTypes: boolean;
+  bundle: BundleFacts | null;
+};
+
+/** Everything that needs the isolated install of the candidate itself, or its cached facts. */
+async function treeFacts(resolved: Resolved, context: Context): Promise<TreeFacts> {
+  const pool = context.bundlePool;
+  const cache = await context.cache;
+  if (!cache) return isolatedTreeFacts(resolved, pool);
+  const vulnerabilitiesOf = (tree: TreePackage[]) =>
+    settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree)));
+  let vulnerabilities: Promise<Settled<string[]>> | null = null;
+  let measureError: unknown = null;
+  const module = pool ? await rootEntry() : null;
+  const facts = await cachedInstallFacts(cache, resolved, {
+    measure:
+      module && pool
+        ? async (dir) => {
+            try {
+              return await module.measureForReport(dir, resolved.name, resolved.manifest, {
+                pool: await pool(),
+              });
+            } catch (error) {
+              // Never fails the install: cost and the other install facts stay as they are.
+              measureError = error;
+              return null;
+            }
+          }
+        : null,
+    cacheable: (measurement) => module?.cacheableMeasurement(measurement) ?? false,
+    onInstall: pool ? () => warmDuringInstall(pool) : undefined,
+    onTree: (tree) => {
+      vulnerabilities = vulnerabilitiesOf(tree);
+    },
+  });
+  const bundle = module ? await bundleOf(module, facts.measurement, measureError) : null;
+  return {
+    tree: facts.tree,
+    vulnerabilities: await (vulnerabilities ?? vulnerabilitiesOf(facts.tree)),
+    bundledTypes: facts.bundledTypes,
+    bundle,
+  };
+}
+
+async function bundleOf(
+  module: Awaited<ReturnType<typeof rootEntry>>,
+  measurement: ReportMeasurement | null,
+  error: unknown,
+): Promise<BundleFacts> {
+  if (!measurement) return bundlerError(error ?? new Error("not measured"));
+  try {
+    const { bundlerName } = await import("./bundle.ts");
+    return module.reportFacts(measurement, await bundlerName());
+  } catch (failure) {
+    return bundlerError(failure);
+  }
+}
+
+/** `--no-cache`, or a cache that cannot be used: today's isolated install, deleted afterwards. */
+async function isolatedTreeFacts(
+  resolved: Resolved,
+  pool: (() => Promise<VitePool>) | null,
+): Promise<TreeFacts> {
   if (pool) warmDuringInstall(pool);
   return withIsolatedInstall(resolved.name, resolved.version, async ({ dir, tree }) => {
     const [vulnerabilities, bundledTypes, bundle] = await Promise.all([
       settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree))),
       shipsTypes(join(dir, "node_modules", resolved.name), resolved.manifest),
-      pool ? bundleFacts(dir, resolved, pool) : null,
+      pool
+        ? (async (): Promise<BundleFacts> => {
+            try {
+              const module = await rootEntry();
+              return await module.rootEntryBundle(dir, resolved.name, resolved.manifest, {
+                pool: await pool(),
+              });
+            } catch (error) {
+              return bundlerError(error);
+            }
+          })()
+        : null,
     ]);
     return { tree, vulnerabilities, bundledTypes, bundle };
   });
@@ -172,7 +247,7 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
   // DefinitelyTyped is looked up alongside the install, and ignored if the install ships types.
   const declaresTypes = manifestDeclaresTypes(manifest);
   const [install, ownAdvisories, github, downloadStats, typesLookup] = await Promise.all([
-    settle(treeFacts(resolved, context.bundlePool)),
+    settle(treeFacts(resolved, context)),
     settle(advisories(name, version, inRepo?.installed_versions ?? [])),
     githubSection(manifest, context.token),
     settle(weeklyDownloads(name)),
@@ -264,7 +339,7 @@ export function bundleSkipped(
   return null;
 }
 
-export const collect: Collect = async (specs, { cwd }) => {
+export const collect: Collect = async (specs, { cwd, cache: useCache = true }) => {
   const generatedAt = new Date().toISOString();
   const loaded = await settle(loadProject(resolve(cwd)));
   const project = loaded.ok ? loaded.value : null;
@@ -273,6 +348,10 @@ export const collect: Collect = async (specs, { cwd }) => {
   const skipped = bundleSkipped(project);
   const npmCandidates = specs.filter((spec) => parseSpec(spec).kind === "npm").length;
   let pool: Promise<VitePool> | undefined;
+  const cache: Promise<Cache | null> =
+    useCache && npmCandidates > 0
+      ? import("./cache.ts").then(({ openCache }) => openCache())
+      : Promise.resolve(null);
   const context: Context = {
     project,
     projectError: loaded.ok ? null : loaded.error,
@@ -290,6 +369,7 @@ export const collect: Collect = async (specs, { cwd }) => {
             return pool;
           }
         : null,
+    cache,
   };
 
   let packages: PackageReport[];
@@ -309,6 +389,7 @@ export const collect: Collect = async (specs, { cwd }) => {
         (started) => started.close(),
         () => {},
       );
+    await cache.then((opened) => opened?.evict()).catch(() => {});
   }
 
   return {

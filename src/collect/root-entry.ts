@@ -478,6 +478,7 @@ function compactSubpaths(subpaths: SubpathMeasurement | null) {
 export function rootEntryFacts(
   measurement: RootEntryMeasurement,
   bundler: string,
+  measuredAt: string | null = null,
 ): { bundle: Bundle; reasons: string[] } {
   const { whole, names, singles } = measurement;
   const measured = singles?.flatMap(({ outcome }) => (outcome.bytes ? [outcome.bytes] : [])) ?? [];
@@ -521,9 +522,108 @@ export function rootEntryFacts(
       ),
       external_packages: leftOut(measurement),
       ...compactSubpaths(measurement.subpaths),
+      measured_at: measuredAt,
     },
     reasons: reasons.map((reason) => reason.text),
   };
+}
+
+/**
+ * The default report's measurement of `candidate` in `dir`, with when it finished: `crash` is the
+ * `bundle: BUNDLER_ERROR` entry of a root phase that failed to run, whose measurement is empty and
+ * whose `measuredAt` is null, since no build behind it completed.
+ */
+export type ReportMeasurement = {
+  measurement: RootEntryMeasurement;
+  crash: string | null;
+  measuredAt: string | null;
+};
+
+/** Codes that depend on the package alone, so a measurement reporting only these can be reused. */
+const PACKAGE_CODES = new Set([
+  "UNRESOLVED_IMPORT",
+  "MISSING_EXPORT",
+  "IMPORT_OUTSIDE_BUNDLE",
+  "NO_ENTRY",
+  "NON_JS_IMPORT",
+  "PEER_IN_BUNDLE",
+]);
+
+/**
+ * Whether a measurement may be cached (SPEC.md, "Cache (#8)"): every code it reports depends on
+ * the package alone, and no phase failed to run. Any other code (BUNDLER_ERROR, BUILD_ERROR,
+ * SUBPATH_LIST_FAILED, TOOLCHAIN_MISMATCH, a pass-through bundler code) may come from the machine.
+ */
+export function cacheableMeasurement({ measurement, crash }: ReportMeasurement): boolean {
+  if (crash !== null) return false;
+  const { whole, listProblems, singles, subpaths } = measurement;
+  const outcomes = [
+    whole,
+    ...(singles ?? []).map((single) => single.outcome),
+    ...(subpaths?.subpaths ?? []).map((subpath) => subpath.outcome),
+  ];
+  const problems = [...listProblems, ...outcomes.flatMap((outcome) => outcome.problems)];
+  if (!problems.every((problem) => PACKAGE_CODES.has(problem.code))) return false;
+  // A failed build that recorded no code is reported as BUILD_ERROR.
+  if (outcomes.some((outcome) => outcome.bytes === null && outcome.problems.length === 0)) {
+    return false;
+  }
+  const reason = subpaths?.reason ?? null;
+  return reason === null || reason.startsWith("bundle: SUBPATH_LIMIT ");
+}
+
+/**
+ * Measures `candidate` installed in `dir` as the default report does, its peers (from `manifest`)
+ * left out. A root phase that fails to run gives an empty measurement and its crash entry.
+ */
+export async function measureForReport(
+  dir: string,
+  candidate: string,
+  manifest: Record<string, unknown>,
+  options: {
+    onSubpathPhase?: (ms: number) => void;
+    runnerScript?: string;
+    pool?: VitePool;
+    serial?: boolean;
+  } = {},
+): Promise<ReportMeasurement> {
+  const { onSubpathPhase, runnerScript, pool, serial } = options;
+  const externals = externalPackages(manifest);
+  const listStarted = performance.now();
+  const listed = await readListing(dir, candidate);
+  const listMs = performance.now() - listStarted;
+  try {
+    const measurement = await measureRootEntry(dir, candidate, externals, {
+      subpaths: true,
+      listing: listed,
+      subpathLimit: REPORT_SUBPATH_LIMIT,
+      runnerScript,
+      pool,
+      serial,
+      onSubpathPhase: (ms) => onSubpathPhase?.(listMs + ms),
+    });
+    return { measurement, crash: null, measuredAt: new Date().toISOString() };
+  } catch (error) {
+    // manifest (a separate cause) keeps its own.
+    const crashed: RootEntryMeasurement = {
+      whole: { bytes: null, problems: [] },
+      names: null,
+      listProblems: [],
+      singles: null,
+      subpaths: unbuiltSubpaths(listed, REPORT_SUBPATH_LIMIT),
+    };
+    const crash = `bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`;
+    return { measurement: crashed, crash, measuredAt: null };
+  }
+}
+
+/** The bundle section and its `unavailable` entries for a measurement, the crash entry first. */
+export function reportFacts(
+  { measurement, crash, measuredAt }: ReportMeasurement,
+  bundler: string,
+): { bundle: Bundle; reasons: string[] } {
+  const { bundle, reasons } = rootEntryFacts(measurement, bundler, measuredAt);
+  return { bundle, reasons: crash ? [crash, ...reasons] : reasons };
 }
 
 /**
@@ -545,34 +645,6 @@ export async function rootEntryBundle(
     serial?: boolean;
   } = {},
 ): Promise<{ bundle: Bundle; reasons: string[] }> {
-  const { onSubpathPhase, runnerScript, pool, serial } = options;
-  const externals = externalPackages(manifest);
   const bundler = await bundlerName();
-  const listStarted = performance.now();
-  const listed = await readListing(dir, candidate);
-  const listMs = performance.now() - listStarted;
-  try {
-    const measurement = await measureRootEntry(dir, candidate, externals, {
-      subpaths: true,
-      listing: listed,
-      subpathLimit: REPORT_SUBPATH_LIMIT,
-      runnerScript,
-      pool,
-      serial,
-      onSubpathPhase: (ms) => onSubpathPhase?.(listMs + ms),
-    });
-    return rootEntryFacts(measurement, bundler);
-  } catch (error) {
-    // manifest (a separate cause) keeps its own.
-    const crashed: RootEntryMeasurement = {
-      whole: { bytes: null, problems: [] },
-      names: null,
-      listProblems: [],
-      singles: null,
-      subpaths: unbuiltSubpaths(listed, REPORT_SUBPATH_LIMIT),
-    };
-    const { bundle, reasons } = rootEntryFacts(crashed, bundler);
-    const crash = `bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`;
-    return { bundle, reasons: [crash, ...reasons] };
-  }
+  return reportFacts(await measureForReport(dir, candidate, manifest, options), bundler);
 }

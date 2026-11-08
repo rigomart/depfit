@@ -102,7 +102,7 @@ describe("rootEntryFacts", () => {
 
   it("reports the whole build and the median of the measured exports", () => {
     const withReact = measurement({ whole: ok(1000, ["react"]) });
-    expect(rootEntryFacts(withReact, BUNDLER)).toEqual({
+    expect(rootEntryFacts(withReact, BUNDLER, "2026-11-08T12:00:00.000Z")).toEqual({
       bundle: {
         bundler: BUNDLER,
         target: "browser",
@@ -119,6 +119,7 @@ describe("rootEntryFacts", () => {
         subpaths_listed: 0,
         subpaths_whole_eager_js_gzip9_bytes: {},
         subpath_patterns_unmeasured: [],
+        measured_at: "2026-11-08T12:00:00.000Z",
       },
       reasons: [],
     });

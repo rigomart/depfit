@@ -8,7 +8,12 @@ describe("parseCliArgs", () => {
       specs: ["zod", "valibot@^1"],
       cwd: "../app",
       output: "json",
+      cache: true,
     });
+  });
+
+  it("turns the cache off with --no-cache", () => {
+    expect(parseCliArgs(["zod", "--no-cache"])).toMatchObject({ kind: "run", cache: false });
   });
 
   it("rejects --bundle-entry, which was removed in schema 6", () => {

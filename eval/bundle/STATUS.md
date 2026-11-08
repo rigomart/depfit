@@ -1043,3 +1043,39 @@ threshold:
    covers all of K5, the 50 ms budget is CPU time with the probes reported apart, and stale-cache
    pairs start from one restored snapshot.
 7. Nit: the ETag rate paragraph is labelled historical, and the size measurement's limits stated.
+
+## Cache (#8): preflight (2026-11-08)
+
+Run on the first working path (the cache, the tree step, `--no-cache`, `measured_at`), as SPEC.md
+"Cache (#8)" requires before the rest of the work. "Today" is 573991c in a separate checkout, same
+machine, `nice -n 10`, one call at a time, `test/fixtures/browser-app`, warm npm cache unless said.
+Medians, ms. Raw rows are kept with the author's evidence (local, gitignored).
+
+**Pair order matters on this machine.** The first runs alternated today then #8 in every pair, as
+the bar's protocol reads; #8 always ran second. They showed #8 0.03 to 0.55 s slower on cold calls
+(motion +0.29 s, four packages +0.55 s) and on zod's hit (+0.09 s). Swapping the order every round
+(today first in even rounds, #8 first in odd ones) removed every cold gap, and a three-way run
+(today, `--no-cache`, cold) gave the same 5.2 s for motion on all three. The numbers below use the
+swapped order, 6 rounds; the protocol change is for the user to approve.
+
+| Target | Result | Pass |
+|---|---|---|
+| K5 (a) hit, fresh npm cache: at most 1.5 s, and no slower than today with `DEPFIT_BUNDLE=0` | zod 1.31 against 1.27 (+0.03); valibot 1.06 against 1.06 (+0.01); motion **1.56** against 1.71; shiki 1.35 against 1.71; `zod valibot` 1.29 against 1.30 | **No:** motion is over 1.5 s; zod and valibot are 10 to 30 ms slower |
+| K5 (b) hit, stale npm cache (both calls from one restored snapshot older than 300 s): at most today's full call | zod 1.28 against 4.54; valibot 1.07 against 2.14; motion 3.00 against 6.86; shiki 3.23 against 7.14; `zod valibot` 1.29 against 5.30 | Yes |
+| K5 (c) cold, empty cache: at most today + 0.15 s | motion +0.04, date-fns −0.13, four packages −0.24 (swapped order); first runs, today first: clsx −0.05, valibot +0.02, zod 0.00, `zod valibot` +0.04, `node:sqlite` 0.00, a missing name +0.02 | Yes |
+| K5 (c) cold, cache at its install limit (the oldest install, a real 14 MB copy, is evicted): at most + 0.3 s | zod +0.02, motion +0.02; evicted in every run | Yes |
+| K5 (d) changed tree: at most today + 0.6 s | zod +0.12, motion +0.14 | Yes |
+| K5 (e) depfit's CPU in the cache code | opening the cache 24 ms once per call (identity and settings, in process); hashing and reading both parts 0.3 to 1.1 ms per candidate; eviction 1.1 ms | Yes |
+| K5 (f) a workspace with no browser signal, hit: no slower than today | zod −0.01, valibot 0.00, motion −0.25, shiki −0.26, `zod valibot` −0.02 | Yes |
+
+**Where a hit's time goes** (one traced call each). zod: the registry resolution ends at 0.64 s,
+the cache's tree step (lock-only resolution and both parts read) at 0.80 s, and the live OSV
+lookup at 1.23 to 1.27 s, which ends the call; the same code with `--no-cache` and bundle facts off
+ends at the same time, its install finishing at 0.94 s. So for a package with no dependencies,
+both calls wait on OSV, and the hit's 140 ms head start does not show. motion: resolution 0.52 s,
+lock-only 0.31 s more, then the dependency OSV query, which needs the tree, about 0.65 s (the
+research simulation measured 0.3 to 0.45 s for it), ending at 1.41 to 1.52 s.
+
+K1 so far: on the first cold, hit and `--no-cache` calls of zod, `bundle` without `measured_at`,
+`unavailable` and `cost` were identical, and the hits kept the cold call's `measured_at`; every
+stale-cache hit kept its `measured_at`. The full K1 to K4 gates have not run.

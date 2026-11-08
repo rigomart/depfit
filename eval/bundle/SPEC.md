@@ -951,10 +951,7 @@ help text gains one line for it.
 - It is null when no build behind the section completed (a worker failure in the root phase, whose
   `BUNDLER_ERROR` entry explains it). A measurement whose subpath phase failed reports the time its
   last completed build finished. Neither is cached.
-- **`--schema`:** "When the measurement behind this section's numbers finished, as an ISO 8601 UTC
-  time. It can predate this run: depfit reuses a measurement from its local cache only for the
-  identical resolved install tree, npm settings, build engine and settings. Null when no build
-  behind this section completed."
+- **`--schema`** (one sentence, as every field's): "When the measurement behind this section's numbers finished, as an ISO 8601 UTC time, which can predate this run because depfit reuses a measurement from its local cache for the identical resolved install tree, npm settings, build engine and settings; null when no build behind this section completed."
 - **Table:** the bundle section gains a "Measured at" line.
 - `SCHEMA_VERSION` stays 6: a field is added, none renamed or changed, and schema 6 is unreleased.
 
