@@ -1,4 +1,4 @@
-import { cp, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,6 +21,7 @@ import {
   unbuiltSubpaths,
 } from "../src/collect/root-entry.ts";
 import { SUBPATH_LIMIT } from "../src/collect/subpaths.ts";
+import { createVitePool } from "../src/collect/vite-pool.ts";
 import { browserProject } from "./reports.ts";
 
 const BUNDLER = "vite@8.3.4 (rolldown@1.2.14)";
@@ -863,5 +864,128 @@ describe("measureRootEntry on fixture packages", () => {
     const fromSingles = new Set(Object.values(imported(result).singles).flat());
     expect([...fromSingles]).toEqual(imported(result).whole);
     expect(rootEntryFacts(result, "vite").bundle.external_packages).toEqual(["peer"]);
+  });
+});
+
+describe("measureRootEntry on a shared pool", () => {
+  const scripted = fileURLToPath(new URL("./fixtures/runner/scripted.mjs", import.meta.url));
+  type Rule = { match: string; delayMs?: number; crash?: string };
+  const WHOLE = 'import * as __depfit_0 from "with-subpaths";';
+  const CORE = "{ core as __depfit_0 }";
+  const DEFAULT = 'import __depfit_0 from "with-subpaths";';
+
+  /** with-subpaths installed in a temp dir, with rules for the scripted runner. */
+  async function installed(rules: Rule[] | null): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), "depfit-root-pool-"));
+    await writeFile(join(dir, "package.json"), '{ "private": true }');
+    await cp(
+      join(fixtures, "bundle", "with-subpaths"),
+      join(dir, "node_modules", "with-subpaths"),
+      {
+        recursive: true,
+      },
+    );
+    if (rules) {
+      await writeFile(join(dir, "runner-rules.json"), JSON.stringify({ exports: ["core"], rules }));
+    }
+    return dir;
+  }
+
+  async function measured(
+    rules: Rule[] | null,
+    options: { size?: number; lifo?: boolean; serial?: boolean; script?: string | null } = {},
+  ) {
+    const dir = await installed(rules);
+    const script = options.script === null ? undefined : (options.script ?? scripted);
+    const pool = createVitePool({ size: options.size ?? 4, lifo: options.lifo, script });
+    try {
+      const result = await measureRootEntry(dir, "with-subpaths", [], {
+        subpaths: true,
+        pool,
+        serial: options.serial,
+      }).catch((error: unknown) => error);
+      const log = (await readFile(join(dir, "runner-log.txt"), "utf8").catch(() => ""))
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line.slice(0, line.lastIndexOf(" "))) as string);
+      return { result, log };
+    } finally {
+      await pool.close();
+      await rm(dir, { recursive: true, force: true });
+    }
+  }
+
+  it("keeps the root's results when a subpath build fails while root builds still run", async () => {
+    const { result } = await measured([
+      { match: "with-subpaths/", crash: "subpath crash" },
+      { match: CORE, delayMs: 300 },
+      { match: DEFAULT, delayMs: 300 },
+    ]);
+    expect(result).toMatchObject({
+      whole: { bytes: { eager_js_gzip9_bytes: 35 } },
+      names: ["core", "default"],
+      subpaths: { exportsMap: true, listed: 3, subpaths: null },
+    });
+    const measurement = result as RootEntryMeasurement;
+    expect(
+      measurement.singles?.map((single) => single.outcome.bytes?.eager_js_gzip9_bytes),
+    ).toEqual([35, 35]);
+    expect(measurement.subpaths?.reason).toMatch(
+      /^bundle: BUNDLER_ERROR vite build exited 1: subpath crash/,
+    );
+  });
+
+  it("reports the failure that comes first in today's order, whatever finished first", async () => {
+    const late = await measured([
+      { match: CORE, delayMs: 300, crash: "crash core" },
+      { match: DEFAULT, crash: "crash default" },
+    ]);
+    expect(String(late.result)).toMatch(/crash core/);
+    const early = await measured([
+      { match: CORE, crash: "crash core" },
+      { match: DEFAULT, delayMs: 300, crash: "crash default" },
+    ]);
+    expect(String(early.result)).toMatch(/crash core/);
+  });
+
+  it("starts nothing else until the whole build is in", async () => {
+    const { log } = await measured([{ match: WHOLE, delayMs: 200 }]);
+    expect(log[0]).toContain(WHOLE);
+    expect(log).toHaveLength(7);
+  });
+
+  it("builds one at a time in today's order on the serial schedule", async () => {
+    const { log } = await measured([], { size: 1, serial: true });
+    const order = [
+      WHOLE,
+      "export * from",
+      "export { default }",
+      CORE,
+      DEFAULT,
+      '"with-subpaths/core"',
+      '"with-subpaths/node"',
+    ];
+    expect(log.map((source) => order.findIndex((part) => source.includes(part)))).toEqual([
+      0, 1, 2, 3, 4, 5, 6,
+    ]);
+  });
+
+  it("gives the same result with real Vite whatever the worker count or order", async () => {
+    const sorted = (value: unknown) =>
+      JSON.stringify(value, (_, inner: unknown) =>
+        Array.isArray(inner) &&
+        inner.every((item) => typeof item === "object" && item && "code" in item)
+          ? [...inner].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
+          : inner,
+      );
+    const runs = await Promise.all([
+      measured(null, { size: 1, serial: true, script: null }),
+      measured(null, { size: 1, script: null }),
+      measured(null, { size: 4, script: null }),
+      measured(null, { size: 4, lifo: true, script: null }),
+    ]);
+    const [first, ...rest] = runs.map((run) => sorted(run.result));
+    expect(first).toContain('"eager_js_gzip9_bytes"');
+    for (const other of rest) expect(other).toBe(first);
   });
 });

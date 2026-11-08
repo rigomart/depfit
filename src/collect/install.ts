@@ -1,5 +1,5 @@
 /** Isolated `npm install` of one package in a temp dir, to see its own tree with no dedupe. */
-import { execFile } from "node:child_process";
+import { type ExecFileOptions, execFile } from "node:child_process";
 import {
   copyFile,
   link,
@@ -13,12 +13,18 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { promisify } from "node:util";
+import { track } from "./children.ts";
 import type { TreeEdge, TreePackage } from "./facts.ts";
 import { resolveAlias } from "./lockfile.ts";
 import { asRecord, asString, asStringRecord } from "./util.ts";
 
-const run = promisify(execFile);
+/** Runs npm, registered as depfit's child (children.ts) so a signal to depfit also stops it. */
+function npm(args: string[], options: ExecFileOptions): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = execFile("npm", args, options, (error) => (error ? reject(error) : resolve()));
+    track(child);
+  });
+}
 
 export type Install = { dir: string; tree: TreePackage[] };
 
@@ -147,10 +153,10 @@ export async function withIsolatedInstall<T>(
       const dependencies = asStringRecord(root.dependencies);
       await writeFile(join(dir, "package.json"), JSON.stringify({ ...manifest, dependencies }));
       await writeFile(join(dir, "package-lock.json"), frozen);
-      await run("npm", ["ci", ...NPM_FLAGS], options);
+      await npm(["ci", ...NPM_FLAGS], options);
     } else {
       await writeFile(join(dir, "package.json"), JSON.stringify(manifest));
-      await run("npm", ["install", `${name}@${version}`, ...NPM_FLAGS], options);
+      await npm(["install", `${name}@${version}`, ...NPM_FLAGS], options);
       if (lockPath) await recordLock(join(dir, "package-lock.json"), lockPath);
     }
     return await use({ dir, tree: await readTree(dir) });

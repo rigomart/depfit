@@ -15,9 +15,10 @@ bun ci/e2e.ts              # CLI on test/fixtures against the output contract (C
 bun ci/bundle-accuracy.ts  # the bundle eval's frozen reference cases, exact
 ```
 
-Collecting needs network access and `npm` on PATH. Two environment switches exist for the eval and CI only:
-`DEPFIT_BUNDLE=0` turns bundle facts off, and `DEPFIT_LOCK_DIR=<dir>` records each isolated install's
-lockfile there, or replays it with `npm ci` when one exists. GitHub facts need `GITHUB_TOKEN`, `GH_TOKEN`,
+Collecting needs network access and `npm` on PATH. Three environment switches exist for the eval and CI only:
+`DEPFIT_BUNDLE=0` turns bundle facts off, `DEPFIT_LOCK_DIR=<dir>` records each isolated install's
+lockfile there, or replays it with `npm ci` when one exists, and `DEPFIT_BUNDLE_WORKERS=<1-4>` sets
+how many Vite workers build bundle measurements. GitHub facts need `GITHUB_TOKEN`, `GH_TOKEN`,
 or a logged-in `gh`; without one they are null and listed in `unavailable`.
 
 ## Layout
@@ -27,9 +28,11 @@ or a logged-in `gh`; without one they are null and listed in `unavailable`.
 - `src/schema-docs.ts`: one sentence per JSON path, printed by `--schema`.
 - `src/collect/`: builds the `Report`. `facts.ts` and `lockfile.ts` are pure; the rest read the
   project or call npm, OSV, and GitHub. `bundle.ts` builds with a real `vite build` in a separate
-  Node process (`vite-build.mjs`, one process per package, one build per request).
-  `root-entry.ts` measures the root entry point whole and each export alone; `index.ts` imports
-  it only in a browser workspace (`project.browser_signals`), so Vite is never loaded otherwise.
+  Node process (`vite-build.mjs`, one build per request). `vite-pool.ts` runs those processes as a
+  pool shared by every candidate of a run, and `children.ts` stops every child process depfit
+  started when it is signalled. `root-entry.ts` measures the root entry point whole, each export
+  alone and each subpath whole, all at once on the pool; `index.ts` imports it only in a browser
+  workspace (`project.browser_signals`), so Vite is never loaded otherwise.
   The eval also measures import snippets (`bundle-entry.ts`) as real-usage ground truth.
   Acceptance bar: `eval/bundle/SPEC.md`.
 - `src/render/`: the human table, a view of the `Report`.

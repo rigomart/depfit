@@ -40,6 +40,7 @@ import {
 } from "./registry.ts";
 import { manifestDeclaresTypes, shipsTypes } from "./types.ts";
 import { asRecord, asString, asStringRecord, errorMessage, reasonText } from "./util.ts";
+import type { VitePool } from "./vite-pool.ts";
 
 type Settled<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -58,6 +59,11 @@ type Context = {
   bundleSkipped: string | null;
   /** Resolved once, on first use. */
   token: () => Promise<string | null>;
+  /**
+   * The run's pool of Vite workers, created on first use; null when bundle facts are skipped, so
+   * the module that runs Vite is never imported then.
+   */
+  bundlePool: (() => Promise<VitePool>) | null;
 };
 
 function failedReport(spec: string, name: string, error: string, unavailable: string[]) {
@@ -100,23 +106,32 @@ async function githubSection(
 async function bundleFacts(
   dir: string,
   resolved: Resolved,
+  pool: () => Promise<VitePool>,
 ): Promise<{ bundle: Bundle | null; reasons: string[] }> {
   try {
     const { rootEntryBundle } = await import("./root-entry.ts");
-    return await rootEntryBundle(dir, resolved.name, resolved.manifest);
+    return await rootEntryBundle(dir, resolved.name, resolved.manifest, { pool: await pool() });
   } catch (error) {
     // Never fails the install: cost and the other install facts stay as they are.
     return { bundle: null, reasons: [`bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`] };
   }
 }
 
-/** Everything that needs the isolated install of the candidate itself. */
-async function treeFacts(resolved: Resolved, measureBundle: boolean) {
+/**
+ * Everything that needs the isolated install of the candidate itself. With a pool, one worker
+ * starts as the install does, so Vite's start-up overlaps it.
+ */
+async function treeFacts(resolved: Resolved, pool: (() => Promise<VitePool>) | null) {
+  if (pool)
+    void pool().then(
+      (started) => started.warm(),
+      () => {},
+    );
   return withIsolatedInstall(resolved.name, resolved.version, async ({ dir, tree }) => {
     const [vulnerabilities, bundledTypes, bundle] = await Promise.all([
       settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree))),
       shipsTypes(join(dir, "node_modules", resolved.name), resolved.manifest),
-      measureBundle ? bundleFacts(dir, resolved) : null,
+      pool ? bundleFacts(dir, resolved, pool) : null,
     ]);
     return { tree, vulnerabilities, bundledTypes, bundle };
   });
@@ -156,7 +171,7 @@ async function collectPackage(spec: string, context: Context): Promise<PackageRe
   // DefinitelyTyped is looked up alongside the install, and ignored if the install ships types.
   const declaresTypes = manifestDeclaresTypes(manifest);
   const [install, ownAdvisories, github, downloadStats, typesLookup] = await Promise.all([
-    settle(treeFacts(resolved, context.bundleSkipped === null)),
+    settle(treeFacts(resolved, context.bundlePool)),
     settle(advisories(name, version, inRepo?.installed_versions ?? [])),
     githubSection(manifest, context.token),
     settle(weeklyDownloads(name)),
@@ -254,25 +269,47 @@ export const collect: Collect = async (specs, { cwd }) => {
   const project = loaded.ok ? loaded.value : null;
 
   let token: Promise<string | null> | undefined;
+  const skipped = bundleSkipped(project);
+  const npmCandidates = specs.filter((spec) => parseSpec(spec).kind === "npm").length;
+  let pool: Promise<VitePool> | undefined;
   const context: Context = {
     project,
     projectError: loaded.ok ? null : loaded.error,
-    bundleSkipped: bundleSkipped(project),
+    bundleSkipped: skipped,
     token: () => {
       token ??= githubToken();
       return token;
     },
+    bundlePool:
+      skipped === null
+        ? () => {
+            pool ??= import("./vite-pool.ts").then(({ bundleWorkers, createVitePool }) =>
+              createVitePool({ size: bundleWorkers(npmCandidates) }),
+            );
+            return pool;
+          }
+        : null,
   };
 
-  const packages = await Promise.all(
-    specs.map(async (spec) => {
-      try {
-        return await collectPackage(spec, context);
-      } catch (error) {
-        return failedReport(spec, parseSpec(spec).name, errorMessage(error), []);
-      }
-    }),
-  );
+  let packages: PackageReport[];
+  try {
+    packages = await Promise.all(
+      specs.map(async (spec) => {
+        try {
+          return await collectPackage(spec, context);
+        } catch (error) {
+          return failedReport(spec, parseSpec(spec).name, errorMessage(error), []);
+        }
+      }),
+    );
+  } finally {
+    // Every worker ends before the report is printed; none outlives the run.
+    if (pool)
+      await pool.then(
+        (started) => started.close(),
+        () => {},
+      );
+  }
 
   return {
     schema_version: SCHEMA_VERSION,

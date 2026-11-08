@@ -3,9 +3,11 @@
  * 1): the whole entry point (`import * as m`, kept whole), and each export alone, one build per
  * export; and each subpath of its `exports` map, measured whole (iteration 2). The report gets a
  * compact map of the subpaths (at most REPORT_SUBPATH_LIMIT); the full detail per subpath
- * (`subpathDetail`) is kept for the follow-up flags (`--entries`, #10). All builds run in one
- * Vite child process. collect/index.ts imports this only for a browser workspace, so Vite and
- * rolldown are never loaded otherwise.
+ * (`subpathDetail`) is kept for the follow-up flags (`--entries`, #10). The builds run on a pool of
+ * Vite worker processes (`vite-pool.ts`), shared by every candidate of a run, and at the same time;
+ * the result is the one today's order of the builds gives (SPEC.md, "Parallel builds (#7)").
+ * collect/index.ts imports this only for a browser workspace, so Vite and rolldown are never loaded
+ * otherwise.
  */
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -14,14 +16,12 @@ import { type BundleEntry, entryModuleSource } from "./bundle-entry.ts";
 import {
   type BundleOutcome,
   type BundleProblem,
-  buildEntrySource,
   bundleReasons,
   bundlerName,
   externalPackages,
   loadParser,
   outcomeOf,
   problemsFromBuild,
-  startViteRunner,
   type ViteBuildResult,
   type ViteLog,
 } from "./bundle.ts";
@@ -33,6 +33,7 @@ import {
   subpathSpecifier,
 } from "./subpaths.ts";
 import { errorMessage, isRecord, reasonText } from "./util.ts";
+import { bundleWorkers, createVitePool, type VitePool } from "./vite-pool.ts";
 
 /** More exports than this are not built one by one: `bundle: EXPORT_LIMIT <count>`. */
 export const EXPORT_LIMIT = 1000;
@@ -142,27 +143,57 @@ export function unbuiltSubpaths(
   return { ...state, subpaths: null, reason };
 }
 
+/** A promise's outcome as a value, so a build started early never rejects unhandled. */
+type Settled<T> = { ok: true; value: T } | { ok: false; error: unknown };
+
+function settle<T>(promise: Promise<T>): Promise<Settled<T>> {
+  return promise.then(
+    (value) => ({ ok: true as const, value }),
+    (error: unknown) => ({ ok: false as const, error }),
+  );
+}
+
+/** The value, or the error thrown: the first failure awaited in order is the one that counts. */
+function unwrap<T>(settled: Settled<T>): T {
+  if (settled.ok) return settled.value;
+  throw settled.error;
+}
+
+/**
+ * Builds each listed subpath whole (`import * as m from "<name>/<subpath>"`, kept), once per
+ * target file, unless there is no map, the root's toolchain check failed, or the list is over
+ * `limit`. `serial` builds them one after another in key order; otherwise all start at once. Either
+ * way the first build in key order that fails to run throws (the caller keeps the root's results).
+ */
 async function measureSubpaths(
   measure: (source: string) => Promise<BundleOutcome>,
   candidate: string,
   listed: ListingResult,
   toolchainFailed: boolean,
   limit: number,
+  serial: boolean,
 ): Promise<SubpathMeasurement> {
   if (!listed.ok) return unbuiltSubpaths(listed, limit);
   const { exportsMap, subpaths, patterns } = listed.listing;
   const nothingToBuild = !exportsMap || subpaths.length === 0 || subpaths.length > limit;
   if (nothingToBuild || toolchainFailed) return unbuiltSubpaths(listed, limit);
-  const byTarget = new Map<string, BundleOutcome>();
   const sorted = [...subpaths].sort((a, b) => byCodePoint(a.key, b.key));
+  const byTarget = new Map<string, () => Promise<Settled<BundleOutcome>>>();
+  for (const { key, target } of sorted) {
+    if (byTarget.has(target)) continue;
+    const build = () => settle(measure(subpathSpecifier(candidate, key)));
+    if (serial) {
+      let once: Promise<Settled<BundleOutcome>> | null = null;
+      byTarget.set(target, () => (once ??= build()));
+    } else {
+      const started = build();
+      byTarget.set(target, () => started);
+    }
+  }
   const outcomes: SubpathOutcome[] = [];
   for (const { key, target } of sorted) {
-    let outcome = byTarget.get(target);
-    if (outcome === undefined) {
-      outcome = await measure(subpathSpecifier(candidate, key));
-      byTarget.set(target, outcome);
-    }
-    outcomes.push({ key, outcome });
+    const outcome = byTarget.get(target);
+    if (outcome) outcomes.push({ key, outcome: unwrap(await outcome()) });
   }
   return {
     exportsMap: true,
@@ -187,8 +218,14 @@ async function listExports(
   build: (source: string) => Promise<ViteBuildResult>,
   externals: string[],
   candidate: string,
+  serial: boolean,
 ): Promise<{ names: string[] | null; problems: BundleProblem[] }> {
   const from = JSON.stringify(candidate);
+  // Both listing builds start at once unless `serial`; the default's result counts only when the
+  // star listing succeeded, as when it is built second.
+  const starBuild = settle(build(`export * from ${from};\n`));
+  const defaultSource = `export { default } from ${from};\n`;
+  const early = serial ? null : settle(build(defaultSource));
   const buildProblems = async (result: ViteBuildResult) =>
     problemsFromBuild(result, externals, candidate, await loadParser());
   const failed = async (result: ViteBuildResult) => {
@@ -198,11 +235,11 @@ async function listExports(
   // When the candidate does not resolve, Vite keeps the import and the build still succeeds (NO_ENTRY).
   const unresolved = async (result: ViteBuildResult) =>
     (await buildProblems(result)).some((problem) => problem.code === "NO_ENTRY");
-  const star = await build(`export * from ${from};\n`);
+  const star = unwrap(await starBuild);
   if (star.errors !== null || star.exports === null || (await unresolved(star))) {
     return failed(star);
   }
-  const withDefault = await build(`export { default } from ${from};\n`);
+  const withDefault = unwrap(await (early ?? settle(build(defaultSource))));
   // Only a missing export error means there is no `default`; any other build error leaves the
   // names unknown. Other problems the checks find in a build that succeeds do not matter for names.
   const errors = withDefault.errors ?? [];
@@ -217,10 +254,18 @@ const isToolchainMismatch = (outcome: BundleOutcome) =>
 /**
  * Measures the root entry point of `candidate`, installed in `dir`, with `externals` left out:
  * the whole build, then (when it ran on the evaluated toolchain) the export names and each export
- * alone, in sorted order; then, when `options.subpaths` is set, each listed subpath whole. All
- * sequentially in one child process.
- * A failure in the root phase throws; one in the subpath phase leaves the root's results as they
- * are and gives the subpaths `bundle: BUNDLER_ERROR`.
+ * alone; and, when `options.subpaths` is set, each listed subpath whole. The result is the one
+ * today's order of these builds gives (whole, listing, each export in sorted order, each subpath in
+ * key order): a build that fails to run (its worker exits, times out or prints an unreadable
+ * result) decides it when it comes first in that order, whatever finished first. A failure in the
+ * root phase throws; one in the subpath phase leaves the root's results as they are and gives the
+ * subpaths `bundle: BUNDLER_ERROR`. Builds after the deciding failure that are still queued are
+ * dropped, and those that ran are not reported.
+ *
+ * The builds run on `options.pool`, or on a pool of the call's own (`bundleWorkers(1)` workers,
+ * closed before returning). They start at once, the subpaths as soon as the whole build has passed
+ * the toolchain check, unless `options.serial` builds them one after another in today's order (one
+ * worker, one candidate at a time: iteration 2's gate F schedule).
  */
 export async function measureRootEntry(
   dir: string,
@@ -232,68 +277,118 @@ export async function measureRootEntry(
     listing?: ListingResult;
     /** At most this many listed subpaths are built (SUBPATH_LIMIT, the measurement's own cap). */
     subpathLimit?: number;
+    /** A stand-in for vite-build.mjs, for the call's own pool (tests). */
     runnerScript?: string;
+    /** The run's shared pool. */
+    pool?: VitePool;
+    serial?: boolean;
     /**
-     * Called with the subpath phase's wall time (SPEC.md gate F): reading the manifest here (0
-     * when `listing` is given), plus the end of the root phase to the subpaths' final state; when
-     * the root phase throws, called with the manifest time alone before the error propagates.
+     * Called with the subpath phase's wall time: reading the manifest here (0 when `listing` is
+     * given), plus, serially, the end of the root phase to the subpaths' final state (SPEC.md
+     * iteration 2, gate F), or otherwise the end of the whole build, when the subpaths may start, to
+     * their final state. When the root phase throws, called with the manifest time alone before the
+     * error propagates.
      */
     onSubpathPhase?: (ms: number) => void;
   } = {},
 ): Promise<RootEntryMeasurement> {
+  const serial = options.serial === true;
   const listStarted = performance.now();
   const listing = options.subpaths
     ? (options.listing ?? (await readListing(dir, candidate)))
     : null;
   const listMs = options.listing ? 0 : performance.now() - listStarted;
-  const runner = startViteRunner(dir, options.runnerScript);
+  const own = options.pool
+    ? null
+    : createVitePool({ size: serial ? 1 : bundleWorkers(1), script: options.runnerScript });
+  const pool = options.pool ?? own;
+  if (!pool) throw new Error("no vite pool");
+  const rootAbort = new AbortController();
+  const subpathAbort = new AbortController();
+  const builder =
+    (signal: AbortSignal) =>
+    (source: string, exports = false) =>
+      pool.build({ root: dir, source, peers: externals, exports, signal });
+  const measurer = (signal: AbortSignal) => async (entry: BundleEntry) =>
+    outcomeOf(await builder(signal)(entryModuleSource(entry)), externals, candidate);
+  const measure = (name: string | null) => measurer(rootAbort.signal)(entryFor(candidate, name));
+  const limit = Math.min(options.subpathLimit ?? SUBPATH_LIMIT, SUBPATH_LIMIT);
+  const subpathsOf = (toolchainFailed: boolean) =>
+    listing === null
+      ? null
+      : measureSubpaths(
+          (source) => measurer(subpathAbort.signal)(entryFor(candidate, null, source)),
+          candidate,
+          listing,
+          toolchainFailed,
+          limit,
+          serial,
+        ).catch((error: unknown) => {
+          subpathAbort.abort();
+          return unbuiltSubpaths(
+            listing,
+            limit,
+            `bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`,
+          );
+        });
   try {
-    const build = (source: string, exports = false) =>
-      buildEntrySource(runner, dir, source, externals, exports);
-    const measureEntry = async (entry: BundleEntry) =>
-      outcomeOf(await build(entryModuleSource(entry)), externals, candidate);
-    const measure = (name: string | null) => measureEntry(entryFor(candidate, name));
-
-    const root = await measureRoot(build, measure, externals, candidate).catch((error: unknown) => {
+    let subpathsStarted = 0;
+    let subpathTask: Promise<SubpathMeasurement> | null = null;
+    const root = await measureRoot(builder(rootAbort.signal), measure, externals, candidate, {
+      serial,
+      afterWhole: (whole) => {
+        if (serial) return;
+        subpathsStarted = performance.now();
+        subpathTask = subpathsOf(isToolchainMismatch(whole));
+      },
+    }).catch((error: unknown) => {
+      rootAbort.abort();
+      subpathAbort.abort();
       if (listing !== null) options.onSubpathPhase?.(listMs);
       throw error;
     });
     if (listing === null) return { ...root, subpaths: null };
-    const started = performance.now();
-    const limit = Math.min(options.subpathLimit ?? SUBPATH_LIMIT, SUBPATH_LIMIT);
-    const subpaths = await measureSubpaths(
-      (source) => measureEntry(entryFor(candidate, null, source)),
-      candidate,
-      listing,
-      isToolchainMismatch(root.whole),
-      limit,
-    ).catch((error: unknown) =>
-      unbuiltSubpaths(listing, limit, `bundle: BUNDLER_ERROR ${reasonText(errorMessage(error))}`),
-    );
-    options.onSubpathPhase?.(listMs + performance.now() - started);
-    return { ...root, subpaths };
+    if (serial) subpathsStarted = performance.now();
+    const subpaths = await (subpathTask ?? subpathsOf(isToolchainMismatch(root.whole)));
+    options.onSubpathPhase?.(listMs + performance.now() - subpathsStarted);
+    return { ...root, subpaths: subpaths ?? unbuiltSubpaths(listing, limit) };
   } finally {
-    runner.close();
+    await own?.close();
   }
 }
 
+/**
+ * The root phase: the whole build; then, unless it ran on another toolchain, the listing and each
+ * export alone (all at once unless `serial`, awaited in sorted order). `afterWhole` runs once the
+ * whole build is in.
+ */
 async function measureRoot(
   build: (source: string, exports?: boolean) => Promise<ViteBuildResult>,
   measure: (name: string | null) => Promise<BundleOutcome>,
   externals: string[],
   candidate: string,
+  { serial, afterWhole }: { serial: boolean; afterWhole: (whole: BundleOutcome) => void },
 ): Promise<RootMeasurement> {
   const whole = await measure(null);
+  afterWhole(whole);
   if (isToolchainMismatch(whole)) {
     return { whole, names: null, listProblems: whole.problems, singles: null };
   }
-  const listed = await listExports((source) => build(source, true), externals, candidate);
+  const listed = await listExports((source) => build(source, true), externals, candidate, serial);
   const { names } = listed;
   if (names === null || names.length > EXPORT_LIMIT) {
     return { whole, names, listProblems: listed.problems, singles: null };
   }
   const singles: ExportOutcome[] = [];
-  for (const name of names) singles.push({ name, outcome: await measure(name) });
+  if (serial) {
+    for (const name of names) singles.push({ name, outcome: await measure(name) });
+  } else {
+    const started = names.map((name) => settle(measure(name)));
+    for (const [at, name] of names.entries()) {
+      const outcome = started[at];
+      if (outcome) singles.push({ name, outcome: unwrap(await outcome) });
+    }
+  }
   return { whole, names, listProblems: [], singles };
 }
 
@@ -454,9 +549,13 @@ export async function rootEntryBundle(
     onSubpathPhase?: (ms: number) => void;
     /** A stand-in for vite-build.mjs (tests). */
     runnerScript?: string;
+    /** The run's shared pool; without one the call uses its own. */
+    pool?: VitePool;
+    /** Today's order, one build at a time (see `measureRootEntry`). */
+    serial?: boolean;
   } = {},
 ): Promise<{ bundle: Bundle; reasons: string[] }> {
-  const { onSubpathPhase, runnerScript } = options;
+  const { onSubpathPhase, runnerScript, pool, serial } = options;
   const externals = externalPackages(manifest);
   const bundler = await bundlerName();
   const listStarted = performance.now();
@@ -468,6 +567,8 @@ export async function rootEntryBundle(
       listing: listed,
       subpathLimit: REPORT_SUBPATH_LIMIT,
       runnerScript,
+      pool,
+      serial,
       onSubpathPhase: (ms) => onSubpathPhase?.(listMs + ms),
     });
     return rootEntryFacts(measurement, bundler);
