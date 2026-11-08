@@ -343,14 +343,19 @@ the codes differ.
     or the `bundle: <n> exports unmeasurable (<codes>)` summary, which reports every code in its
     parentheses. A code belongs to an entry when it is that entry's leading code or one of the
     summary's listed codes. Matching is on whole codes, never on substrings.
-  - **Framing** (added 2026-11-07 after the amendment's second review). Every name or message
-    depfit writes into a `bundle:` entry has `%`, `;` and `[` percent-encoded (`%25`, `%3B`,
-    `%5B`). That covers specifiers, module labels, file names and error messages. So in any
-    entry, the first `; ` is where the appended groups start, and every `[` opens a group's key
-    array. No group delimiter can come from a root payload.
+  - **Framing** (added 2026-11-07 after the amendment's second review, worded after its third).
+    Free text in a `bundle:` entry is every name or message outside a group's JSON array:
+    specifiers, module labels, file names and error messages. depfit writes it with `%`, `;` and
+    `[` percent-encoded (`%25`, `%3B`, `%5B`). Keys inside a group's JSON array are not encoded;
+    JSON escaping keeps them exact. So outside the arrays, the first `; ` starts the appended
+    groups and a `[` can only open a group's key array. A key may contain `;`, `[` or `]`, and only
+    the JSON parse of its array decides where that array ends.
   - **Parsing.** Groups appended to one entry come in code-point order of their codes, each after
-    `; `. An entry that is itself a group starts `bundle: <CODE> in subpaths [`. A reader finds
-    each group by `<CODE> in subpaths [` and parses the JSON array that starts at the `[`.
+    `; `. An entry that is itself a group starts `bundle: <CODE> in subpaths [`. A reader scans the
+    entry from the start. On finding `bundle: <CODE> in subpaths [` or `; <CODE> in subpaths [`
+    outside an array, it parses the complete JSON array that begins at that `[`, respecting
+    strings and escapes, then resumes scanning after the array's closing `]`. Delimiters count only
+    outside the arrays.
   - **What each null value gets.** It appears once per code it failed with: one group per
     `(key, code)` pair. Each code appears in only one entry per package, so one cause still gives
     one entry (amendment 4). A value whose build recorded no code counts as `BUILD_ERROR`. At most
@@ -506,7 +511,9 @@ amendment: the states' precedence, the parseable `unavailable` format, correspon
 call each gate reads, and fresh R scores. A second review found two more must-fix gaps, also fixed
 the same day: E's correspondence applies only to a populated map, and free text in `bundle:`
 entries is percent-encoded so a root payload can never look like a group. It also asked for a
-complete timing boundary for F. Between the first review and the fixes, gate L and gates
+complete timing boundary for F. A third review approved with one wording change, now made:
+percent-encoding applies to free text outside the group arrays, and parsing resumes after each
+complete array. Between the first review and the fixes, gate L and gates
 A, B, C and D on the B set had been scored, and all passed. The fixes changed A's report-format
 check and named the call each gate reads, so those gates are rerun on the final code. No report
 gate (E, R, H0, H) had run. The lines changed above say
