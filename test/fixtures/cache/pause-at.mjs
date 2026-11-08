@@ -1,5 +1,4 @@
-// Opens the cache at argv[2] and publishes a part (or an install) with a pause at the named hook
-// (argv[3]: beforeLink or beforeRename), printing "paused" there, so a test can SIGKILL it.
+// Opens the cache at argv[2] (src/collect at argv[4]) and pauses at hook argv[3] (beforeLink or beforeRename), printing "paused", so a test can SIGKILL it.
 const [dir, hook, collect] = process.argv.slice(2);
 const { openCache } = await import(`${collect}/cache.ts`);
 const pause = async () => {

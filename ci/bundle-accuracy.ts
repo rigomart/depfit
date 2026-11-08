@@ -183,8 +183,7 @@ process.env.npm_config_legacy_peer_deps = "true";
 // The CLI runs at the default worker count, as users get it; only the measurement steps take
 // DEPFIT_BUNDLE_WORKERS.
 const { DEPFIT_BUNDLE_WORKERS: _workers, ...cliEnv } = process.env;
-// The CLI step always builds: --no-cache, and a cache directory of its own that it never reads
-// (SPEC.md, "Cache (#8)", K6), so a cached result can never hide a change in the bytes.
+// SPEC.md, "Cache (#8)", K6: the CLI step always builds, so a cached result never hides a change in the bytes.
 cliEnv.XDG_CACHE_HOME = await mkdtemp(join(tmpdir(), "depfit-accuracy-cache-"));
 
 function cli(spec: string): Promise<{ report: unknown; error: string | null; ms: number }> {

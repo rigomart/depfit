@@ -22,10 +22,7 @@ const RUNTIME = process.versions.bun ? "bun" : `node${process.versions.node.spli
 
 type Run = { code: number; stdout: string; stderr: string; ms: number };
 
-/**
- * Every run gets its own empty cache directory unless it names one, so no scenario reads another's
- * results and none ever touches the user's own cache (SPEC.md, "Cache (#8)", K6).
- */
+/** SPEC.md, "Cache (#8)", K6: no scenario reads another's cache or touches the user's. */
 const CACHE_ROOT = await mkdtemp(join(tmpdir(), "depfit-e2e-cache-"));
 let cacheRuns = 0;
 const freshCacheHome = () => join(CACHE_ROOT, String(cacheRuns++));
@@ -187,21 +184,17 @@ function cachedFacts(report: Record<string, unknown>): string {
 const measuredAt = (report: Record<string, unknown>) =>
   asArray(report.packages).map((value) => asRecord(asRecord(value).bundle).measured_at ?? null);
 
-/**
- * The browser workspace twice on one cache, then with --no-cache: the second call is a hit (the
- * first's facts and measured_at, and npm only resolves: no install, no npm ci); the third builds.
- */
+/** An `npm` for the front of PATH: appends its arguments to $DEPFIT_E2E_NPM_LOG, then runs the next npm on PATH. */
+const npmShimThatLogsAndForwards = () =>
+  `#!/bin/sh\necho "$*" >> "$DEPFIT_E2E_NPM_LOG"\nPATH="\${PATH#*${delimiter}}" exec npm "$@"\n`;
+
+/** SPEC.md, "Cache (#8)", K6: the browser workspace cold, then a hit, then --no-cache. */
 async function cacheScenario(): Promise<string[]> {
   const cwd = join(FIXTURES, "browser-app");
   const cacheHome = freshCacheHome();
   const wrapperDir = await mkdtemp(join(tmpdir(), "depfit-e2e-npm-"));
   const log = join(wrapperDir, "args.log");
-  // First on PATH, it logs its arguments and runs the npm that comes after it on PATH.
-  await writeFile(
-    join(wrapperDir, "npm"),
-    `#!/bin/sh\necho "$*" >> "$DEPFIT_E2E_NPM_LOG"\nPATH="\${PATH#*${delimiter}}" exec npm "$@"\n`,
-    { mode: 0o755 },
-  );
+  await writeFile(join(wrapperDir, "npm"), npmShimThatLogsAndForwards(), { mode: 0o755 });
   const env = (name: string) => ({
     ...process.env,
     PATH: `${wrapperDir}${delimiter}${process.env.PATH ?? ""}`,

@@ -103,7 +103,6 @@ export async function cachedInstallFacts(
       options.measure ? options.measure(staging) : null,
     ]);
     if (whole) {
-      // A cache that fails partway leaves this call's facts as measured.
       try {
         const facts: FactsPart = { tree, bundledTypes };
         await cache.write("facts", name, version, keys.entry, facts);
@@ -136,8 +135,6 @@ async function readHit(
   );
   return measurement ? { ...facts, measurement } : null;
 }
-
-// --- reading parts back, without type assertions -------------------------------------------------
 
 const isString = (value: unknown): value is string => typeof value === "string";
 const isNumber = (value: unknown): value is number =>
@@ -229,7 +226,7 @@ function isMeasurement(value: unknown): value is RootEntryMeasurement {
   );
 }
 
-/** A cached measurement; only measurements that ran (no crash, a time) are ever stored. */
+/** A cached measurement, or null unless it is well formed, did not crash and has a time. */
 export function asReportMeasurement(value: unknown): ReportMeasurement | null {
   if (!isRecord(value) || value.crash !== null || !isString(value.measuredAt)) return null;
   const { measurement, measuredAt } = value;

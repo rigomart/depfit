@@ -544,8 +544,7 @@ export type ReportMeasurement = {
   measuredAt: string | null;
 };
 
-/** Codes that depend on the package alone, so a measurement reporting only these can be reused. */
-const PACKAGE_CODES = new Set([
+const PACKAGE_ONLY_CODES = new Set([
   "UNRESOLVED_IMPORT",
   "MISSING_EXPORT",
   "IMPORT_OUTSIDE_BUNDLE",
@@ -553,6 +552,10 @@ const PACKAGE_CODES = new Set([
   "NON_JS_IMPORT",
   "PEER_IN_BUNDLE",
 ]);
+
+/** A failed build that recorded no code: reported as BUILD_ERROR. */
+const failedWithoutCode = (outcome: BundleOutcome) =>
+  outcome.bytes === null && outcome.problems.length === 0;
 
 /**
  * Whether a measurement may be cached (SPEC.md, "Cache (#8)"): every code it reports depends on
@@ -568,11 +571,8 @@ export function cacheableMeasurement({ measurement, crash }: ReportMeasurement):
     ...(subpaths?.subpaths ?? []).map((subpath) => subpath.outcome),
   ];
   const problems = [...listProblems, ...outcomes.flatMap((outcome) => outcome.problems)];
-  if (!problems.every((problem) => PACKAGE_CODES.has(problem.code))) return false;
-  // A failed build that recorded no code is reported as BUILD_ERROR.
-  if (outcomes.some((outcome) => outcome.bytes === null && outcome.problems.length === 0)) {
-    return false;
-  }
+  if (!problems.every((problem) => PACKAGE_ONLY_CODES.has(problem.code))) return false;
+  if (outcomes.some(failedWithoutCode)) return false;
   const reason = subpaths?.reason ?? null;
   return reason === null || reason.startsWith("bundle: SUBPATH_LIMIT ");
 }
@@ -597,8 +597,6 @@ export async function measureForReport(
   const listStarted = performance.now();
   const listed = await readListing(dir, candidate);
   const listMs = performance.now() - listStarted;
-  // When the last build behind the numbers completed: a subpath phase that fails later, after a
-  // timeout, does not move it.
   let lastBuildMs = 0;
   try {
     const measurement = await measureRootEntry(dir, candidate, externals, {

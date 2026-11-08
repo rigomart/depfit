@@ -280,7 +280,6 @@ describe("a cache that fails partway", () => {
   it(
     "does not retry an npm failure, which is the install's own",
     async () => {
-      // Never published, so npm's resolution fails with E404.
       let uncached = 0;
       const failing = withCacheFallback<CachedFacts | null>(
         () => call("never-published"),

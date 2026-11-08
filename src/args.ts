@@ -11,7 +11,6 @@ export type Command =
       specs: string[];
       cwd: string | null;
       output: OutputMode | "auto";
-      /** false with --no-cache. */
       cache: boolean;
     }
   | { kind: "usage-error"; message: string };

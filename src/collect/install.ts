@@ -126,6 +126,11 @@ function omitted(entry: Record<string, unknown>, omit: ReadonlySet<string>): boo
   return omit.has("peer") && entry.peer === true;
 }
 
+/** Whether `error` is ENOENT for `path` itself, not for something inside it. */
+function isOwnEnoent(error: unknown, path: string): boolean {
+  return isRecord(error) && error.code === "ENOENT" && error.path === path;
+}
+
 /**
  * The installed tree. `whole` is false when a package npm should have installed here is missing
  * (not excluded by its `os`, `cpu` or `libc`, nor by `omit`), or a package directory could not be
@@ -146,12 +151,13 @@ export async function readTree(
     packages.map(async ([path, value]): Promise<TreePackage> => {
       const entry = asRecord(value);
       const name = asString(entry.name) ?? path.slice(path.lastIndexOf("node_modules/") + 13);
-      // npm leaves out only the optional packages it cannot install here: other OS/CPU/libc.
       const packageDir = join(dir, path);
       const size = await dirStats(packageDir).catch((error: unknown) => {
-        // Only the package directory itself missing means npm left it out; anything else is a read failure.
-        const missing = isRecord(error) && error.code === "ENOENT" && error.path === packageDir;
-        if (!missing || !(platformExcludes(entry, platform) || omitted(entry, omit))) whole = false;
+        if (
+          !isOwnEnoent(error, packageDir) ||
+          !(platformExcludes(entry, platform) || omitted(entry, omit))
+        )
+          whole = false;
         return null;
       });
       return {

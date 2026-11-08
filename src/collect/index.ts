@@ -67,7 +67,7 @@ type Context = {
    * the module that runs Vite is never imported then.
    */
   bundlePool: (() => Promise<VitePool>) | null;
-  /** depfit's cache, opened once per call; null with `--no-cache` or when it cannot be used. */
+  /** null with `--no-cache` or when the cache cannot be used. */
   cache: Promise<Cache | null>;
 };
 
@@ -132,11 +132,7 @@ type TreeFacts = {
   bundle: BundleFacts | null;
 };
 
-/**
- * Everything that needs the isolated install of the candidate itself, or its cached facts. A cache
- * that fails once open gives way to the uncached path (`withCacheFallback`); an npm failure is the
- * install's own.
- */
+/** Everything that needs the isolated install of the candidate itself, or its cached facts. */
 async function treeFacts(resolved: Resolved, context: Context): Promise<TreeFacts> {
   const cache = await context.cache;
   if (!cache) return isolatedTreeFacts(resolved, context.bundlePool);
@@ -200,7 +196,6 @@ async function bundleOf(
   }
 }
 
-/** `--no-cache`, or a cache that cannot be used: today's isolated install, deleted afterwards. */
 async function isolatedTreeFacts(
   resolved: Resolved,
   pool: (() => Promise<VitePool>) | null,

@@ -1,12 +1,6 @@
 /**
  * depfit's local cache (eval/bundle/SPEC.md, "Cache (#8)"): install facts and bundle measurements
- * stored by the exact resolved install tree, plus the install directories for the follow-up flags.
- *
- * Layout under `<cache dir>/v1/`: `entries/<name>@<version>/<key>.<part>.json`, `installs/<key>/`
- * and `tmp/`, where everything is staged so that publishing is a link or a rename on one file
- * system. There are no locks: a part is published by hard link (the first writer wins), an install
- * by rename, and a reader checks every part it reads, so a crash or a concurrent call can only
- * cause a miss.
+ * keyed by the exact resolved install tree, plus install directories kept for #10.
  */
 import { execFile } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
@@ -32,12 +26,12 @@ import { track } from "./children.ts";
 import { currentPlatform } from "./install.ts";
 import { asRecord, asStringArray, isRecord } from "./util.ts";
 
-/** Bumped when the layout or a part's shape changes; part of every key. */
+/** Bumped when the on-disk layout changes (a part's shape is covered by the sources hash); in every key and the root directory name. */
 export const CACHE_FORMAT = 1;
 
 export type Limits = { installs: number; entries: number };
 
-/** Approved in SPEC.md: 2 GiB of install directories, 128 MiB of entries. */
+/** SPEC.md, "Cache (#8)": the approved limits. */
 export const LIMITS: Limits = { installs: 2 * 1024 ** 3, entries: 128 * 1024 ** 2 };
 
 const STAGING_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -102,8 +96,6 @@ export function keysFor(
   return { entry: sha256(canonicalJson({ identity, install })), install };
 }
 
-// --- identity --------------------------------------------------------------------------------
-
 function run(command: string, args: string[], cwd?: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = execFile(
@@ -118,7 +110,6 @@ function run(command: string, args: string[], cwd?: string): Promise<string> {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-/** sha256 of every file directly under src/collect/ and of depfit's package.json. */
 async function sourcesHash(): Promise<string> {
   const files = (await readdir(HERE, { withFileTypes: true }))
     .filter((entry) => entry.isFile())
@@ -216,7 +207,7 @@ export function identityOf(inputs: IdentityInputs): string {
 
 export type NpmSettings = { hash: string; omit: ReadonlySet<string> };
 
-/** sha256 of `npm config list --json` run in `dir` (a directory with only a minimal manifest). */
+/** `npm config list --json` run in `dir` (only a minimal manifest there): its sha256 and its `omit` setting. */
 export async function npmSettings(dir: string): Promise<NpmSettings> {
   const parsed: unknown = JSON.parse(await run("npm", ["config", "list", "--json"], dir));
   return {
@@ -224,8 +215,6 @@ export async function npmSettings(dir: string): Promise<NpmSettings> {
     omit: new Set(asStringArray(asRecord(parsed).omit)),
   };
 }
-
-// --- eviction ----------------------------------------------------------------------------------
 
 export type Item = { path: string; bytes: number; lastUsedMs: number };
 
@@ -278,8 +267,6 @@ export async function fileLengths(dir: string): Promise<number> {
   return bytes;
 }
 
-// --- the cache ---------------------------------------------------------------------------------
-
 export type Cache = {
   root: string;
   identity: string;
@@ -295,7 +282,6 @@ export type Cache = {
   staging: () => Promise<string>;
   /** Keeps an install directory (staged by this call) under its key; false when it is not kept. */
   publishInstall: (dir: string, key: string) => Promise<boolean>;
-  /** Deletes a staging directory. */
   discard: (dir: string) => Promise<void>;
   /** The eviction pass: dead calls' staging, then each part over its limit. */
   evict: () => Promise<void>;
@@ -333,8 +319,7 @@ async function open(options: CacheOptions): Promise<Cache> {
 
   const staging = () => mkdtemp(join(tmp, prefix));
   const discard = (dir: string) => rm(dir, { recursive: true, force: true });
-  /** Moves `path` into tmp/ and deletes it there, so it is whole or gone, never partial, in place. */
-  const remove = async (path: string) => {
+  const removeWholeOrNothing = async (path: string) => {
     const moved = join(tmp, unique());
     try {
       await rename(path, moved);
@@ -383,7 +368,7 @@ async function open(options: CacheOptions): Promise<Cache> {
       }
       const body = validPart(text, part, key);
       if (body === null) {
-        await remove(path);
+        await removeWholeOrNothing(path);
         return null;
       }
       const now = new Date();
@@ -453,13 +438,15 @@ async function open(options: CacheOptions): Promise<Cache> {
         ]);
         const bytes = text === null ? Number.NaN : Number(text);
         if (!info || !Number.isFinite(bytes)) {
-          await remove(path);
+          await removeWholeOrNothing(path);
           continue;
         }
         installItems.push({ path, bytes, lastUsedMs: info.mtimeMs });
       }
-      for (const victim of chooseVictims(entryItems, limits.entries)) await remove(victim.path);
-      for (const victim of chooseVictims(installItems, limits.installs)) await remove(victim.path);
+      for (const victim of chooseVictims(entryItems, limits.entries))
+        await removeWholeOrNothing(victim.path);
+      for (const victim of chooseVictims(installItems, limits.installs))
+        await removeWholeOrNothing(victim.path);
     },
   };
 }
