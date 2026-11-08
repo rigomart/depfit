@@ -18,6 +18,28 @@ import type {
 import { shipsTypes } from "./types.ts";
 import { asArray, isRecord } from "./util.ts";
 
+/** An error from an npm run (execFile's error names the command), not from the cache's files. */
+export function isNpmFailure(error: unknown): boolean {
+  return isRecord(error) && typeof error.cmd === "string";
+}
+
+/**
+ * Runs `cached`, and `uncached` instead when the cache failed once open (its directory removed or
+ * unwritable, a full disk), so the call still gets every fact. An npm failure is the install's own
+ * and is not retried.
+ */
+export async function withCacheFallback<T>(
+  cached: () => Promise<T>,
+  uncached: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await cached();
+  } catch (error) {
+    if (isNpmFailure(error)) throw error;
+    return uncached();
+  }
+}
+
 /** cold: nothing cached for name@version; hit: every part needed was cached; miss: otherwise. */
 export type Step = "cold" | "hit" | "miss";
 

@@ -7,7 +7,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { type Cache, openCache } from "../src/collect/cache.ts";
-import { type CachedInstallOptions, cachedInstallFacts } from "../src/collect/cached-install.ts";
+import {
+  type CachedFacts,
+  type CachedInstallOptions,
+  cachedInstallFacts,
+  isNpmFailure,
+  withCacheFallback,
+} from "../src/collect/cached-install.ts";
 import type { ReportMeasurement } from "../src/collect/root-entry.ts";
 import { type Registry, startRegistry } from "./local-registry.ts";
 
@@ -253,11 +259,38 @@ describe("parts", () => {
 
 describe("a cache that fails partway", () => {
   it(
-    "rejects when its directory is gone after opening, so the caller can take the uncached path",
+    "takes the uncached path when its directory is gone after opening",
     async () => {
       await registry.publish("gone", "1.0.0");
       await rm(cache.root, { recursive: true, force: true });
-      await expect(call("gone")).rejects.toThrow();
+      let uncached = 0;
+      const facts = await withCacheFallback<CachedFacts | string>(
+        () => call("gone"),
+        async () => {
+          uncached++;
+          return "uncached facts";
+        },
+      );
+      expect(facts).toBe("uncached facts");
+      expect(uncached).toBe(1);
+    },
+    SLOW,
+  );
+
+  it(
+    "does not retry an npm failure, which is the install's own",
+    async () => {
+      // Never published, so npm's resolution fails with E404.
+      let uncached = 0;
+      const failing = withCacheFallback<CachedFacts | null>(
+        () => call("never-published"),
+        async () => {
+          uncached++;
+          return null;
+        },
+      );
+      await expect(failing).rejects.toSatisfy(isNpmFailure);
+      expect(uncached).toBe(0);
     },
     SLOW,
   );

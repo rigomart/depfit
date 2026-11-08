@@ -144,23 +144,30 @@ describe("keys", () => {
 });
 
 describe("viteClosure", () => {
-  it("follows symlinks the way Node does, finding dependencies beside the real location", async () => {
+  it("follows symlinks the way Node does, finding dependencies beside each real location", async () => {
     const root = await mkdtemp(join(tmpdir(), "depfit-closure-"));
     const pkg = async (dir: string, name: string, version: string, dependencies = {}) => {
       await mkdir(dir, { recursive: true });
       await writeFile(join(dir, "package.json"), JSON.stringify({ name, version, dependencies }));
     };
     try {
-      // pnpm-style: node_modules/vite links into the store, where its dependency sits beside it.
-      const store = join(root, "node_modules", ".pnpm", "vite@8.3.4", "node_modules");
-      await pkg(join(store, "vite"), "vite", "8.3.4", { dep: "^1.0.0" });
-      await pkg(join(store, "dep"), "dep", "1.0.1");
+      // pnpm-style: node_modules/vite links into the store; its dependency `dep` is a link into
+      // another store directory, where dep's own dependency `leaf` sits beside dep's real location.
+      const pnpm = join(root, "node_modules", ".pnpm");
+      const viteStore = join(pnpm, "vite@8.3.4", "node_modules");
+      const depStore = join(pnpm, "dep@1.0.1", "node_modules");
+      await pkg(join(viteStore, "vite"), "vite", "8.3.4", { dep: "^1.0.0" });
+      await pkg(join(depStore, "dep"), "dep", "1.0.1", { leaf: "^2.0.0" });
+      await pkg(join(depStore, "leaf"), "leaf", "2.0.1");
+      await symlink(join(depStore, "dep"), join(viteStore, "dep"));
+      // Hoisted copies that a lookup along the links' own paths would find instead.
       await pkg(join(root, "node_modules", "dep"), "dep", "9.9.9");
-      await symlink(join(store, "vite"), join(root, "node_modules", "vite"));
-      expect(await viteClosure(join(root, "node_modules", "vite"))).toEqual([
-        "dep@1.0.1",
-        "vite@8.3.4",
-      ]);
+      await pkg(join(root, "node_modules", "leaf"), "leaf", "9.9.9");
+      await symlink(join(viteStore, "vite"), join(root, "node_modules", "vite"));
+      const vite = join(root, "node_modules", "vite");
+      expect(await viteClosure(vite)).toEqual(["dep@1.0.1", "leaf@2.0.1", "vite@8.3.4"]);
+      await pkg(join(depStore, "leaf"), "leaf", "2.0.2");
+      expect(await viteClosure(vite)).toEqual(["dep@1.0.1", "leaf@2.0.2", "vite@8.3.4"]);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

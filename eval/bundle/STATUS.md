@@ -1158,3 +1158,16 @@ Every run used an `XDG_CACHE_HOME` of its own; the user's own cache directory wa
 Found while building, and fixed: the eviction pass deleted another host's young staging (a shared
 cache directory would lose a running call's files); the rule is now "older than a day, or a dead
 call on this host".
+
+Code review (Codex gpt-6.1-sol, high effort, read-only), on the diff with the bar and this
+scorecard: two must-fix and two should-fix findings, all fixed with tests that fail without the
+fix: (1) a cache that failed after opening (its directory removed or unwritable) surfaced as an
+install failure; the call now takes the uncached path, and only for cache failures, so a genuine
+npm failure is not installed twice; (2) Vite's dependency closure walked logical paths, so a
+symlinked (pnpm-style) layout could miss a changed dependency in the identity; it now resolves
+real paths, as Node does; (3) after a subpath worker failure, `measured_at` was the failure's
+time; it is now the last completed build's; (4) the SIGKILL tests' child could exit on its own;
+it is now kept alive and the kill is asserted. A second review of the fixes found nothing
+must-fix; its three should-fix findings (the fallback scope, testing the fallback through its
+caller, a transitive symlink) were applied. Unit tests on Node and Bun (312), type check, lint,
+format and `ci/e2e.ts` pass after the fixes.
