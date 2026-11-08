@@ -229,7 +229,10 @@ export async function recordFrozenLock(dir: string, name: string, version: strin
  */
 export async function resolveLock(dir: string, name: string, version: string): Promise<string> {
   await writeFile(join(dir, "package.json"), JSON.stringify(MANIFEST));
-  await npm(["install", "--package-lock-only", `${name}@${version}`, ...NPM_FLAGS], npmOptions(dir));
+  await npm(
+    ["install", "--package-lock-only", `${name}@${version}`, ...NPM_FLAGS],
+    npmOptions(dir),
+  );
   return readFile(join(dir, "package-lock.json"), "utf8");
 }
 

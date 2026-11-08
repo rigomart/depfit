@@ -79,7 +79,9 @@ export function canonicalJson(value: unknown): string {
 /** sha256 of the whole lockfile's `lockfileVersion` and `packages`, the root entry included. */
 export function treeHash(lockText: string): string {
   const lock = asRecord(JSON.parse(lockText));
-  return sha256(canonicalJson({ lockfileVersion: lock.lockfileVersion ?? null, packages: lock.packages ?? {} }));
+  return sha256(
+    canonicalJson({ lockfileVersion: lock.lockfileVersion ?? null, packages: lock.packages ?? {} }),
+  );
 }
 
 export type Keys = { entry: string; install: string };
@@ -162,8 +164,11 @@ export async function viteClosure(): Promise<string[]> {
     const manifest = await readManifest(join(dir, "package.json"));
     if (!manifest) continue;
     seen.set(dir, `${String(manifest.name)}@${String(manifest.version)}`);
-    const names = [manifest.dependencies, manifest.optionalDependencies, manifest.peerDependencies]
-      .flatMap((deps) => Object.keys(asRecord(deps)));
+    const names = [
+      manifest.dependencies,
+      manifest.optionalDependencies,
+      manifest.peerDependencies,
+    ].flatMap((deps) => Object.keys(asRecord(deps)));
     for (const name of new Set(names)) {
       const found = await findPackage(dir, name);
       if (found) queue.push(found);
@@ -183,17 +188,26 @@ export async function measurementIdentity(): Promise<string> {
     viteClosure(),
     run("node", ["-p", 'process.versions.node+" "+process.versions.zlib']),
   ]);
-  const runtime = process.versions.bun ? `bun ${process.versions.bun}` : `node ${process.versions.node}`;
-  return sha256(
-    canonicalJson({
-      format: CACHE_FORMAT,
-      sources,
-      vite,
-      runtime,
-      worker: worker.trim(),
-      platform: currentPlatform(),
-    }),
-  );
+  const runtime = process.versions.bun
+    ? `bun ${process.versions.bun}`
+    : `node ${process.versions.node}`;
+  return identityOf({ sources, vite, runtime, worker: worker.trim(), platform: currentPlatform() });
+}
+
+export type IdentityInputs = {
+  /** sha256 of depfit's src/collect/ and package.json. */
+  sources: string;
+  /** `name@version` of every package in Vite's installed closure. */
+  vite: string[];
+  /** The runtime running depfit, e.g. "bun 1.3.14". */
+  runtime: string;
+  /** The Node and zlib versions of the workers' `node`. */
+  worker: string;
+  platform: { os: string; cpu: string; libc: string | null };
+};
+
+export function identityOf(inputs: IdentityInputs): string {
+  return sha256(canonicalJson({ format: CACHE_FORMAT, ...inputs }));
 }
 
 export type NpmSettings = { hash: string; omit: ReadonlySet<string> };
@@ -201,7 +215,10 @@ export type NpmSettings = { hash: string; omit: ReadonlySet<string> };
 /** sha256 of `npm config list --json` run in `dir` (a directory with only a minimal manifest). */
 export async function npmSettings(dir: string): Promise<NpmSettings> {
   const parsed: unknown = JSON.parse(await run("npm", ["config", "list", "--json"], dir));
-  return { hash: sha256(canonicalJson(parsed)), omit: new Set(asStringArray(asRecord(parsed).omit)) };
+  return {
+    hash: sha256(canonicalJson(parsed)),
+    omit: new Set(asStringArray(asRecord(parsed).omit)),
+  };
 }
 
 // --- eviction ----------------------------------------------------------------------------------
@@ -212,7 +229,9 @@ export type Item = { path: string; bytes: number; lastUsedMs: number };
 export function chooseVictims(items: Item[], limit: number): Item[] {
   let total = items.reduce((sum, item) => sum + item.bytes, 0);
   const victims: Item[] = [];
-  for (const item of [...items].sort((a, b) => a.lastUsedMs - b.lastUsedMs || a.path.localeCompare(b.path))) {
+  for (const item of [...items].sort(
+    (a, b) => a.lastUsedMs - b.lastUsedMs || a.path.localeCompare(b.path),
+  )) {
     if (total <= limit) break;
     victims.push(item);
     total -= item.bytes;
@@ -220,11 +239,19 @@ export function chooseVictims(items: Item[], limit: number): Item[] {
   return victims;
 }
 
-/** Whether a staging item named `<host>-<pid>-...` belongs to a call still running on this host. */
-export function stagingOwnerAlive(name: string, host: string, alive: (pid: number) => boolean): boolean {
+/**
+ * Whether the eviction pass deletes a staging item named `<host>-<pid>-...`: when it is older than
+ * a day, or when its call ran on this host and is no longer alive. Another host's young item stays.
+ */
+export function stagingAbandoned(
+  name: string,
+  host: string,
+  alive: (pid: number) => boolean,
+  ageMs: number,
+): boolean {
+  if (ageMs > STAGING_MAX_AGE_MS) return true;
   const match = /^(.*)-(\d+)-[^-]+$/.exec(name);
-  if (!match || match[1] !== host) return false;
-  return alive(Number(match[2]));
+  return match !== null && match[1] === host && !alive(Number(match[2]));
 }
 
 function pidAlive(pid: number): boolean {
@@ -317,7 +344,10 @@ async function open(options: CacheOptions): Promise<Cache> {
   let identity: string;
   let npm: NpmSettings;
   try {
-    await writeFile(join(probe, "package.json"), JSON.stringify({ name: "depfit-probe", private: true }));
+    await writeFile(
+      join(probe, "package.json"),
+      JSON.stringify({ name: "depfit-probe", private: true }),
+    );
     [identity, npm] = await Promise.all([measurementIdentity(), npmSettings(probe)]);
   } finally {
     await discard(probe);
@@ -330,7 +360,8 @@ async function open(options: CacheOptions): Promise<Cache> {
     root,
     identity,
     npm,
-    keys: (lockText, name, version) => keysFor(identity, npm.hash, treeHash(lockText), name, version),
+    keys: (lockText, name, version) =>
+      keysFor(identity, npm.hash, treeHash(lockText), name, version),
     hasVersion: async (name, version) => {
       try {
         return (await readdir(join(entries, `${encodeName(name)}@${version}`))).length > 0;
@@ -393,11 +424,11 @@ async function open(options: CacheOptions): Promise<Cache> {
     evict: async () => {
       const now = Date.now();
       for (const name of await readdir(tmp)) {
-        if (stagingOwnerAlive(name, host, pidAlive)) {
-          const age = await stat(join(tmp, name)).then((s) => now - s.mtimeMs, () => 0);
-          if (age <= STAGING_MAX_AGE_MS) continue;
-        }
-        await discard(join(tmp, name));
+        const age = await stat(join(tmp, name)).then(
+          (s) => now - s.mtimeMs,
+          () => 0,
+        );
+        if (stagingAbandoned(name, host, pidAlive, age)) await discard(join(tmp, name));
       }
       const entryItems: Item[] = [];
       for (const dir of await readdir(entries)) {

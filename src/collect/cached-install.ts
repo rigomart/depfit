@@ -58,7 +58,13 @@ export async function cachedInstallFacts(
     const cold = frozen === null && !(await cache.hasVersion(name, version));
     const lock = frozen ?? (cold ? null : await resolveLock(staging, name, version));
     if (lock !== null) {
-      const hit = await readHit(cache, name, version, cache.keys(lock, name, version).entry, options);
+      const hit = await readHit(
+        cache,
+        name,
+        version,
+        cache.keys(lock, name, version).entry,
+        options,
+      );
       if (hit) {
         options.onTree?.(hit.tree);
         return { ...hit, step: "hit" };

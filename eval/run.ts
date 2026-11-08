@@ -216,7 +216,8 @@ for (const { probe, n } of probes) {
   const dir = join(OUT, probe.project);
   await mkdir(dir, { recursive: true });
   const started = performance.now();
-  const json = await run("bun", [cli, ...probe.packages.map(pinned), "--json"], {
+  // The eval measures the code under test, never a cached result (SPEC.md, "Cache (#8)", K6).
+  const json = await run("bun", [cli, ...probe.packages.map(pinned), "--json", "--no-cache"], {
     cwd,
     maxBuffer: 1 << 26,
   });

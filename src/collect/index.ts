@@ -10,6 +10,8 @@ import {
   SCHEMA_VERSION,
   type Security,
 } from "../report.ts";
+import type { Cache } from "./cache.ts";
+import { cachedInstallFacts } from "./cached-install.ts";
 import {
   atNewestInstalled,
   builtinReport,
@@ -23,8 +25,6 @@ import {
   treeCost,
 } from "./facts.ts";
 import { type GithubFacts, githubFacts, githubToken, NO_GITHUB } from "./github.ts";
-import type { Cache } from "./cache.ts";
-import { cachedInstallFacts } from "./cached-install.ts";
 import { withIsolatedInstall } from "./install.ts";
 import { advisories, dependencyVulnerabilities } from "./osv.ts";
 import { loadProject, type Project } from "./project.ts";
@@ -40,9 +40,9 @@ import {
   typesPackage,
   weeklyDownloads,
 } from "./registry.ts";
+import type { ReportMeasurement } from "./root-entry.ts";
 import { manifestDeclaresTypes, shipsTypes } from "./types.ts";
 import { asRecord, asString, asStringRecord, errorMessage, reasonText } from "./util.ts";
-import type { ReportMeasurement } from "./root-entry.ts";
 import type { VitePool } from "./vite-pool.ts";
 
 type Settled<T> = { ok: true; value: T } | { ok: false; error: string };
