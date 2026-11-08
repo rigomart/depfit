@@ -20,7 +20,7 @@
  */
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { parseArgs, promisify } from "node:util";
@@ -154,7 +154,11 @@ async function frozenCwd(cwd: string): Promise<string> {
   }
   let root = exported.get(`${top} ${recorded.head}`);
   if (!root) {
-    root = await mkdtemp(join(tmpdir(), "depfit-frozen-"));
+    // A fixed path per project and revision, so every run reports the same project.root.
+    const id = createHash("sha256").update(top).digest("hex").slice(0, 12);
+    root = join(tmpdir(), "depfit-frozen", `${id}-${recorded.head.slice(0, 12)}`);
+    await rm(root, { recursive: true, force: true });
+    await mkdir(root, { recursive: true });
     scratch.push(root);
     await run("sh", [
       "-c",

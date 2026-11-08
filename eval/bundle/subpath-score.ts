@@ -1007,7 +1007,8 @@ async function scoreReports(options: { on: string; again: string; off: string })
   const bracketed = withTruth.filter((c) => c.bracketed);
   const misses = withTruth.filter((c) => !c.bracketed);
   const unclassified = misses.filter((c) => !c.miss_class);
-  type Pair = { probe: string; a: string; b: string; agrees: boolean };
+  const unclassifiedPairs = () => pairs.filter((p) => !p.agrees && !p.miss_class);
+  type Pair = { probe: string; a: string; b: string; agrees: boolean; miss_class: string | null };
   const pairs: Pair[] = [];
   const sign = (x: number) => (x > 0 ? 1 : x < 0 ? -1 : 0);
   const scored = withTruth.filter((c) => c.L !== null && c.U !== null);
@@ -1018,7 +1019,10 @@ async function scoreReports(options: { on: string; again: string; off: string })
       if (way === 0 || way !== sign((a.U ?? 0) - (b.U ?? 0))) continue;
       const [ra, rb] = [a.real ?? 0, b.real ?? 0];
       if (Math.max(ra, rb) < 1.1 * Math.min(ra, rb)) continue;
-      pairs.push({ probe: a.probe, a: a.name, b: b.name, agrees: sign(ra - rb) === way });
+      const agrees = sign(ra - rb) === way;
+      // A disagreeing pair is classified by its candidates' miss classes (as in iteration 1).
+      const missClass = agrees ? null : (a.miss_class ?? b.miss_class);
+      pairs.push({ probe: a.probe, a: a.name, b: b.name, agrees, miss_class: missClass });
     }
   }
   const agree = pairs.filter((p) => p.agrees).length;
@@ -1040,10 +1044,12 @@ async function scoreReports(options: { on: string; again: string; off: string })
     ...dFail.map((f) => `    ${f}`),
     `  R (a). real usage in [0.9 x L, 1.1 x U]: ${bracketed.length}/${withTruth.length} (${pct(bracketed.length, withTruth.length)}, min 85%) ${pass(rA)}; by set: ${perSet.join(", ")}`,
     `  R (b). pairs pointing the same way, real usage >= 10% apart: ${agree}/${pairs.length} agree (${pct(agree, pairs.length)}, min 90%) ${pass(rB)}`,
-    ...pairs.filter((p) => !p.agrees).map((p) => `    disagrees: ${p.probe} ${p.a} vs ${p.b}`),
+    ...pairs
+      .filter((p) => !p.agrees)
+      .map((p) => `    disagrees (${p.miss_class ?? "UNCLASSIFIED"}): ${p.probe} ${p.a} vs ${p.b}`),
     `  R (c). imported subpaths the listing rule admits, at most 30 listed: ${coverageR.length} not covered ${pass(!coverageR.length)}; over the cap, reported separately: ${overCap.length}`,
     ...[...coverageR, ...overCap.map((c) => `over cap: ${c}`)].map((f) => `    ${f}`),
-    `  R (d). misses: ${misses.length}, unclassified ${unclassified.length} ${pass(!unclassified.length)}`,
+    `  R (d). misses: ${misses.length}, unclassified ${unclassified.length}; disagreeing pairs unclassified ${unclassifiedPairs().length} ${pass(!unclassified.length && !unclassifiedPairs().length)}`,
     ...misses.map(
       (c) =>
         `    ${c.miss_class ?? "UNCLASSIFIED"}: ${c.probe} ${c.name} real ${c.real} L ${c.L} U ${c.U}${c.uncovered.length ? ` uncovered ${c.uncovered.join(" ")}` : ""}`,
