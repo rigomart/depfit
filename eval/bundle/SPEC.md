@@ -624,11 +624,27 @@ faster and changes no number, field or reason. Measurements behind every target 
 
 ### Worker count and memory
 
-- **Workers:** `min(4, os.availableParallelism())`, at least 1. Measured on 12 cores: zod's builds
-  took 2.9 s at 4 workers, 2.7 s at 6 and 3.0 s at 8; four candidates took 9.2 s at 4 and 8.7 s at
-  6, for about 900 MB more. Rolldown already uses several threads per build.
-- **An eval and CI switch `DEPFIT_BUNDLE_WORKERS=<n>`** sets the count (1 or more), like
-  `DEPFIT_BUNDLE` and `DEPFIT_LOCK_DIR`, and AGENTS.md lists it with them. The gates below use it.
+- **Workers: `floor(os.availableParallelism() / 3)`, at least 1 and at most 4** (12 cores: 4; 8: 2;
+  4, as on CI's runners: 1; fewer: 1). The rule budgets cores, not only speed, because depfit runs in
+  agent loops, often on laptops:
+  - A worker is not one core. Rolldown builds on several threads, so one worker alone kept 2.9
+    (zod) to 4.0 (motion) cores busy on average; 4 workers kept 5.0 to 9.4 of 12 busy.
+  - The pool does not add work, it moves it closer together. Total CPU time per call was the same at
+    1, 2 and 4 workers (zod 18.2, 18.1, 16.9 s; motion 38.8, 39.8, 39.3 s; all four 85.9 s at 2,
+    87.4 s at 4), so each call heats the machine about as much as today, in a shorter burst.
+  - Dividing by 3 keeps the expected busy cores near the machine's count instead of oversubscribing
+    it, leaves the machine usable during a call, and gives one worker (today's speed and load) on
+    small machines.
+  - Above 4 workers buys little and costs memory: zod's builds took 2.9 s at 4 workers, 2.7 s at 6
+    and 3.0 s at 8; four candidates 9.2 s at 4, 8.7 s at 6 and 8.5 s at 8, for about 900 MB more per
+    two workers (measured before this rule, under load).
+  - Today a call with several candidates has no limit at all: one process per candidate at once (four
+    candidates: 3.1 GB, every core busy). The pool caps that.
+  - Repeated calls in an agent loop are what caching (#8) removes; until then every call rebuilds.
+- **An eval and CI switch `DEPFIT_BUNDLE_WORKERS=<n>`** sets the count (1 to 4), like
+  `DEPFIT_BUNDLE` and `DEPFIT_LOCK_DIR`, and AGENTS.md lists it with them. The gates below use it,
+  and CI's bundle job sets it to 2, so the parallel path runs and is timed on every pull request
+  although the default there is 1 worker.
 - **A worker is replaced after at most 100 builds.** A worker's memory grows with every build and is
   not given back (motion: 632 MB after 100 builds, 1.5 GB after 500, 2.3 GB after 1000; with a 384 MB
   heap cap it runs out at about build 570). One shared worker would otherwise do every build of every
@@ -648,8 +664,8 @@ runs, on the frozen installs (`DEPFIT_LOCK_DIR`) and a warm npm cache.
 | Gate | Pass condition |
 |---|---|
 | **P1. Same results** | (a) **Every build of every reference package:** for each package in `single-reference.json`, every export (not only the 5 listed), the whole build and the listing; every root null case in `cases.json`; and, after #9, every package in `subpath-reference.json`. Each outcome (bytes, the set of problems, `external_packages`, export names and counts, and the `unavailable` entries) is identical to today's, at `DEPFIT_BUNDLE_WORKERS` 1, 2 and 4, and once with the build queue in reverse order. (b) **Two cases the reference sets lack:** a package whose builds emit lazy chunks (@storybook/addon-a11y, frozen) and biome (`NO_ENTRY`), identical in the same way. (c) **Full reports:** in `test/fixtures/browser-app`, the calls `valibot`, `zod`, `date-fns`, `motion`, `zod valibot`, `valibot zod date-fns motion`, and one with a built-in and a name that does not exist, on frozen installs: today's CLI and #7's run alternately (today, #7, today, #7); each #7 report is identical to the today report run before it, apart from `generated_at`. If a field fed by the network differs, the pair is run again; the two today runs agreeing while #7 differs fails. (d) Gates C and D as CI runs them (`ci/bundle-accuracy.ts`, two runs) pass unchanged. |
-| **P2. Speed, this machine** | Bundle step alone (the measurement call, no network), default worker count (4 here). **Per package:** valibot, zod, date-fns and motion each at most 0.6x today (measured 0.32x, 0.55x, 0.44x, 0.45x). **Several packages:** `zod valibot` at most 0.75x today (measured 0.66x); `valibot zod date-fns motion` at most 0.9x today (measured 0.79x to 0.84x), since today already gives each candidate its own process. **One worker:** each package at most 1.1x today (measured 1.00x to 1.05x). CLI wall time is reported, not gated; expected about 4.7 s for zod (today 7.1 to 7.7), 5.6 s for motion (10.7), 5 s for `zod valibot` (7.2), against 1.0 to 2.6 s without bundle facts. |
-| **P3. Workers and memory** | The count rule and recycling above, each with a test. The memory bar above, measured on P2's calls. P1(a) passes at 1 and 2 workers. With 1 or 2 workers, several candidates can be slower than today (on 12 cores: `zod valibot` 9.0 s at 1 worker against 5.8 s; all four 13.8 s at 2 workers against 11.6 s). That is accepted: those counts are chosen only on machines reporting 1 or 2 CPUs, where today's one process per candidate shares the same CPUs (not measured). |
+| **P2. Speed, this machine** | Bundle step alone (the measurement call, no network), default worker count (4 here). **Per package:** valibot, zod, date-fns and motion each at most 0.65x today (measured 0.32x, 0.55x to 0.57x, 0.44x, 0.42x to 0.45x). **Several packages:** `zod valibot` at most 0.75x today (measured 0.66x); `valibot zod date-fns motion` at most 0.9x today (measured 0.79x to 0.84x), since today already gives each candidate its own process. **One worker:** each package at most 1.1x today (measured 1.00x to 1.05x). CLI wall time is reported, not gated; expected about 4.7 s for zod (today 7.1 to 7.7), 5.6 s for motion (10.7), 5 s for `zod valibot` (7.2), against 1.0 to 2.6 s without bundle facts. |
+| **P3. Workers, load and memory** | The count rule and recycling above, each with a test. **Load:** total CPU time of the workers per call (user plus system, all threads) at most 1.1x today's on each P2 call (measured 0.93x to 1.03x against one worker); average busy cores reported per call. The memory bar above, measured on P2's calls. P1(a) passes at 1 and 2 workers. With 1 or 2 workers, several candidates can be slower than today (on 12 cores: `zod valibot` 9.0 s at 1 worker against 5.8 s; all four 14.8 s at 2 workers against 13.1 s), because today runs every candidate at once with no limit. That is accepted: those counts are the default only on machines with fewer than 9 cores, where today's unlimited processes share the same cores (not measured on such a machine). |
 | **P4. Robustness** | Each with a test using a stand-in runner (as `test/fixtures/runner/` does today): (a) **Timeout:** the 5-minute limit counts from when a worker takes the build, not from when it was queued; a build over it ends its worker. (b) **Crash:** when a worker exits, hangs past the limit or prints an unreadable result mid-build, that build's candidate gets exactly what today's code gives for a crash in that phase (root phase: `bundle` all null and one `bundle: BUNDLER_ERROR <message>`; subpath phase: the root's results kept and the subpaths' `BUNDLER_ERROR`); its other builds in flight or queued are discarded; every other candidate's results are identical to a run without the crash; a new worker takes the remaining work. (c) **A worker that fails to start** gives `BUNDLER_ERROR` to the candidates that needed it, and the run ends. (d) **Every child stops:** after a normal run, a run where a candidate fails, a worker crash, and SIGINT or SIGTERM to depfit, no `vite-build.mjs` process is left and depfit exits without waiting on idle workers. (e) **No browser signal:** no worker is started, and Vite and rolldown are never loaded (iteration 1 gate F's tracer, plus no `vite-build.mjs` process). |
 | **P5. Contract and CI** | No field, reason text or `SCHEMA_VERSION` changes; `schema-docs` unchanged. Type check, lint, unit tests, `ci/e2e.ts` on Bun and Node 22, and `ci/bundle-accuracy.ts` pass. A test fails if the pool stops running builds at the same time (a stand-in runner that waits per build: 8 builds on 4 workers finish in well under 8 waits), because CI's 2x gate alone would not catch losing the speed-up. |
 

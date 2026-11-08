@@ -715,5 +715,21 @@ merely uncollected. Peaks: today motion 1.4 to 1.5 GB, zod 0.8 GB, all four 3.0 
 without recycling, 5.9 GB at 8 workers). A fresh worker's first build took 100 ms, later builds
 11 ms (median).
 
+**Load per call** (re-measured after a restart, under `nice -n 10`, at most 4 workers, recycling
+after 100 builds, while another session's eval ran on the machine, load average 11 to 15). Each
+worker's CPU time (user plus system, all threads) is read when it exits:
+
+| Call | Workers | Wall | CPU time | Busy cores (average) |
+|---|---|---|---|---|
+| zod | 1 / 2 / 4 | 6.36 / 4.27 / 3.39 s | 18.2 / 18.1 / 16.9 s | 2.9 / 4.2 / 5.0 |
+| motion | 1 / 2 / 4 | 9.70 / 5.62 / 4.19 s | 38.8 / 39.8 / 39.3 s | 4.0 / 7.1 / 9.4 |
+| all four | 2 / 4 | 14.81 / 9.98 s | 85.9 / 87.4 s | 5.8 / 8.8 |
+
+Today's code in the same window: zod 5.99 s, motion 9.86 s, all four 13.09 s (one child per
+candidate, 3.1 GB). The work per call does not depend on the worker count; the pool spends it in a
+shorter burst. One worker already keeps about 3 to 4 cores busy, because rolldown is multi-threaded.
+
 **Not measured:** a machine with 1 or 2 CPUs, and CI's 4-vCPU runners (worker counts 1 and 2 were run
-on 12 cores instead); subpath builds under a pool (iteration 2 is not merged).
+on 12 cores instead); subpath builds under a pool (iteration 2 is not merged); worker counts above 4 after the restart
+(the 6- and 8-worker numbers above are from before it). The research scripts are kept with the
+author's notes (local, gitignored).
