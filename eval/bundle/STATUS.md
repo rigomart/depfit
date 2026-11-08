@@ -658,6 +658,13 @@ Research is copied to `results/research/` (gitignored): `catalog.md` (post-morte
 
 ## Parallel builds (#7): measurements for the bar (2026-11-08)
 
+**Bar approved by the user on 2026-11-08.** Independent review (Codex gpt-6.1-sol, high effort,
+read-only), four rounds: not ready three times (failure precedence; full comparisons; on-demand
+start; owned-process cleanup; today's CPU baseline; the small-machine rule; the CPU allowance; the
+default-call bound; CI protocol), each fixed; the fourth, on the text rebased onto #9: approve with
+changes (iteration 2's gate D populations, per-package subpath gating in `ci/perf.ts`, run counts,
+the small-machine bound kept at 1.05x), applied in the approved text.
+
 Measured for SPEC.md "Parallel builds (#7)" on an Apple M4 Pro (12 cores, 24 GB), Node 24.14.1,
 Bun 1.3.14, npm 11.11.0, warm npm cache, with research scripts outside the repo that reuse depfit's
 own runner (`startViteRunner`, `outcomeOf`, `measureRootEntry`). Another session's builds ran on the

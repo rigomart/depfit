@@ -594,7 +594,12 @@ Unchanged from v1. If one shows up, stop and reassess with the user instead of p
 
 ## Parallel builds (#7): acceptance bar
 
-Drafted 2026-11-08, awaiting the user's approval. #7 makes a first overview in a browser workspace
+Drafted 2026-11-08 and approved by the user on 2026-11-08, after four independent reviews (Codex
+gpt-6.1-sol, high effort; the last: approve with changes, applied). The user approved these
+trade-offs explicitly: 4 workers where today runs one process per candidate above four candidates;
+extra CPU up to about 1.23x, traded for speed; iteration 2's subpath cost gate re-measured with its
+own bound for the default call; higher memory for a single package (zod 1.1 to 2.3 GiB) and lower
+across several. #7 makes a first overview in a browser workspace
 faster and changes no number, field or reason. Measurements behind every target are in
 `STATUS.md` ("Parallel builds (#7): measurements for the bar"). They cover the default report's whole
 operation as merged in #9 (c0e2a5d): the whole build, both listing builds, every export, and each
