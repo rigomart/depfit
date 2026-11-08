@@ -681,7 +681,9 @@ Each pair of reports was identical apart from `generated_at`.
 1273, OSV done at 2029, builds done at 8027; motion 488, 1011, 1092, 10199. Builds start after the
 install and run alongside the lookups, which all end by about 2.2 s.
 
-**Bundle step: today against a shared pool** (every build of the root, recycling after 100 builds):
+**Bundle step: today against a shared pool, first prototype** (the whole build and every export,
+recycling after 100 builds; the two listing builds were not run in the pool, which took the names
+from today's run, so these times favor the pool slightly; superseded by the alternating runs below):
 
 | Package (exports) | Today | 1 worker | 2 workers | 4 workers |
 |---|---|---|---|---|
@@ -696,8 +698,8 @@ install and run alongside the lookups, which all end by about 2.2 s.
 and 8 workers took 5.6, 3.7, 2.9, 2.7 and 3.0 s; motion at 2, 4 and 6 took 5.4, 3.8 and 3.6 s;
 all four at 6 and 8 workers took 8.7 and 8.5 s.
 
-**Same results:** every outcome (bytes, problems, peers) matched the sequential build in every pool
-run above: 261, 351, 321, 251, 582 and 1184 builds, at 1 to 8 workers, with and without recycling,
+**Same results:** every outcome (bytes, problems, peers) matched the sequential build in every
+first-prototype run: 261, 351, 321, 251, 582 and 1184 builds, at 1 to 8 workers, with and without recycling,
 with workers started in a neutral directory serving every install. Two entry layouts did not:
 
 - A per-worker entry file name (`__depfit_entry_<i>.mjs`) changed @storybook/addon-a11y@10.6.6's lazy
@@ -707,7 +709,9 @@ with workers started in a neutral directory serving every install. Two entry lay
   `problemsFromBuild` recognizes the entry by its path relative to the root.
 - No package in `single-reference.json` has lazy bytes, so CI's checks would not see the first one.
 
-**Memory** (summed resident memory of the Vite workers, sampled every 150 ms): one worker building
+**Memory, first prototype** (summed resident memory of processes whose command named
+`vite-build.mjs`, sampled every 150 ms; the earliest runs matched any worktree's, so another
+session's worker may be counted in them; the alternating runs below sample owned processes only): one worker building
 motion's exports over and over held 632 MB after 100 builds, 947 MB after 200, 1.5 GB after 500 and
 2.3 GB after 1000; capped at a 384 MB heap it ran out at about build 570, so the memory is kept, not
 merely uncollected. Peaks: today motion 1.4 to 1.5 GB, zod 0.8 GB, all four 3.0 to 3.1 GB. Pool with
@@ -726,8 +730,33 @@ worker's CPU time (user plus system, all threads) is read when it exits:
 | all four | 2 / 4 | 14.81 / 9.98 s | 85.9 / 87.4 s | 5.8 / 8.8 |
 
 Today's code in the same window: zod 5.99 s, motion 9.86 s, all four 13.09 s (one child per
-candidate, 3.1 GB). The work per call does not depend on the worker count; the pool spends it in a
-shorter burst. One worker already keeps about 3 to 4 cores busy, because rolldown is multi-threaded.
+candidate, 3.1 GB). Among pool sizes the work per call does not change; against today's code, see
+the alternating runs below. One worker already keeps about 3 to 4 cores busy, because rolldown is
+multi-threaded.
+
+**Alternating runs, the whole root operation** (after the first review; `nice -n 10`, at most 4
+workers). Each invocation measures one way on installs prepared once: today's `measureRootEntry`
+for every candidate at once, or one shared pool of 4 workers running each candidate's whole build,
+both listing builds and then every export, in that dependency order, recycling after 100 builds.
+CPU is user plus system time of the invocation and every child, from `/usr/bin/time -l`; memory is
+sampled every 100 ms over the invocation's own descendants, per process and summed. Today and pool
+alternate; another session's eval ran on the machine part of the time (load average 7 to 16).
+
+| Call (builds) | Today, wall | Pool, wall | Ratio | Today, CPU | Pool, CPU | Ratio | Today / pool memory (largest process) |
+|---|---|---|---|---|---|---|---|
+| clsx (5) | 0.15 s | 0.19 s | | 0.26 s | 0.64 s | 2.5x | 105 / 359 MB (103) |
+| valibot (323) | 3.21, 3.17 s | 1.12, 1.15 s | 0.35x | 5.4 s | 6.4 s | 1.18x | 0.6 / 1.1 GB (285 MB) |
+| zod (263) | 6.94, 5.77, 5.67 s | 3.08, 3.10, 2.98 s | 0.53x | 20.3 to 21.0 s | 20.8 s | 1.02x | 0.8 / 1.9 GB (524 MB) |
+| date-fns (253) | 5.77, 5.76 s | 2.68, 2.66 s | 0.46x | 24.4 s | 26.9, 27.7 s | 1.12x | 1.0 / 2.3 GB (591 MB) |
+| motion (353) | 9.97, 9.12, 9.04 s | 4.23, 4.22, 4.55 s | 0.46x | 40.5 to 42.1 s | 43.8 to 44.4 s | 1.09x | 1.5 / 2.6 GB (656 MB) |
+| zod valibot (586) | 5.81, 5.84 s | 3.91, 3.92 s | 0.67x | 26.2 s | 26.5, 26.8 s | 1.02x | 1.3 / 1.6 GB (429 MB) |
+| all four (1192) | 12.15, 11.86 s | 10.48, 10.27 s | 0.86x, 0.87x | 95.3, 95.2 s | 97.7, 98.3 s | 1.03x | 3.1 / 2.6 GB (683 MB) |
+
+The largest process today is the one child per candidate (motion 1.5 GB); in the pool, a worker.
+Every outcome matched across all 26 runs (each call's today and pool runs compared in full: whole
+build, export names, listing problems as a set, each export). clsx's pool started 4 workers at once
+for 5 builds, which is the cost on-demand start removes. Scripts and every run's output are kept with
+the author's notes (local, gitignored).
 
 **Not measured:** a machine with 1 or 2 CPUs, and CI's 4-vCPU runners (worker counts 1 and 2 were run
 on 12 cores instead); subpath builds under a pool (iteration 2 is not merged); worker counts above 4 after the restart
