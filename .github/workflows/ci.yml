@@ -18,32 +18,39 @@ env:
 
 jobs:
   quality:
-    name: Code quality (${{ matrix.label }})
+    name: Code quality
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { label: Bun, key: bun, node: 24, test: bun --bun run test:once }
-          - { label: Node 22, key: node22, node: 22, test: npx vitest run }
-          - { label: Node 24, key: node24, node: 24, test: npx vitest run }
-          - { label: Node 26, key: node26, node: 26, test: npx vitest run }
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
         id: setup
         with:
-          node-version: ${{ matrix.node }}
+          node-version: "22.18"
       # Each check runs even when an earlier one failed, so one run reports them all.
       - run: bun run check-types
       - run: npx oxlint
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
       - run: npx oxfmt --check
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
-      - name: Unit tests
-        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
-        run: ${{ matrix.test }}
+
+  unit:
+    name: Unit tests (${{ matrix.label }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { label: Bun, node: 24, test: bun --bun run test:once }
+          # 22.18 is the oldest Node that runs src/cli.ts without a flag (type stripping).
+          - { label: Node 22, node: "22.18", test: npx vitest run }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node }}
+      - run: ${{ matrix.test }}
 
   e2e:
     name: End to end (${{ matrix.label }})
@@ -54,9 +61,7 @@ jobs:
       matrix:
         include:
           - { label: Bun, key: bun, node: 24, run: bun }
-          - { label: Node 22, key: node22, node: 22, run: node }
-          - { label: Node 24, key: node24, node: 24, run: node }
-          - { label: Node 26, key: node26, node: 26, run: node }
+          - { label: Node 22, key: node22, node: "22.18", run: node }
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup

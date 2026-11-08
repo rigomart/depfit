@@ -5,15 +5,17 @@ The scripts here are what its jobs run; each also runs locally, and needs networ
 
 | Job | Runs | Fails when |
 |---|---|---|
-| Code quality (Bun, Node 22, 24, 26) | `bun run check-types`, `npx oxlint`, `npx oxfmt --check`, unit tests on that runtime | any of them fails |
-| End to end (Bun, Node 22, 24, 26) | `ci/e2e.ts`: the CLI on `test/fixtures`, on that runtime | a report breaks the output contract (below) or a project's expectation |
+| Code quality | `bun run check-types`, `npx oxlint`, `npx oxfmt --check` (each runs even after one fails) | any of them fails |
+| Unit tests (Bun, Node 22) | `bun --bun run test:once` on Bun, `npx vitest run` on Node | a test fails |
+| End to end (Bun, Node 22) | `ci/e2e.ts`: the CLI on `test/fixtures`, on that runtime | a report breaks the output contract (below) or a project's expectation |
 | Bundle accuracy | `ci/bundle-accuracy.ts`: the bundle eval's frozen reference cases | a byte differs from its reference, or a reason code is not the expected one |
-| Performance | `ci/perf.ts compare`: the times the two jobs above measured | a gated time is 2x its baseline or more |
+| Performance | `ci/perf.ts compare`: the times the end-to-end and bundle jobs measured | a gated time is 2x its baseline or more |
 
 Bun is pinned to 1.3.14, the version `bun.lock` was written with; the Bun jobs also install Node 24,
-because depfit runs Vite in a Node child process. Node 22, 24 and 26 are the LTS lines that depfit's
-dependencies support (vitest: `^22.12.0 || ^24.0.0 || >=26.0.0`); the CLI runs on Node from source
-through Node's type stripping.
+because depfit runs Vite in a Node child process. Node is 22.18, the oldest release that runs
+`node src/cli.ts` without a flag (type stripping) and within the range depfit's dependencies accept
+(vitest: `^22.12.0 || ^24.0.0 || >=26.0.0`). One Node version keeps the end-to-end jobs, which
+call npm, OSV and GitHub, to two. The newest Node joins the matrix when depfit is published (#13).
 
 ## End to end
 
