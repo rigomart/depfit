@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # GitHub facts (maintenance.archived, last_commit_at, commits_last_year).
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  quality:
+    name: Code quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        id: setup
+        with:
+          node-version: "22.18"
+      # Each check runs even when an earlier one failed, so one run reports them all.
+      - run: bun run check-types
+      - run: npx oxlint
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+      - run: npx oxfmt --check
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+
+  unit:
+    name: Unit tests (${{ matrix.label }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { label: Bun, node: 24, test: bun --bun run test:once }
+          # 22.18 is the oldest Node that runs src/cli.ts without a flag (type stripping).
+          - { label: Node 22, node: "22.18", test: npx vitest run }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node }}
+      - run: ${{ matrix.test }}
+
+  e2e:
+    name: End to end (${{ matrix.label }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { label: Bun, key: bun, node: 24, run: bun }
+          - { label: Node 22, key: node22, node: "22.18", run: node }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node }}
+      - name: CLI on test/fixtures, checked against the output contract
+        run: mkdir -p timings && ${{ matrix.run }} ci/e2e.ts --timings timings/e2e-${{ matrix.key }}.json
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: timings-e2e-${{ matrix.key }}
+          path: timings/
+          if-no-files-found: ignore
+
+  bundle:
+    name: Bundle accuracy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          node-version: 24
+      - uses: actions/cache@v6
+        with:
+          path: ~/.npm
+          key: npm-bundle-${{ runner.os }}-${{ hashFiles('eval/bundle/locks/**', 'eval/bundle/cases.json') }}
+          restore-keys: npm-bundle-${{ runner.os }}-
+      - name: Replay the frozen bundle reference cases
+        run: mkdir -p timings && bun ci/bundle-accuracy.ts --timings timings/bundle.json
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: timings-bundle
+          path: timings/
+          if-no-files-found: ignore
+
+  perf:
+    name: Performance
+    needs: [e2e, bundle]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: timings-*
+          path: timings
+          merge-multiple: true
+      - name: Compare with ci/perf-baseline.json
+        run: bun ci/perf.ts compare timings
