@@ -568,8 +568,20 @@ describe("rootEntryBundle, the CLI's call", () => {
       new URL("./fixtures/runner/slow-crash-on-subpath.mjs", import.meta.url),
     );
     try {
-      const result = await measureForReport(dir, "with-subpaths", {}, { runnerScript: script });
+      // In the serial order every subpath build comes after every root build, whatever the
+      // worker count (a pool may run a subpath build before the exports).
+      const started = Date.now();
+      const result = await measureForReport(
+        dir,
+        "with-subpaths",
+        {},
+        {
+          runnerScript: script,
+          serial: true,
+        },
+      );
       const returned = Date.now();
+      expect(Date.parse(result.measuredAt ?? "")).toBeGreaterThanOrEqual(started);
       expect(result.crash).toBeNull();
       expect(result.measurement.subpaths?.reason).toMatch(/^bundle: BUNDLER_ERROR/);
       expect(result.measuredAt).not.toBeNull();
