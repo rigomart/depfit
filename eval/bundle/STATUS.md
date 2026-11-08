@@ -870,3 +870,109 @@ the fix:
 After the fixes, P1 (a) (41 packages, 8 variants), gate C, `ci/e2e.ts` on Bun and Node, and the
 unit tests were rerun: unchanged results, all pass. The speed and load pairs were not rerun: the
 fixes change only what happens to a worker that does not exit on its own, which Vite's do.
+
+## Cache (#8): measurements for the bar (2026-11-08)
+
+**Bar drafted, pending the user's approval.** Measured for SPEC.md "Cache (#8)" on an Apple M4 Pro
+(12 cores), Node 24.14.1, Bun 1.3.14, npm 11.11.0, at 573991c, every command under `nice -n 10`,
+one at a time, at most 4 Vite workers, over the real registry from a home network. Research scripts
+are outside the repo and reuse depfit's own functions (`resolvePackage`, `advisories`,
+`githubFacts`, `weeklyDownloads`, `typesPackage`, `dependencyVulnerabilities`,
+`withIsolatedInstall`, `measureRootEntry`). No cache code exists yet, so the hit times below are a
+simulation of its critical path, not a run of it.
+
+One batch was discarded: the first CLI timings ran before `bun install` in this worktree, so Bun
+auto-installed Vite 8.3.6 and every build crashed (`BUNDLER_ERROR`, bundle on and off took the same
+time). That is also why the bar never caches a `BUNDLER_ERROR`.
+
+**Lock-only resolution against a full install** (`npm install [--package-lock-only] <spec>` with
+depfit's flags in an empty temp directory, warm npm cache; medians of rounds 2 to 4, ms; round 1
+was the warm-up and its full install is shown as "first"):
+
+| Package (tree) | Full install | First | Lock-only | Lock-only, `--prefer-online` | `npm ci` from the lock-only lockfile |
+|---|---|---|---|---|---|
+| clsx (1) | 136 | 141 | 123 | 479 | 139 |
+| zod (1) | 237 | 238 | 133 | 505 | 222 |
+| valibot (1) | 183 | 544 | 167 | 624 | 130 |
+| date-fns (1) | 534 | 500 | 140 | 488 | 517 |
+| motion (5) | 425 | 2216 | 306 | 2128 | 249 |
+| react-hook-form (2) | 206 | 567 | 170 | 721 | 160 |
+| @tanstack/react-form (10) | 281 | 1451 | 229 | 1742 | 181 |
+| shiki (45) | 359 | 2473 | 185 | 2468 | 305 |
+| @mui/material (36) | 714 | 3423 | 363 | 3028 | 475 |
+| next (54) | 2219 | 4395 | 528 | 2443 | 1829 |
+
+In all 40 runs the lock-only lockfile was identical to the full install's, every field of every
+entry, and `npm ci` from it installed the same tree.
+
+**Lock-only on a stale npm cache** (a private npm cache filled at 13:10, timed at 13:17, past
+npm's 300 s freshness, then again at once; s): zod 0.65 then 0.15, motion 2.22 then 0.32,
+@tanstack/react-form 1.88 then 0.25, shiki 2.46 then 0.20, @mui/material 2.90 then 0.38, next 2.23
+then 0.56. On the empty cache it took 0.77 to 4.72 s. `--prefer-online` matches the stale case.
+The registry sends `cache-control: public, max-age=300` for packuments.
+
+**Conditional revalidation** of every package in the tree (abbreviated packuments, the `Accept`
+header npm sends, `If-None-Match` with the ETag, all at once; 3 rounds, ms): zod 87 to 255 (1
+packument), motion 94 to 95 (5), @tanstack/react-form 108 to 131 (10), shiki 109 to 125 (45),
+@mui/material 111 to 116 (33), next 145 to 154 (54). Every response was 304. Fetching the same
+packuments in full took 0.39 to 0.87 s and 1.2 to 63 MB. A HEAD request's ETag gives a 304 on a
+conditional GET (next, zod, @types/node). `Last-Modified` was 2 to 10 s after the packument's
+`modified` field for zod, next, typescript, react, @types/node and motion.
+
+**Which packuments npm reads** (npm's cache index after a resolution into an empty cache, against
+the names in the lockfile): react-hook-form 3 for a tree of 2, @tanstack/react-form 10 of 10, shiki
+45 of 45, @mui/material 37 for 33, next 58 for 54, motion 14 for 5. The extra ones are optional
+peers and similar. Adding every dependency and peer named in the installed manifests still missed 6
+of motion's and 1 of @mui/material's, so the bar takes the set from npm's own log:
+`--loglevel=http` prints one `npm http fetch` or `npm http cache` line per packument URL.
+
+**Probes, once per run:** `npm config list --json` 67 to 77 ms (170 keys, including `npm-version`,
+`registry`, `legacy-peer-deps`; identical from two different directories); `node -p` 25 ms.
+
+**A hit's critical path, simulated** (resolve the version; then, at once: the live lookups, the
+probes, conditional revalidation of every URL npm logged for the tree, reading a 100 KB file, and
+dependency OSV on the stored tree; 5 rounds, ms, median and range). CLI start-up and the project
+scan come on top (CI's baseline for `--schema`: 64 ms on Bun):
+
+| Package | Total | Revalidation done after resolve |
+|---|---|---|
+| zod | 617 (499 to 1047) | 90 to 100 |
+| valibot | 460 (435 to 510) | 84 to 90 |
+| motion | 590 (557 to 990) | 92 to 261 |
+| shiki | 762 (613 to 812) | 115 to 288 |
+| @mui/material | 788 (730 to 920) | 166 to 242 |
+| next | 1659 (1074 to 1741) | 126 to 718 |
+
+The same path with lock-only resolution (fresh npm cache) in place of revalidation: zod 483 to
+2295, valibot 442 to 466, motion 837 to 920, shiki 723 to 1003, @mui/material 990 to 1149, next
+1536 to 1753. Dependency OSV, which needs the tree, is the long pole for trees with dependencies
+(about 0.3 to 0.45 s after the tree is known); next's resolve (0.54 to 0.73 s, a large packument)
+and OSV (1.1 to 1.6 s) dominate it.
+
+**Today's CLI** (`test/fixtures/browser-app`, 3 rounds, s, median; bundle facts on / with
+`DEPFIT_BUNDLE=0`, which still installs): zod 4.18 / 1.32, valibot 1.76 / 1.75, motion 5.19 / 2.01,
+shiki 5.09 / 1.75, `zod valibot` 4.90 / 1.27, clsx 1.03 / 1.86. The off column varies with the
+network (valibot 1.06 to 1.89).
+
+**Cache entry sizes** (the measurement with the subpath cap of 100, what #10 reads; the overview's
+with the cap of 30 was the same size for all eight; install facts as `readTree` gives them; the
+install directory by `du`):
+
+| Package | Exports | Subpaths built | Measurement (gzip) | Install facts | Install dir (files) |
+|---|---|---|---|---|---|
+| clsx | 2 | 1 | 0.8 KB (0.2) | 0.2 KB | 0.1 MB (16) |
+| zod | 260 | 9 | 48.4 KB (4.5) | 0.2 KB | 8.1 MB (851) |
+| valibot | 320 | 0 | 57.7 KB (5.2) | 0.2 KB | 1.9 MB (23) |
+| date-fns | 250 | over the cap | 46.6 KB (4.0) | 0.2 KB | 26.5 MB (5,148) |
+| motion | 350 | 10 | 67.8 KB (7.0) | 1.2 KB | 16.4 MB (1,046) |
+| react-hook-form | 18 | 0 | 3.7 KB (0.6) | 0.4 KB | 2.6 MB (269) |
+| shiki | 54 | 10 | 12.9 KB (1.6) | 13.5 KB | 21.9 MB (2,432) |
+| @mui/material | 474 | over the cap | 98.7 KB (9.0) | 11.0 KB | 38.5 MB (5,428) |
+
+next's install is 337 MB (10,386 files). Renaming an install directory took 6 ms; deleting one,
+which today's code does at the end of every install, took 0.31 s (@mui/material), 0.28 s
+(date-fns) and 0.67 s (next).
+
+**Not measured:** Linux, Windows and CI's runners; private registries; concurrent runs; a range
+floating in the wild (nothing can be published to npm for it; gate K2 (b) uses a local test
+registry instead); and the cache itself, which does not exist yet.
