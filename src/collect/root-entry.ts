@@ -285,6 +285,8 @@ export async function measureRootEntry(
      * error propagates.
      */
     onSubpathPhase?: (ms: number) => void;
+    /** Called as each build completes with a result (one that ran, whatever it reports). */
+    onBuild?: () => void;
   } = {},
 ): Promise<RootEntryMeasurement> {
   const serial = options.serial === true;
@@ -302,8 +304,11 @@ export async function measureRootEntry(
   const subpathAbort = new AbortController();
   const builder =
     (signal: AbortSignal) =>
-    (source: string, exports = false) =>
-      pool.build({ root: dir, source, peers: externals, exports, signal });
+    async (source: string, exports = false) => {
+      const result = await pool.build({ root: dir, source, peers: externals, exports, signal });
+      options.onBuild?.();
+      return result;
+    };
   const measurer = (signal: AbortSignal) => async (entry: BundleEntry) =>
     outcomeOf(await builder(signal)(entryModuleSource(entry)), externals, candidate);
   const measure = (name: string | null) => measurer(rootAbort.signal)(entryFor(candidate, name));
@@ -592,6 +597,9 @@ export async function measureForReport(
   const listStarted = performance.now();
   const listed = await readListing(dir, candidate);
   const listMs = performance.now() - listStarted;
+  // When the last build behind the numbers completed: a subpath phase that fails later, after a
+  // timeout, does not move it.
+  let lastBuildMs = 0;
   try {
     const measurement = await measureRootEntry(dir, candidate, externals, {
       subpaths: true,
@@ -601,8 +609,12 @@ export async function measureForReport(
       pool,
       serial,
       onSubpathPhase: (ms) => onSubpathPhase?.(listMs + ms),
+      onBuild: () => {
+        lastBuildMs = Date.now();
+      },
     });
-    return { measurement, crash: null, measuredAt: new Date().toISOString() };
+    const measuredAt = lastBuildMs > 0 ? new Date(lastBuildMs).toISOString() : null;
+    return { measurement, crash: null, measuredAt };
   } catch (error) {
     // manifest (a separate cause) keeps its own.
     const crashed: RootEntryMeasurement = {

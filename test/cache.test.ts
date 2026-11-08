@@ -1,4 +1,14 @@
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  symlink,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { hostname, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -15,6 +25,7 @@ import {
   openCache,
   SIZE_FILE,
   sha256,
+  viteClosure,
   stagingAbandoned,
   treeHash,
   validPart,
@@ -129,6 +140,30 @@ describe("keys", () => {
     expect(canonicalJson({ b: 1, a: { d: [1, { f: 2, e: 3 }], c: null } })).toBe(
       '{"a":{"c":null,"d":[1,{"e":3,"f":2}]},"b":1}',
     );
+  });
+});
+
+describe("viteClosure", () => {
+  it("follows symlinks the way Node does, finding dependencies beside the real location", async () => {
+    const root = await mkdtemp(join(tmpdir(), "depfit-closure-"));
+    const pkg = async (dir: string, name: string, version: string, dependencies = {}) => {
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, "package.json"), JSON.stringify({ name, version, dependencies }));
+    };
+    try {
+      // pnpm-style: node_modules/vite links into the store, where its dependency sits beside it.
+      const store = join(root, "node_modules", ".pnpm", "vite@8.3.4", "node_modules");
+      await pkg(join(store, "vite"), "vite", "8.3.4", { dep: "^1.0.0" });
+      await pkg(join(store, "dep"), "dep", "1.0.1");
+      await pkg(join(root, "node_modules", "dep"), "dep", "9.9.9");
+      await symlink(join(store, "vite"), join(root, "node_modules", "vite"));
+      expect(await viteClosure(join(root, "node_modules", "vite"))).toEqual([
+        "dep@1.0.1",
+        "vite@8.3.4",
+      ]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
 

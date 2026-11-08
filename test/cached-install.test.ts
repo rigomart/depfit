@@ -253,6 +253,16 @@ describe("parts", () => {
 
 describe("a cache that fails partway", () => {
   it(
+    "rejects when its directory is gone after opening, so the caller can take the uncached path",
+    async () => {
+      await registry.publish("gone", "1.0.0");
+      await rm(cache.root, { recursive: true, force: true });
+      await expect(call("gone")).rejects.toThrow();
+    },
+    SLOW,
+  );
+
+  it(
     "still gives the call its facts when publishing fails",
     async () => {
       await registry.publish("fp", "1.0.0");

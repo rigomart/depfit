@@ -13,6 +13,7 @@ import { createHash, randomBytes } from "node:crypto";
 import {
   link,
   lstat,
+  realpath,
   mkdir,
   mkdtemp,
   readdir,
@@ -141,11 +142,14 @@ async function readManifest(path: string): Promise<Record<string, unknown> | nul
   }
 }
 
-/** The package directory Node would load `name` from, starting at `from` (a package directory). */
+/**
+ * The real directory Node would load `name` from, starting at `from` (a package's real directory):
+ * Node resolves symlinks first (pnpm-style layouts), so its lookup starts beside the real location.
+ */
 async function findPackage(from: string, name: string): Promise<string | null> {
   for (let dir = from; ; dir = dirname(dir)) {
     const candidate = join(dir, "node_modules", name);
-    if (await readManifest(join(candidate, "package.json"))) return candidate;
+    if (await readManifest(join(candidate, "package.json"))) return realpath(candidate);
     if (dirname(dir) === dir) return null;
   }
 }
@@ -154,11 +158,11 @@ async function findPackage(from: string, name: string): Promise<string | null> {
  * `name@version` of every installed package Vite depends on, Vite included, sorted: its
  * dependencies, optional dependencies and installed peers, transitively.
  */
-export async function viteClosure(): Promise<string[]> {
-  const require = createRequire(join(HERE, "bundle.ts"));
-  const start = dirname(require.resolve("vite/package.json"));
+export async function viteClosure(
+  start: string = dirname(createRequire(join(HERE, "bundle.ts")).resolve("vite/package.json")),
+): Promise<string[]> {
   const seen = new Map<string, string>();
-  const queue = [start];
+  const queue = [await realpath(start)];
   for (let dir = queue.shift(); dir !== undefined; dir = queue.shift()) {
     if (seen.has(dir)) continue;
     const manifest = await readManifest(join(dir, "package.json"));

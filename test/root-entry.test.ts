@@ -12,6 +12,8 @@ import {
   medianBytes,
   readListing,
   type RootEntryMeasurement,
+  cacheableMeasurement,
+  measureForReport,
   rootEntryBundle,
   rootEntryFacts,
   REPORT_SUBPATH_LIMIT,
@@ -555,6 +557,24 @@ describe("rootEntryBundle, the CLI's call", () => {
       expect(facts.reasons[1]).toBe(
         "bundle: SUBPATH_LIST_FAILED with-subpaths/package.json ENOENT",
       );
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("times a measurement by its last completed build, not by a later subpath failure", async () => {
+    const dir = await install();
+    const script = fileURLToPath(
+      new URL("./fixtures/runner/slow-crash-on-subpath.mjs", import.meta.url),
+    );
+    try {
+      const result = await measureForReport(dir, "with-subpaths", {}, { runnerScript: script });
+      const returned = Date.now();
+      expect(result.crash).toBeNull();
+      expect(result.measurement.subpaths?.reason).toMatch(/^bundle: BUNDLER_ERROR/);
+      expect(result.measuredAt).not.toBeNull();
+      expect(returned - Date.parse(result.measuredAt ?? "")).toBeGreaterThanOrEqual(400);
+      expect(cacheableMeasurement(result)).toBe(false);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

@@ -19,9 +19,11 @@ async function killAt(dir: string, hook: string): Promise<void> {
     });
     child.on("exit", (code) => reject(new Error(`exited ${code} before pausing`)));
   });
-  const exited = new Promise((resolve) => child.on("exit", resolve));
+  const exited = new Promise<NodeJS.Signals | null>((resolve) =>
+    child.on("exit", (_code, signal) => resolve(signal)),
+  );
   child.kill("SIGKILL");
-  await exited;
+  expect(await exited).toBe("SIGKILL");
 }
 
 describe("a call killed while publishing", () => {

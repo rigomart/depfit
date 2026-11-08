@@ -4,6 +4,8 @@ const [dir, hook, collect] = process.argv.slice(2);
 const { openCache } = await import(`${collect}/cache.ts`);
 const pause = async () => {
   process.stdout.write("paused\n");
+  // A timer keeps the process alive until the test kills it.
+  setInterval(() => {}, 1000);
   await new Promise(() => {});
 };
 const cache = await openCache({ dir, hooks: { [hook]: pause } });

@@ -132,11 +132,24 @@ type TreeFacts = {
   bundle: BundleFacts | null;
 };
 
-/** Everything that needs the isolated install of the candidate itself, or its cached facts. */
+/**
+ * Everything that needs the isolated install of the candidate itself, or its cached facts. A cache
+ * that fails once open (its directory removed or made unwritable, a full disk) gives way to the
+ * uncached path, so the call still gets every fact; a failure there is the install's own.
+ */
 async function treeFacts(resolved: Resolved, context: Context): Promise<TreeFacts> {
-  const pool = context.bundlePool;
   const cache = await context.cache;
-  if (!cache) return isolatedTreeFacts(resolved, pool);
+  if (!cache) return isolatedTreeFacts(resolved, context.bundlePool);
+  return cachedTreeFacts(resolved, context.bundlePool, cache).catch(() =>
+    isolatedTreeFacts(resolved, context.bundlePool),
+  );
+}
+
+async function cachedTreeFacts(
+  resolved: Resolved,
+  pool: (() => Promise<VitePool>) | null,
+  cache: Cache,
+): Promise<TreeFacts> {
   const vulnerabilitiesOf = (tree: TreePackage[]) =>
     settle(dependencyVulnerabilities(dependenciesOf(resolved.name, tree)));
   let vulnerabilities: Promise<Settled<string[]>> | null = null;
