@@ -734,7 +734,8 @@ candidate, 3.1 GB). Among pool sizes the work per call does not change; against 
 the alternating runs below. One worker already keeps about 3 to 4 cores busy, because rolldown is
 multi-threaded.
 
-**First alternating runs, the whole root operation** (after the first review; superseded by the
+**First alternating runs, the whole root operation** (their CPU totals were printed, not kept, so
+they cannot be rebuilt from the files) (after the first review; superseded by the
 second set below, because these started every worker at once, started a replacement before the
 retiring worker exited, sampled depfit's workers but not depfit itself, and printed CPU time
 without keeping it; `nice -n 10`, at most 4
@@ -786,7 +787,7 @@ memory is the largest sampled peak (GiB, from `ps` RSS):
 calls it; the pool queues each listed subpath's whole build (once per target file) as soon as the
 whole build has passed the toolchain check, alongside the exports. Subpaths built: clsx 1, zod 9,
 motion 10, preact 12 targets; valibot and react-hook-form none; date-fns lists 739, over the cap, so
-none. 40 runs, every outcome identical within each call, subpaths included:
+none. 44 runs (22 pairs), every outcome identical within each call, subpaths included:
 
 | Call, workers | Pairs | Wall, today / pool | Ratio | CPU, today / pool | Ratio | Memory, today / pool (largest worker, MiB) | Started (most live) |
 |---|---|---|---|---|---|---|---|
